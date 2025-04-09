@@ -1,8 +1,8 @@
 {
   "name": "MyTestData",
   "evaluators": [
-    "RelevanceEvaluator",
-    "GroundednessEvaluator"
+    "FluencyEvaluator",
+    "ViolenceEvaluator"
   ],
   "data": [
     {

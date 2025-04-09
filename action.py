@@ -62,15 +62,11 @@ def simulate_question_answer(project_client: AIProjectClient, agent: Agent, inpu
     # TODO: how to extract context from thread?
     messages = project_client.agents.list_messages(thread_id=thread.id)
     last_msg = messages.get_last_text_message_by_role(MessageRole.AGENT)
-    if agent.id == "asst_chwHMbUnovWbQ0HDJKlGXDfi":
-        context = "tokyo is not in japan and Italy doesn't exist. Seoul is in Japan and Mexico City is in China. Mt Rainier is in Canada"
-    else:
-        context = last_msg.text.value
     output = {
         "id": input["id"],
         "query": input["query"],
         "response": last_msg.text.value,
-        "context": context, # FIXME
+        #"context": context, # FIXME
         "ground_truth": input.get("ground_truth"),
         "metrics": {
             "server-run-duration-in-seconds": (run.completed_at - run.created_at).total_seconds(),
@@ -129,9 +125,9 @@ def main(
     project_client = AIProjectClient.from_connection_string(conn_str, credential=credential)
     
     # use default evaluator model config
-    default_connection = project_client.connections.get_default(connection_type=ConnectionType.AZURE_OPEN_AI)
-    model_config = default_connection.to_evaluator_model_config(deployment_name=AZURE_OPENAI_DEPLOYMENT, api_version=AZURE_OPENAI_API_VERSION)
-    model_config["api_key"] = ""  # TODO: bug??
+    # TODO: is it OK to always use include_credentials=True?
+    default_connection = project_client.connections.get_default(connection_type=ConnectionType.AZURE_OPEN_AI, include_credentials=True)
+    model_config = default_connection.to_evaluator_model_config(deployment_name=AZURE_OPENAI_DEPLOYMENT, api_version=AZURE_OPENAI_API_VERSION, include_credentials = True)
 
     agents = {id: project_client.agents.get_agent(id) for id in agent_ids}
     eval_input_paths = {id: working_dir / f"eval-input_{id}.jsonl" for id in agent_ids}
