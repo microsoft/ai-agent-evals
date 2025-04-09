@@ -1,0 +1,37 @@
+name: test
+
+on:
+  workflow_dispatch:
+  push:
+    # Run when commits are pushed to mainline branch (main or master)
+    # Set this to the mainline branch you are using
+    branches:
+      - init-check-in
+
+
+permissions:
+  id-token: write
+  contents: read
+  issues: write
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    steps:
+      # required because action is unpublished
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Azure login using Federated Credentials
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Test local action
+        uses: ./
+        with:
+          azure-ai-project-connection-string: 'eastus2.api.azureml.ms;80d2c6c6-fa64-4ab1-8aa5-4e118c6b16ce;rg-aprilk-test-agent-template-02;ai-project-cjn4rbprsy56k'
+          data-path: ${{ github.workspace }}/tests/data/golden-dataset-small.json
+          agent-ids: 'asst_6ScdM6tAPLIxfo6HY3Ro8Y4K, asst_chwHMbUnovWbQ0HDJKlGXDfi'

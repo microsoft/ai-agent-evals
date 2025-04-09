@@ -1,0 +1,43 @@
+name: "Azure AI Agent Evaluation"
+description: "Evaluate the performance, quality and safety of AI agents using the Azure AI Evaluation SDK"
+
+inputs:
+  azure-ai-project-connection-string:
+    description: >
+      The connection string for the Azure AI Project. This is used to connect to Azure OpenAI to simulate
+      conversations with each agent, and to connect to the Azure AI Evaluation SDK to perform the evaluation.
+    required: true
+  data-path:
+    description: >
+      Path to the input data file containing the conversation starters. Each conversation starter
+      will be sent to each agent for a pairwise comparison of evaluation results.
+    required: true
+  agent-ids:
+    description: Comma-separated list of agent IDs to evaluate.
+    required: true
+  baseline-agent-id:
+    description: Agent ID of the baseline agent to compare against. By default, the first agent is used.
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Install Python dependencies
+      shell: bash
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r ${{ github.action_path }}/requirements.txt
+
+    - name: Evaluate agents
+      shell: bash
+      run: python ${{ github.action_path }}/action.py
+      env:
+        AZURE_AI_PROJECT_CONNECTION_STRING: ${{ inputs.azure-ai-project-connection-string }}
+        DATA_PATH: ${{ inputs.data-path }}
+        AGENT_IDS: ${{ inputs.agent-ids }}
+        BASELINE_AGENT_ID: ${{ inputs.baseline-agent-id }}

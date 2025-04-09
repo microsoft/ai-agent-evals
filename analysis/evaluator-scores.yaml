@@ -1,0 +1,273 @@
+sections:
+  - name: "Operational metrics"
+    evaluators:
+      - class: "OperationalMetricsEvaluator"
+        key: "operational_metrics"
+        scores:
+          - name: "Client run duration [s]"
+            key: "client-run-duration-in-seconds"
+            type: "Continuous"
+            desired_direction: "Decrease"
+            range: [0, null]
+          - name: "Server run duration [s]"
+            key: "server-run-duration-in-seconds"
+            type: "Continuous"
+            desired_direction: "Decrease"
+            range: [0, null]
+          - name: "Completion tokens"
+            key: "completion-tokens"
+            type: "Continuous"
+            desired_direction: "Neutral"
+            range: [0, null]
+          - name: "Prompt tokens"
+            key: "prompt-tokens"
+            type: "Continuous"
+            desired_direction: "Neutral"
+            range: [0, null]
+
+  - name: "AI quality (AI assisted)"
+    evaluators:
+      - class: "GroundednessEvaluator"
+        key: "groundedness"
+        scores:
+          - name: "Groundedness"
+            key: "groundedness"
+            type: "Ordinal"
+            desired_direction: "Increase"
+            range: [1, 5]
+
+      - class: "GroundednessProEvaluator"
+        key: "groundedness_pro"
+        scores:
+          - name: "Groundedness Pro"
+            key: "groundedness_pro_label"
+            type: "Boolean"
+            desired_direction: "Increase"
+
+      - class: "RetrievalEvaluator"
+        key: "retrieval"
+        scores:
+          - name: "Retrieval"
+            key: "retrieval"
+            type: "Ordinal"
+            desired_direction: "Increase"
+            range: [1, 5]
+
+      - class: "RelevanceEvaluator"
+        key: "relevance"
+        scores:
+          - name: "Relevance"
+            key: "relevance"
+            type: "Ordinal"
+            desired_direction: "Increase"
+            range: [1, 5]
+
+      - class: "CoherenceEvaluator"
+        key: "coherence"
+        scores:
+          - name: "Coherence"
+            key: "coherence"
+            type: "Ordinal"
+            desired_direction: "Increase"
+            range: [1, 5]
+
+      - class: "FluencyEvaluator"
+        key: "fluency"
+        scores:
+          - name: "Fluency"
+            key: "fluency"
+            type: "Ordinal"
+            desired_direction: "Increase"
+            range: [1, 5]
+
+      - class: "SimilarityEvaluator"
+        key: "similarity"
+        scores:
+          - name: "Similarity"
+            key: "similarity"
+            type: "Ordinal"
+            desired_direction: "Increase"
+            range: [1, 5]
+
+  - name: "Risk and safety"
+    evaluators:
+      - class: "ViolenceEvaluator"
+        key: "violence"
+        scores:
+          - name: "Violent content"
+            key: "violence_score"
+            type: "Ordinal"
+            desired_direction: "Decrease"
+            range: [0, 7]
+
+      - class: "SexualEvaluator"
+        key: "sexual"
+        scores:
+          - name: "Sexual content"
+            key: "sexual_score"
+            type: "Ordinal"
+            desired_direction: "Decrease"
+            range: [0, 7]
+
+      - class: "SelfHarmEvaluator"
+        key: "self_harm"
+        scores:
+          - name: "Self-harm-related content"
+            key: "self_harm_score"
+            type: "Ordinal"
+            desired_direction: "Decrease"
+            range: [0, 7]
+
+      - class: "HateUnfairnessEvaluator"
+        key: "hate_unfairness"
+        scores:
+          - name: "Hateful and unfair content"
+            key: "hate_unfairness_score"
+            type: "Ordinal"
+            desired_direction: "Decrease"
+            range: [0, 7]
+
+      - class: "IndirectAttackEvaluator"
+        key: "indirect_attack"
+        scores:
+          - name: "Indirect attack"
+            key: "xpia_label"
+            type: "Boolean"
+            desired_direction: "Decrease"
+          - name: "Indirect attack: manipulated content"
+            key: "xpia_manipulated_content"
+            type: "Boolean"
+            desired_direction: "Decrease"
+          - name: "Indirect attack: intrusion"
+            key: "xpia_intrusion"
+            type: "Boolean"
+            desired_direction: "Decrease"
+          - name: "Indirect attack: information gathering"
+            key: "xpia_information_gathering"
+            type: "Boolean"
+            desired_direction: "Decrease"
+
+      - class: "ProtectedMaterialEvaluator"
+        key: "protected_material"
+        scores:
+          - name: "Protected material"
+            key: "protected_material_label"
+            type: "Boolean"
+            desired_direction: "Decrease"
+
+  - name: "AI quality (NLP)"
+    evaluators:
+      - class: "F1ScoreEvaluator"
+        key: "f1_score"
+        scores:
+          - name: "F1 score"
+            key: "f1_score"
+            type: "Continuous"
+            desired_direction: "Increase"
+            range: [0, 1]
+
+      - class: "RougeScoreEvaluator"
+        key: "rouge"
+        scores:
+          - name: "ROUGE precision"
+            key: "rouge_precision"
+            type: "Continuous"
+            desired_direction: "Increase"
+            range: [0, 1]
+          - name: "ROUGE recall"
+            key: "rouge_recall"
+            type: "Continuous"
+            desired_direction: "Increase"
+            range: [0, 1]
+          - name: "ROUGE F1 score"
+            key: "rouge_f1_score"
+            type: "Continuous"
+            desired_direction: "Increase"
+            range: [0, 1]
+
+      - class: "GleuScoreEvaluator"
+        key: "gleu"
+        scores:
+          - name: "GLEU score"
+            key: "gleu_score"
+            type: "Continuous"
+            desired_direction: "Increase"
+            range: [0, 1]
+
+      - class: "BleuScoreEvaluator"
+        key: "bleu"
+        scores:
+          - name: "BLEU score"
+            key: "bleu_score"
+            type: "Continuous"
+            desired_direction: "Increase"
+            range: [0, 1]
+
+      - class: "MeteorScoreEvaluator"
+        key: "meteor"
+        scores:
+          - name: "METEOR score"
+            key: "meteor_score"
+            type: "Continuous"
+            desired_direction: "Increase"
+            range: [0, 1]
+
+  - name: "Composite"
+    evaluators:
+      - class: "QAEvaluator"
+        key: "qa"
+        scores:
+          - name: "Groundedness"
+            key: "groundedness"
+            type: "Ordinal"
+            desired_direction: "Increase"
+            range: [1, 5]
+          - name: "Relevance"
+            key: "relevance"
+            type: "Ordinal"
+            desired_direction: "Increase"
+            range: [1, 5]
+          - name: "Coherence"
+            key: "coherence"
+            type: "Ordinal"
+            desired_direction: "Increase"
+            range: [1, 5]
+          - name: "Fluency"
+            key: "fluency"
+            type: "Ordinal"
+            desired_direction: "Increase"
+            range: [1, 5]
+          - name: "Similarity"
+            key: "similarity"
+            type: "Ordinal"
+            desired_direction: "Increase"
+            range: [1, 5]
+          - name: "F1 score"
+            key: "f1_score"
+            type: "Continuous"
+            desired_direction: "Increase"
+            range: [0, 1]
+
+      - class: "ContentSafetyEvaluator"
+        key: "content_safety"
+        scores:
+          - name: "Violent content"
+            key: "violence_score"
+            type: "Ordinal"
+            desired_direction: "Decrease"
+            range: [0, 7]
+          - name: "Sexual content"
+            key: "sexual_score"
+            type: "Ordinal"
+            desired_direction: "Decrease"
+            range: [0, 7]
+          - name: "Self-harm-related content"
+            key: "self_harm_score"
+            type: "Ordinal"
+            desired_direction: "Decrease"
+            range: [0, 7]
+          - name: "Hateful and unfair content"
+            key: "hate_unfairness_score"
+            type: "Ordinal"
+            desired_direction: "Decrease"
+            range: [0, 7]
