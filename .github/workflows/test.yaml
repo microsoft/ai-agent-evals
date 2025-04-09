@@ -5,9 +5,6 @@ on:
   push:
     # Run when commits are pushed to mainline branch (main or master)
     # Set this to the mainline branch you are using
-    branches:
-      - init-check-in
-
 
 permissions:
   id-token: write
