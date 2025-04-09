@@ -15,6 +15,7 @@ from azure.ai.projects.models import Agent, ConnectionType, MessageRole, RunStat
 from azure.identity import DefaultAzureCredential
 
 # NOTE: custom evaluators must be imported so evaluate() can pickle them
+
 import analysis
 
 current_dir = Path(__file__).parent
@@ -25,7 +26,7 @@ if env_path.exists():
 
 GITHUB_STEP_SUMMARY = os.getenv("GITHUB_STEP_SUMMARY")
 
-AZURE_AI_PROJECT_CONNECTION_STRING = os.getenv("AZURE_AI_PROJECT_CONNECTION_STRING") 
+AZURE_AI_PROJECT_CONNECTION_STRING = os.getenv("AZURE_AI_PROJECT_CONNECTION_STRING")
 DATA_PATH = os.getenv("DATA_PATH")
 AGENT_IDS = [x.strip() for x in os.getenv("AGENT_IDS", "").split(",") if x.strip()]
 BASELINE_AGENT_ID = os.getenv("BASELINE_AGENT_ID")
