@@ -42,7 +42,7 @@ def simulate_question_answer(
     # TODO: validate input schema
 
     thread = project_client.agents.create_thread()
-    message = project_client.agents.create_message(
+    project_client.agents.create_message(
         thread.id, role=MessageRole.USER, content=input["query"]
     )
 

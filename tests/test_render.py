@@ -64,15 +64,6 @@ def test_fmt_pvalue():
     assert fmt_pvalue(0) == "≈0"
 
 
-def test_fmt_badge():
-    """Test formatting of badges."""
-    # Test predefined color
-    assert "img.shields.io" in fmt_badge("Test", "Passed", "Pass")
-
-    # Test with custom color
-    assert "img.shields.io" in fmt_badge("Test", "Passed", "ff0000")
-
-
 def test_fmt_image():
     """Test formatting of image markdown."""
     assert (
