@@ -308,6 +308,16 @@ def main(
 
 
 if __name__ == "__main__":
+    # Check required environment variables
+    if not AZURE_AI_PROJECT_CONNECTION_STRING:
+        raise ValueError(
+            "AZURE_AI_PROJECT_CONNECTION_STRING environment variable is not set"
+        )
+    if not DATA_PATH:
+        raise ValueError("DATA_PATH environment variable is not set")
+    if not AGENT_IDS:
+        raise ValueError("AGENT_IDS environment variable is not set or empty")
+
     SUMMARY_MD = main(
         credential=DefaultAzureCredential(),
         conn_str=AZURE_AI_PROJECT_CONNECTION_STRING,
