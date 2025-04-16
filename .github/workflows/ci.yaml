@@ -9,7 +9,6 @@ on:
   push:
     branches:
       - main
-      - aprilk/init-check-in
 
 permissions:
   id-token: write
