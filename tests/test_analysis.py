@@ -7,7 +7,8 @@ from analysis.analysis import (
     EvaluationScore,
     EvaluationScoreCI,
     EvaluationScoreComparison,
-    EvaluationScoreDataType)
+    EvaluationScoreDataType,
+)
 
 data_result_1 = {
     "inputs.id": [1, 2, 3],

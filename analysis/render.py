@@ -9,10 +9,11 @@ import pandas as pd
 
 from .analysis import (
     EvaluationResult,
-    EvaluationScore, 
+    EvaluationScore,
     EvaluationScoreCI,
     EvaluationScoreComparison,
-    EvaluationScoreDataType)
+    EvaluationScoreDataType,
+)
 
 SS_THRESHOLD = 0.05
 HSS_THRESHOLD = 0.001

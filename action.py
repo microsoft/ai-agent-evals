@@ -16,11 +16,7 @@ import pandas as pd
 import yaml
 from azure.ai.evaluation import evaluate
 from azure.ai.projects import AIProjectClient
-from azure.ai.projects.models import (
-    Agent,
-    ConnectionType,
-    MessageRole,
-    RunStatus)
+from azure.ai.projects.models import Agent, ConnectionType, MessageRole, RunStatus
 from azure.identity import DefaultAzureCredential
 
 import analysis
