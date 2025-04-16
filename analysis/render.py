@@ -8,8 +8,11 @@ from urllib.parse import quote
 import pandas as pd
 
 from .analysis import (
-    EvaluationResult, EvaluationScore, EvaluationScoreDataType,
-    EvaluationScoreComparison, EvaluationScoreCI
+    EvaluationResult,
+    EvaluationScore,
+    EvaluationScoreDataType,
+    EvaluationScoreComparison,
+    EvaluationScoreCI,
 )
 
 SS_THRESHOLD = 0.05
@@ -26,7 +29,9 @@ PALE_GREY = "e6e6e3"
 WHITE = "ffffff"
 
 
-def fmt_metric_value(x: float, data_type: EvaluationScoreDataType, sign: bool=False) -> str:
+def fmt_metric_value(
+    x: float, data_type: EvaluationScoreDataType, sign: bool = False
+) -> str:
     """Format a metric value"""
     if data_type == EvaluationScoreDataType.ORDINAL:
         spec = ".2f"
@@ -157,9 +162,7 @@ def fmt_treatment_badge(x: EvaluationScoreComparison) -> str:
         tooltip_stat = "Insufficient observations to determine statistical significance"
     elif effect == "Zero samples":
         color = "Warning"
-        tooltip_stat = (
-            "Zero observations might indicate a problem with data collection"
-        )
+        tooltip_stat = "Zero observations might indicate a problem with data collection"
     else:
         color = PALE_GREY
         tooltip_stat = ""
@@ -190,10 +193,10 @@ def fmt_ci(x: EvaluationScoreCI) -> str:
 
 
 def fmt_table_compare(
-        scores: list[EvaluationScore],
-        results: dict[str, EvaluationResult],
-        baseline: str,
-    ) -> str:
+    scores: list[EvaluationScore],
+    results: dict[str, EvaluationResult],
+    baseline: str,
+) -> str:
     """Render a table comparing the evaluation results from multiple agent variants"""
     if not results:
         raise ValueError("No evaluation results provided")
@@ -206,14 +209,18 @@ def fmt_table_compare(
         try:
             row = {"Evaluation score": score.name}
 
-            compare_result = EvaluationScoreComparison(results[baseline], results[baseline], score=score)
+            compare_result = EvaluationScoreComparison(
+                results[baseline], results[baseline], score=score
+            )
             row[results[baseline].variant] = fmt_control_badge(compare_result)
 
             for variant, variant_result in results.items():
                 if variant == baseline:
                     continue
 
-                compare_result = EvaluationScoreComparison(results[baseline], variant_result, score=score)
+                compare_result = EvaluationScoreComparison(
+                    results[baseline], variant_result, score=score
+                )
                 row[variant_result.variant] = fmt_treatment_badge(compare_result)
 
             records.append(row)
@@ -226,10 +233,7 @@ def fmt_table_compare(
     return df_summary.to_markdown(index=False)
 
 
-def fmt_table_ci(
-        scores: list[EvaluationScore],
-        result: EvaluationResult
-    ) -> str:
+def fmt_table_ci(scores: list[EvaluationScore], result: EvaluationResult) -> str:
     """Render a table of confidence intervals for the evaluation result"""
     if not scores:
         raise ValueError("No evaluator scores provided")
@@ -238,11 +242,15 @@ def fmt_table_ci(
     for score in scores:
         try:
             result_ci = EvaluationScoreCI(result, score=score)
-            records.append({
-                "Evaluation score": score.name,
-                result.variant: fmt_metric_value(result_ci.mean, result_ci.score.data_type),
-                "95% CI": fmt_ci(result_ci),
-            })
+            records.append(
+                {
+                    "Evaluation score": score.name,
+                    result.variant: fmt_metric_value(
+                        result_ci.mean, result_ci.score.data_type
+                    ),
+                    "95% CI": fmt_ci(result_ci),
+                }
+            )
         except ValueError as e:
             print(f"Error comparing score {score.name}: {e}")
             pass

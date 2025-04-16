@@ -8,12 +8,12 @@ from .render import fmt_hyperlink, fmt_table_compare, fmt_table_ci
 
 
 def summarize(
-        eval_results: dict[str, EvaluationResult],
-        agents: dict[str, Agent],
-        baseline: str,
-        evaluators: list[str],
-        agent_base_url: str
-    ) -> str:
+    eval_results: dict[str, EvaluationResult],
+    agents: dict[str, Agent],
+    baseline: str,
+    evaluators: list[str],
+    agent_base_url: str,
+) -> str:
     md = []
     md.append("## Azure AI Evaluation\n")
 
@@ -34,7 +34,7 @@ def summarize(
     metadata_path = Path(__file__).parent / "evaluator-scores.yaml"
     with open(metadata_path, "r", encoding="utf-8") as f:
         score_metadata = yaml.safe_load(f)
-    
+
     for section in score_metadata["sections"]:
         section_evals = [x["class"] for x in section["evaluators"]]
         if not any(x in evaluators for x in section_evals):
@@ -45,13 +45,15 @@ def summarize(
             if evaluator["class"] not in evaluators:
                 continue
             for score in evaluator["scores"]:
-                eval_scores.append(EvaluationScore(
-                    name=score["name"],
-                    evaluator=evaluator["key"],
-                    field=score["key"],
-                    data_type=score["type"],
-                    desired_direction=score["desired_direction"]
-                ))
+                eval_scores.append(
+                    EvaluationScore(
+                        name=score["name"],
+                        evaluator=evaluator["key"],
+                        field=score["key"],
+                        data_type=score["type"],
+                        desired_direction=score["desired_direction"],
+                    )
+                )
 
         if len(eval_results) >= 2:
             md.append("\n### Compare evaluation scores between variants\n")

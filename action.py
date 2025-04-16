@@ -19,9 +19,10 @@ from azure.identity import DefaultAzureCredential
 import analysis
 
 current_dir = Path(__file__).parent
-env_path = current_dir / '.env'
+env_path = current_dir / ".env"
 if env_path.exists():
     from dotenv import load_dotenv
+
     load_dotenv(dotenv_path=env_path)
 
 GITHUB_STEP_SUMMARY = os.getenv("GITHUB_STEP_SUMMARY")
@@ -34,14 +35,15 @@ BASELINE_AGENT_ID = os.getenv("BASELINE_AGENT_ID")
 AZURE_OPENAI_DEPLOYMENT = "gpt-4o-mini"
 AZURE_OPENAI_API_VERSION = "2024-08-01-preview"
 
-def simulate_question_answer(project_client: AIProjectClient, agent: Agent, input: dict) -> dict:
+
+def simulate_question_answer(
+    project_client: AIProjectClient, agent: Agent, input: dict
+) -> dict:
     # TODO: validate input schema
 
     thread = project_client.agents.create_thread()
     message = project_client.agents.create_message(
-        thread.id,
-        role=MessageRole.USER,
-        content=input["query"]
+        thread.id, role=MessageRole.USER, content=input["query"]
     )
 
     # TODO: improve error handling
@@ -49,12 +51,16 @@ def simulate_question_answer(project_client: AIProjectClient, agent: Agent, inpu
     wait_seconds = 20
     for attempt in range(retries):
         start_time = time.time()
-        run = project_client.agents.create_and_process_run(thread_id=thread.id, agent_id=agent.id)
+        run = project_client.agents.create_and_process_run(
+            thread_id=thread.id, agent_id=agent.id
+        )
         end_time = time.time()
         if run.status == RunStatus.COMPLETED:
             break
         if run.last_error.code == "rate_limit_exceeded" and attempt < retries - 1:
-            print(f"Rate limit exceeded. You may wish to increase your quote. Retrying in {wait_seconds} seconds...")
+            print(
+                f"Rate limit exceeded. You may wish to increase your quote. Retrying in {wait_seconds} seconds..."
+            )
             time.sleep(wait_seconds)
         else:
             raise ValueError(run.last_error)
@@ -66,21 +72,23 @@ def simulate_question_answer(project_client: AIProjectClient, agent: Agent, inpu
         "id": input["id"],
         "query": input["query"],
         "response": last_msg.text.value,
-        #"context": context, # FIXME
+        # "context": context, # FIXME
         "ground_truth": input.get("ground_truth"),
         "metrics": {
-            "server-run-duration-in-seconds": (run.completed_at - run.created_at).total_seconds(),
+            "server-run-duration-in-seconds": (
+                run.completed_at - run.created_at
+            ).total_seconds(),
             "client-run-duration-in-seconds": end_time - start_time,
             "completion-tokens": run.usage.completion_tokens,
             "prompt-tokens": run.usage.prompt_tokens,
-        }
+        },
     }
 
     return output
 
 
 def create_evaluators(class_names: list[str], args_default: dict) -> dict:
-    with open(Path(__file__).parent / "analysis" / "evaluator-scores.yaml", 'r') as f:
+    with open(Path(__file__).parent / "analysis" / "evaluator-scores.yaml", "r") as f:
         evaluator_metadata = yaml.safe_load(f)
 
     evaluators = {}
@@ -102,7 +110,11 @@ def create_evaluators(class_names: list[str], args_default: dict) -> dict:
         args_required = {
             k
             for k, v in init_signature.parameters.items()
-            if (v.kind is v.POSITIONAL_OR_KEYWORD and k != "self" and v.default is v.empty)
+            if (
+                v.kind is v.POSITIONAL_OR_KEYWORD
+                and k != "self"
+                and v.default is v.empty
+            )
         }
         args_used = {k: args_default[k] for k in args_required}
 
@@ -122,12 +134,20 @@ def main(
     baseline_agent_id: Optional[str] = None,
     working_dir: Path = Path("."),
 ) -> str:
-    project_client = AIProjectClient.from_connection_string(conn_str, credential=credential)
-    
+    project_client = AIProjectClient.from_connection_string(
+        conn_str, credential=credential
+    )
+
     # use default evaluator model config
     # TODO: is it OK to always use include_credentials=True?
-    default_connection = project_client.connections.get_default(connection_type=ConnectionType.AZURE_OPEN_AI, include_credentials=True)
-    model_config = default_connection.to_evaluator_model_config(deployment_name=AZURE_OPENAI_DEPLOYMENT, api_version=AZURE_OPENAI_API_VERSION, include_credentials = True)
+    default_connection = project_client.connections.get_default(
+        connection_type=ConnectionType.AZURE_OPEN_AI, include_credentials=True
+    )
+    model_config = default_connection.to_evaluator_model_config(
+        deployment_name=AZURE_OPENAI_DEPLOYMENT,
+        api_version=AZURE_OPENAI_API_VERSION,
+        include_credentials=True,
+    )
 
     agents = {id: project_client.agents.get_agent(id) for id in agent_ids}
     eval_input_paths = {id: working_dir / f"eval-input_{id}.jsonl" for id in agent_ids}
@@ -147,7 +167,9 @@ def main(
                 with eval_input_paths[agent_id].open("a", encoding="utf-8") as f:
                     f.write(json.dumps(eval_input) + "\n")
             except Exception as e:
-                print(f"An error occurred while simulating question-answer for agent {agent_id}: {e}")
+                print(
+                    f"An error occurred while simulating question-answer for agent {agent_id}: {e}"
+                )
                 pass
 
     # create evaluator instances
@@ -166,7 +188,7 @@ def main(
             evaluators=evaluators,
             evaluation_name=f"Evaluation of agent '{agent.name}' upon dataset '{input_data['name']}'",
             azure_ai_project=project_client.scope,
-            output_path=eval_output_paths[agent_id]
+            output_path=eval_output_paths[agent_id],
         )
         # display evaluation results
         print(f"Evaluation results for agent '{agent.name}':")
@@ -181,14 +203,20 @@ def main(
         eval_results[agent_id] = analysis.EvaluationResult(
             variant=agent.name,
             ai_foundry_url=eval_result_data["studio_url"],
-            df_result=pd.DataFrame.from_records(eval_result_data["rows"])
+            df_result=pd.DataFrame.from_records(eval_result_data["rows"]),
         )
 
     baseline_agent_id = baseline_agent_id or agent_ids[0]
     project_scope = project_client.scope
     agent_base_url = f"https://ai.azure.com/playground/agents?wsid=/subscriptions/{project_scope["subscription_id"]}/resourceGroups/{project_scope["resource_group_name"]}/providers/Microsoft.MachineLearningServices/workspaces/{project_scope["project_name"]}&assistantId="
 
-    return analysis.summarize(eval_results, agents, baseline_agent_id, input_data["evaluators"] + ["OperationalMetricsEvaluator"], agent_base_url)
+    return analysis.summarize(
+        eval_results,
+        agents,
+        baseline_agent_id,
+        input_data["evaluators"] + ["OperationalMetricsEvaluator"],
+        agent_base_url,
+    )
 
 
 if __name__ == "__main__":

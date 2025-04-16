@@ -8,7 +8,9 @@ class OperationalMetricsEvaluator:
     and the evaluator is named "my_metrics", then the evaluation results will
     have the field: {"output.my_metrics.token-count": 100}
     """
+
     def __init__(self):
         pass
+
     def __call__(self, *, metrics: dict, **kwargs):
         return metrics

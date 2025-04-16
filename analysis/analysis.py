@@ -56,6 +56,7 @@ class EvaluationResult:
 
 class EvaluationScoreDataType(Enum):
     """Data type of the evaluation score"""
+
     ORDINAL = "Ordinal"
     CONTINUOUS = "Continuous"
     BOOLEAN = "Boolean"
@@ -63,6 +64,7 @@ class EvaluationScoreDataType(Enum):
 
 class DesiredDirection(Enum):
     """Desired direction of the evaluation score"""
+
     INCREASE = "Increase"
     DECREASE = "Decrease"
     NEUTRAL = "Neutral"
@@ -71,6 +73,7 @@ class DesiredDirection(Enum):
 @dataclass
 class EvaluationScore:
     """Metadata about an evaluation score"""
+
     name: str
     evaluator: str
     field: str
@@ -93,6 +96,7 @@ class EvaluationScore:
 
 class EvaluationScoreCI:
     """Confidence interval for an evaluation score"""
+
     def __init__(self, result: EvaluationResult, score: EvaluationScore):
         # Ensure the evaluation key is present in the dataframe
         col_score = f"outputs.{score.evaluator}.{score.field}"
@@ -104,19 +108,21 @@ class EvaluationScoreCI:
         self.count = result.df_result.shape[0]
         self._compute_ci(result.df_result[col_score])
 
-    def _compute_ci(self, data: pd.Series, confidence_level: float=0.95):
+    def _compute_ci(self, data: pd.Series, confidence_level: float = 0.95):
         """Compute the confidence interval for the given data"""
         if self.score.data_type == EvaluationScoreDataType.BOOLEAN:
             result = binomtest(data.sum(), data.count())
             mean = result.proportion_estimate
-            ci = result.proportion_ci(confidence_level=confidence_level, method="wilsoncc")
+            ci = result.proportion_ci(
+                confidence_level=confidence_level, method="wilsoncc"
+            )
             ci_lower = ci.low
             ci_upper = ci.high
 
         elif self.score.data_type == EvaluationScoreDataType.CONTINUOUS:
             # NOTE: parametric CI does not respect score bounds (use bootstrapping if needed)
             mean = data.mean()
-            stderr = data.std() / (self.count ** 0.5)
+            stderr = data.std() / (self.count**0.5)
             z_ao2 = t.ppf(1 - (1 - confidence_level) / 2, df=self.count - 1)
             ci_lower = mean - z_ao2 * stderr
             ci_upper = mean + z_ao2 * stderr
@@ -135,16 +141,30 @@ class EvaluationScoreCI:
 class EvaluationScoreComparison:
     """Comparison of paired evaluation scores from two variants"""
 
-    def __init__(self, control: EvaluationResult, treatment: EvaluationResult, score: EvaluationScore):
+    def __init__(
+        self,
+        control: EvaluationResult,
+        treatment: EvaluationResult,
+        score: EvaluationScore,
+    ):
         # Ensure the evaluation key is present in both dataframes
         col_score = f"outputs.{score.evaluator}.{score.field}"
-        if col_score not in control.df_result.columns or col_score not in treatment.df_result.columns:
+        if (
+            col_score not in control.df_result.columns
+            or col_score not in treatment.df_result.columns
+        ):
             raise ValueError(f"{col_score} column is required in both results")
 
-        df_c = control.df_result[[TEST_ID, col_score]].rename(columns={col_score: "score"})
-        df_t = treatment.df_result[[TEST_ID, col_score]].rename(columns={col_score: "score"})
+        df_c = control.df_result[[TEST_ID, col_score]].rename(
+            columns={col_score: "score"}
+        )
+        df_t = treatment.df_result[[TEST_ID, col_score]].rename(
+            columns={col_score: "score"}
+        )
 
-        df_paired = df_c.merge(df_t, how="inner", on=TEST_ID, suffixes=("_c", "_t"), validate="one_to_one")
+        df_paired = df_c.merge(
+            df_t, how="inner", on=TEST_ID, suffixes=("_c", "_t"), validate="one_to_one"
+        )
 
         # raise exception if there are unmatched rows (will cause contradictions)
         if df_paired.shape[0] < max(df_c.shape[0], df_t.shape[0]):
@@ -190,7 +210,7 @@ class EvaluationScoreComparison:
             contingency_table = crosstab(
                 df_paired["score_c"],
                 df_paired["score_t"],
-                levels=([False, True], [False, True])
+                levels=([False, True], [False, True]),
             ).count
 
             # McNemar's test for paired nominal data
@@ -202,7 +222,16 @@ class EvaluationScoreComparison:
         return p_value
 
     @property
-    def treatment_effect(self) -> Literal["Zero samples", "Too few samples", "Inconclusive", "Changed", "Improved", "Degraded"]:
+    def treatment_effect(
+        self,
+    ) -> Literal[
+        "Zero samples",
+        "Too few samples",
+        "Inconclusive",
+        "Changed",
+        "Improved",
+        "Degraded",
+    ]:
         if self.count == 0:
             return "Zero samples"
         if self.count < SAMPLE_SIZE_THRESHOLD:
@@ -214,8 +243,14 @@ class EvaluationScoreComparison:
             return "Inconclusive"
         if self.score.desired_direction == DesiredDirection.NEUTRAL:
             return "Changed"
-        if self.score.desired_direction == DesiredDirection.INCREASE and self.treatment_mean > self.control_mean:
+        if (
+            self.score.desired_direction == DesiredDirection.INCREASE
+            and self.treatment_mean > self.control_mean
+        ):
             return "Improved"
-        if self.score.desired_direction == DesiredDirection.DECREASE and self.treatment_mean < self.control_mean:
+        if (
+            self.score.desired_direction == DesiredDirection.DECREASE
+            and self.treatment_mean < self.control_mean
+        ):
             return "Improved"
         return "Degraded"

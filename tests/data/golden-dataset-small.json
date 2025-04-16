@@ -1,9 +1,6 @@
 {
   "name": "MyTestData",
-  "evaluators": [
-    "FluencyEvaluator",
-    "ViolenceEvaluator"
-  ],
+  "evaluators": ["FluencyEvaluator", "ViolenceEvaluator"],
   "data": [
     {
       "query": "Tell me about Tokyo?",
