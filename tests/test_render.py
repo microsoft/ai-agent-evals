@@ -3,26 +3,14 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from analysis.render import (
-    fmt_metric_value,
-    fmt_pvalue,
-    fmt_hyperlink,
-    fmt_badge,
-    fmt_image,
-    fmt_treatment_badge,
-    fmt_control_badge,
-    fmt_ci,
-    fmt_table_compare,
-)
-from analysis.analysis import (
-    EvaluationScoreDataType,
-    EvaluationResult,
-    DesiredDirection,
-    EvaluationScore,
-    EvaluationScoreCI,
-    EvaluationScoreComparison,
-)
-
+from analysis.analysis import (DesiredDirection, EvaluationResult,
+                               EvaluationScore, EvaluationScoreCI,
+                               EvaluationScoreComparison,
+                               EvaluationScoreDataType)
+from analysis.render import (fmt_badge, fmt_ci, fmt_control_badge,
+                             fmt_hyperlink, fmt_image, fmt_metric_value,
+                             fmt_pvalue, fmt_table_compare,
+                             fmt_treatment_badge)
 
 data_result_1 = {
     "inputs.id": [1, 2, 3],

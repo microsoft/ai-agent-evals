@@ -7,13 +7,8 @@ from urllib.parse import quote
 
 import pandas as pd
 
-from .analysis import (
-    EvaluationResult,
-    EvaluationScore,
-    EvaluationScoreDataType,
-    EvaluationScoreComparison,
-    EvaluationScoreCI,
-)
+from .analysis import (EvaluationResult, EvaluationScore, EvaluationScoreCI,
+                       EvaluationScoreComparison, EvaluationScoreDataType)
 
 SS_THRESHOLD = 0.05
 HSS_THRESHOLD = 0.001
@@ -227,7 +222,6 @@ def fmt_table_compare(
 
         except ValueError as e:
             print(f"Error comparing score {score.name}: {e}")
-            pass
 
     df_summary = pd.DataFrame.from_records(records)
     return df_summary.to_markdown(index=False)
@@ -253,7 +247,6 @@ def fmt_table_ci(scores: list[EvaluationScore], result: EvaluationResult) -> str
             )
         except ValueError as e:
             print(f"Error comparing score {score.name}: {e}")
-            pass
 
     df_summary = pd.DataFrame.from_records(records)
     return df_summary.to_markdown(index=False)

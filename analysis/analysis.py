@@ -93,7 +93,7 @@ class EvaluationScore:
         if isinstance(self.desired_direction, str):
             self.desired_direction = DesiredDirection(self.desired_direction)
 
-
+# pylint: disable-next=too-few-public-methods
 class EvaluationScoreCI:
     """Confidence interval for an evaluation score"""
 
@@ -110,6 +110,8 @@ class EvaluationScoreCI:
 
     def _compute_ci(self, data: pd.Series, confidence_level: float = 0.95):
         """Compute the confidence interval for the given data"""
+        ci_lower = None
+        ci_upper = None
         if self.score.data_type == EvaluationScoreDataType.BOOLEAN:
             result = binomtest(data.sum(), data.count())
             mean = result.proportion_estimate
@@ -137,7 +139,7 @@ class EvaluationScoreCI:
         self.ci_lower = ci_lower
         self.ci_upper = ci_upper
 
-
+# pylint: disable-next=too-few-public-methods,too-many-instance-attributes
 class EvaluationScoreComparison:
     """Comparison of paired evaluation scores from two variants"""
 
@@ -202,7 +204,8 @@ class EvaluationScoreComparison:
                 p_value = 0.0
             else:
                 # Paired t-test
-                # NOTE: assumes normality of the differences (may not be true for bounded scores with small samples)
+                # NOTE: assumes normality of the differences
+                # (may not be true for bounded scores with small samples)
                 result = ttest_rel(df_paired["score_c"], df_paired["score_t"])
                 p_value = result.pvalue
 
@@ -222,6 +225,7 @@ class EvaluationScoreComparison:
         return p_value
 
     @property
+    # pylint: disable-next=too-many-return-statements
     def treatment_effect(
         self,
     ) -> Literal[
@@ -232,6 +236,7 @@ class EvaluationScoreComparison:
         "Improved",
         "Degraded",
     ]:
+        """Treatment effect based on the p-value and desired direction"""
         if self.count == 0:
             return "Zero samples"
         if self.count < SAMPLE_SIZE_THRESHOLD:

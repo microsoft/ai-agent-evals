@@ -1,3 +1,9 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
+
+"""Evaluator to pass through operational metrics."""
+
+# pylint: disable-next=too-few-public-methods
 class OperationalMetricsEvaluator:
     """Propagate operational metrics to the final evaluation results.
 

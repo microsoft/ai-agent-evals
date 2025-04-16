@@ -1,3 +1,8 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
+
+"""GitHub Action to evaluate Azure AI agents using the Azure AI Evaluation SDK."""
+
 import inspect
 import json
 import os
@@ -6,17 +11,19 @@ import uuid
 from pathlib import Path
 from typing import Optional
 
+import azure.ai.evaluation as evals
 import pandas as pd
 import yaml
-import azure.ai.evaluation as evals
 from azure.ai.evaluation import evaluate
 from azure.ai.projects import AIProjectClient
-from azure.ai.projects.models import Agent, ConnectionType, MessageRole, RunStatus
+from azure.ai.projects.models import (Agent, ConnectionType, MessageRole,
+                                      RunStatus)
 from azure.identity import DefaultAzureCredential
+
+import analysis
 
 # NOTE: custom evaluators must be imported so evaluate() can pickle them
 
-import analysis
 
 current_dir = Path(__file__).parent
 env_path = current_dir / ".env"
@@ -39,6 +46,34 @@ AZURE_OPENAI_API_VERSION = "2024-08-01-preview"
 def simulate_question_answer(
     project_client: AIProjectClient, agent: Agent, input: dict
 ) -> dict:
+    """
+    Simulates a question-answering interaction with an agent.
+
+    This function performs the following steps:
+    1. Creates a new thread for the interaction.
+    2. Sends a user message containing the query to the agent.
+    3. Processes the run to generate the agent's response.
+    4. Handles retries in case of rate limit errors.
+    5. Extracts the agent's response and relevant metrics.
+
+    Args:
+        project_client (AIProjectClient): The client used to interact with the Azure AI Project.
+        agent (Agent): The agent instance to simulate the interaction with.
+        input (dict): A dictionary containing the input data for the interaction. 
+                      It must include a "query" key and may include "id" and "ground_truth".
+
+    Returns:
+        dict: A dictionary containing the following keys:
+            - "id": The unique identifier for the input.
+            - "query": The original query sent to the agent.
+            - "response": The agent's response to the query.
+            - "ground_truth": The expected response, if provided in the input.
+            - "metrics": A dictionary of performance metrics
+
+    Raises:
+        ValueError: If the run fails for reasons other than rate limits or if retries are exhausted.
+    """
+
     # TODO: validate input schema
 
     thread = project_client.agents.create_thread()
@@ -59,7 +94,9 @@ def simulate_question_answer(
             break
         if run.last_error.code == "rate_limit_exceeded" and attempt < retries - 1:
             print(
-                f"Rate limit exceeded. You may wish to increase your quote. Retrying in {wait_seconds} seconds..."
+                f"Rate limit exceeded. "
+                f"You may wish to increase your quota. "
+                f"Retrying in {wait_seconds} seconds..."
             )
             time.sleep(wait_seconds)
         else:
@@ -88,7 +125,24 @@ def simulate_question_answer(
 
 
 def create_evaluators(class_names: list[str], args_default: dict) -> dict:
-    with open(Path(__file__).parent / "analysis" / "evaluator-scores.yaml", "r") as f:
+    """
+    Creates a dictionary of evaluators based on the provided class names and default arguments.
+    This function reads evaluator metadata from a YAML file, matches the provided class names
+    with the metadata, and dynamically creates instances of the corresponding evaluator classes.
+    It also appends a custom evaluator for operational metrics.
+    Args:
+        class_names (list[str]): A list of evaluator class names to be instantiated.
+        args_default (dict): A dictionary containing default arguments to be used for initializing
+            the evaluator classes.
+    Returns:
+        dict: A dictionary where the keys are evaluator keys (from the metadata) and the values
+        are instances of the corresponding evaluator classes.
+    Raises:
+        AttributeError: If the specified evaluator class is not found in the `evals` module.
+        KeyError: If a required argument for an evaluator class is missing in `args_default`.
+    """
+    path = Path(__file__).parent / "analysis" / "evaluator-scores.yaml"
+    with open(path, "r", encoding="utf-8") as f:
         evaluator_metadata = yaml.safe_load(f)
 
     evaluators = {}
@@ -134,12 +188,42 @@ def main(
     baseline_agent_id: Optional[str] = None,
     working_dir: Path = Path("."),
 ) -> str:
+    """
+    Main function to evaluate AI agents using simulated conversations and analysis.
+
+    Args:
+        credential: The credential object for authentication.
+        conn_str (str): The connection string for the AI project.
+        input_data (dict): The input data containing evaluation details, including
+            the dataset and evaluator configurations.
+        agent_ids (list[str]): A list of agent IDs to be evaluated.
+        baseline_agent_id (Optional[str], optional): The ID of the baseline agent for
+            comparison. Defaults to the first agent in `agent_ids` if not provided.
+        working_dir (Path, optional): The working directory for storing intermediate
+            evaluation files. Defaults to the current directory.
+
+    Returns:
+        str: A summary of the evaluation results, including analysis and comparison
+        of agents' performance.
+
+    Raises:
+        Exception: If any error occurs during the simulation of question-answer
+        interactions or evaluation process.
+
+    Notes:
+        - The function uses the default evaluator model configuration.
+        - Evaluation results are stored in JSON files in the specified working
+          directory.
+        - The function facilitates paired comparisons by adding unique IDs to input
+          data rows if not already present.
+        - The evaluation results are analyzed and summarized, with a baseline agent
+          used for comparison.
+    """
     project_client = AIProjectClient.from_connection_string(
         conn_str, credential=credential
     )
 
     # use default evaluator model config
-    # TODO: is it OK to always use include_credentials=True?
     default_connection = project_client.connections.get_default(
         connection_type=ConnectionType.AZURE_OPEN_AI, include_credentials=True
     )
@@ -170,7 +254,6 @@ def main(
                 print(
                     f"An error occurred while simulating question-answer for agent {agent_id}: {e}"
                 )
-                pass
 
     # create evaluator instances
     args_default = {
@@ -186,7 +269,7 @@ def main(
         result = evaluate(
             data=eval_input_paths[agent_id],
             evaluators=evaluators,
-            evaluation_name=f"Evaluation of agent '{agent.name}' upon dataset '{input_data['name']}'",
+            evaluation_name=f"Evaluating agent '{agent.name}' upon dataset '{input_data['name']}'",
             azure_ai_project=project_client.scope,
             output_path=eval_output_paths[agent_id],
         )
@@ -208,7 +291,13 @@ def main(
 
     baseline_agent_id = baseline_agent_id or agent_ids[0]
     project_scope = project_client.scope
-    agent_base_url = f"https://ai.azure.com/playground/agents?wsid=/subscriptions/{project_scope["subscription_id"]}/resourceGroups/{project_scope["resource_group_name"]}/providers/Microsoft.MachineLearningServices/workspaces/{project_scope["project_name"]}&assistantId="
+    agent_base_url = (
+        f"https://ai.azure.com/playground/agents?"
+        f"wsid=/subscriptions/{project_scope['subscription_id']}/"
+        f"resourceGroups/{project_scope['resource_group_name']}/"
+        f"providers/Microsoft.MachineLearningServices/workspaces/"
+        f"{project_scope['project_name']}&assistantId="
+    )
 
     return analysis.summarize(
         eval_results,
@@ -220,7 +309,7 @@ def main(
 
 
 if __name__ == "__main__":
-    summary_md = main(
+    SUMMARY_MD = main(
         credential=DefaultAzureCredential(),
         conn_str=AZURE_AI_PROJECT_CONNECTION_STRING,
         input_data=json.loads(Path(DATA_PATH).read_text(encoding="utf-8")),
@@ -231,4 +320,4 @@ if __name__ == "__main__":
 
     if GITHUB_STEP_SUMMARY:
         with open(GITHUB_STEP_SUMMARY, "a", encoding="utf-8") as fp:
-            fp.write(summary_md)
+            fp.write(SUMMARY_MD)

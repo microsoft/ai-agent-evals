@@ -1,6 +1,6 @@
 from pathlib import Path
-import pandas as pd
 
+import pandas as pd
 from azure.ai.projects.models import Agent
 
 from analysis.analysis import EvaluationResult

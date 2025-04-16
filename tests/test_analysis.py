@@ -1,13 +1,10 @@
-import pytest
 import pandas as pd
-from analysis.analysis import (
-    EvaluationResult,
-    EvaluationScore,
-    EvaluationScoreDataType,
-    DesiredDirection,
-    EvaluationScoreComparison,
-    EvaluationScoreCI,
-)
+import pytest
+
+from analysis.analysis import (DesiredDirection, EvaluationResult,
+                               EvaluationScore, EvaluationScoreCI,
+                               EvaluationScoreComparison,
+                               EvaluationScoreDataType)
 
 data_result_1 = {
     "inputs.id": [1, 2, 3],

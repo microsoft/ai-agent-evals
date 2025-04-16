@@ -8,7 +8,7 @@ As the maintainer of this project, please make a few updates:
 - Improving this README.MD file to provide a great experience
 - Updating SUPPORT.MD with content about this project's support experience
 - Understanding the security reporting process in SECURITY.MD
-- Remove this section from the README
+- Remove this section from the readme
 
 ## Contributing
 
