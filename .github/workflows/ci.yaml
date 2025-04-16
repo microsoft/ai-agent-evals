@@ -2,13 +2,13 @@ name: Continuous Integration
 
 on:
   workflow_dispatch:
-  push:
   pull_request:
     branches:
       - main
   push:
     branches:
       - main
+      - aprilk/init-check-in
 
 permissions:
   id-token: write
