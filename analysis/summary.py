@@ -34,8 +34,7 @@ def summarize(
     metadata_path = Path(__file__).parent / "evaluator-scores.yaml"
     with open(metadata_path, "r", encoding="utf-8") as f:
         score_metadata = yaml.safe_load(f)
-
-    md.append("\n### Compare evaluation scores between variants\n")
+    
     for section in score_metadata["sections"]:
         section_evals = [x["class"] for x in section["evaluators"]]
         if not any(x in evaluators for x in section_evals):
@@ -55,8 +54,10 @@ def summarize(
                 ))
 
         if len(eval_results) >= 2:
+            md.append("\n### Compare evaluation scores between variants\n")
             md_table = fmt_table_compare(eval_scores, eval_results, baseline)
         elif len(eval_results) == 1:
+            md.append("\n### Evaluation results\n")
             md_table = fmt_table_ci(eval_scores, eval_results[baseline])
 
         md.append(f"#### {section['name']}\n")

@@ -1,0 +1,99 @@
+import pytest
+import pandas as pd
+from analysis.analysis import (
+    EvaluationResult,
+    EvaluationScore,
+    EvaluationScoreDataType,
+    DesiredDirection,
+    EvaluationScoreComparison,
+    EvaluationScoreCI
+)
+
+data_result_1 = {
+    "inputs.id": [1, 2, 3],
+    "outputs.fluency.score": [0.8, 0.9, 0.85],
+    "outputs.accuracy.score": [4, 5, 4]
+}
+
+data_result_2 = {
+    "inputs.id": [1, 2, 3],
+    "outputs.fluency.score": [0.6, 0.5, 0.75],
+    "outputs.accuracy.score": [3 ,4, 5]
+}
+
+def test_create_score():
+    # Test creating a basic evaluation score
+    score = EvaluationScore(
+        name="fluency",
+        evaluator="fluency",
+        field="score",
+        data_type=EvaluationScoreDataType.CONTINUOUS,
+        desired_direction=DesiredDirection.INCREASE
+    )
+    assert score.name == "fluency"
+    assert score.evaluator == "fluency"
+    assert score.field == "score"
+    assert score.data_type == EvaluationScoreDataType.CONTINUOUS
+    assert score.desired_direction == DesiredDirection.INCREASE
+
+def test_create_evaluation_result():
+    # Test creating an evaluation result with multiple scores
+    result = EvaluationResult(
+        variant="test_variant",
+        df_result=pd.DataFrame(data_result_1),
+        ai_foundry_url="test_url"
+    )
+    assert result.variant == "test_variant"
+    assert result.df_result.shape == (3, 3)  # 3 rows, 3 columns
+    assert result.ai_foundry_url == "test_url"
+
+def test_evaluation_confidence_interval():
+    # Test creating a confidence interval for an evaluation result
+    result = EvaluationResult(
+        variant="test_variant",
+        df_result=pd.DataFrame(data_result_1),
+        ai_foundry_url="test_url"
+    )
+    score = EvaluationScore(
+        name="fluency",
+        evaluator="fluency",
+        field="score",
+        data_type=EvaluationScoreDataType.CONTINUOUS,
+        desired_direction=DesiredDirection.INCREASE
+    )
+    ci = EvaluationScoreCI(result, score)
+    assert ci.ci_lower == pytest.approx(0.73, rel=1e-2)
+    assert ci.ci_upper == pytest.approx(0.97, rel=1e-2)
+    assert ci.mean == pytest.approx(0.85, rel=1e-2)
+
+def test_evaluation_score_comparison():
+    # Test comparing two evaluation results
+    control_result = EvaluationResult(
+        variant="test_variant_1",
+        df_result=pd.DataFrame(data_result_1),
+        ai_foundry_url="test_url_1"
+    )
+    treatment_result = EvaluationResult(
+        variant="test_variant_2",
+        df_result=pd.DataFrame(data_result_2),
+        ai_foundry_url="test_url_2"
+    )
+    score = EvaluationScore(
+        name="fluency",
+        evaluator="fluency",
+        field="score",
+        data_type=EvaluationScoreDataType.CONTINUOUS,
+        desired_direction=DesiredDirection.INCREASE
+    )
+    
+    comparison = EvaluationScoreComparison(control_result, treatment_result, score)
+
+    assert comparison.score.name == "fluency"
+    assert comparison.control_variant == "test_variant_1"
+    assert comparison.treatment_variant == "test_variant_2"
+    assert comparison.count == 3
+    assert comparison.control_mean == pytest.approx(0.85, rel=1e-2)
+    assert comparison.treatment_mean == pytest.approx(0.62, rel=1e-2)
+    assert comparison.delta_estimate == pytest.approx(-0.233, rel=1e-2)
+    assert comparison.p_value == pytest.approx(0.118, rel=1e-2)
+    assert comparison.treatment_effect == "Too few samples"
