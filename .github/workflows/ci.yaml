@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   run-tests:
-    name: Test
+    name: Run Tests
     runs-on: ubuntu-latest
 
     steps:
@@ -35,13 +35,13 @@ jobs:
       - name: Run tests
         run: python -m pytest
 
-
-  run-action:  
+  run-action:
+    name: Test Action
     runs-on: ubuntu-latest
     steps:
       # required because action is unpublished
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Azure login using Federated Credentials
         uses: azure/login@v2
@@ -53,6 +53,6 @@ jobs:
       - name: Test local action
         uses: ./
         with:
-          azure-ai-project-connection-string: 'eastus2.api.azureml.ms;80d2c6c6-fa64-4ab1-8aa5-4e118c6b16ce;rg-aprilk-test-agent-template-02;ai-project-cjn4rbprsy56k'
+          azure-ai-project-connection-string: "eastus2.api.azureml.ms;80d2c6c6-fa64-4ab1-8aa5-4e118c6b16ce;rg-aprilk-test-agent-template-02;ai-project-cjn4rbprsy56k"
           data-path: ${{ github.workspace }}/tests/data/golden-dataset-small.json
-          agent-ids: 'asst_6ScdM6tAPLIxfo6HY3Ro8Y4K, asst_chwHMbUnovWbQ0HDJKlGXDfi'
+          agent-ids: "asst_6ScdM6tAPLIxfo6HY3Ro8Y4K, asst_chwHMbUnovWbQ0HDJKlGXDfi"
