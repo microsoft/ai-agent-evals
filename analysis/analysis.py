@@ -93,6 +93,7 @@ class EvaluationScore:
         if isinstance(self.desired_direction, str):
             self.desired_direction = DesiredDirection(self.desired_direction)
 
+
 # pylint: disable-next=too-few-public-methods
 class EvaluationScoreCI:
     """Confidence interval for an evaluation score"""
@@ -138,6 +139,7 @@ class EvaluationScoreCI:
         self.mean = mean
         self.ci_lower = ci_lower
         self.ci_upper = ci_upper
+
 
 # pylint: disable-next=too-few-public-methods,too-many-instance-attributes
 class EvaluationScoreComparison:

@@ -16,8 +16,7 @@ import pandas as pd
 import yaml
 from azure.ai.evaluation import evaluate
 from azure.ai.projects import AIProjectClient
-from azure.ai.projects.models import (Agent, ConnectionType, MessageRole,
-                                      RunStatus)
+from azure.ai.projects.models import Agent, ConnectionType, MessageRole, RunStatus
 from azure.identity import DefaultAzureCredential
 
 import analysis
@@ -59,7 +58,7 @@ def simulate_question_answer(
     Args:
         project_client (AIProjectClient): The client used to interact with the Azure AI Project.
         agent (Agent): The agent instance to simulate the interaction with.
-        input (dict): A dictionary containing the input data for the interaction. 
+        input (dict): A dictionary containing the input data for the interaction.
                       It must include a "query" key and may include "id" and "ground_truth".
 
     Returns:

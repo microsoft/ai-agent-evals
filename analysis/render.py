@@ -7,8 +7,13 @@ from urllib.parse import quote
 
 import pandas as pd
 
-from .analysis import (EvaluationResult, EvaluationScore, EvaluationScoreCI,
-                       EvaluationScoreComparison, EvaluationScoreDataType)
+from .analysis import (
+    EvaluationResult,
+    EvaluationScore,
+    EvaluationScoreCI,
+    EvaluationScoreComparison,
+    EvaluationScoreDataType,
+)
 
 SS_THRESHOLD = 0.05
 HSS_THRESHOLD = 0.001
