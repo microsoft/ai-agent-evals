@@ -4,8 +4,8 @@
 
 | Agent name | Agent ID | Evaluation results |
 |:-----------|:---------|:-------------------|
-| agent_version_1 |  [agent.v1](https://ai-url/agent.v1 "")  | [Click here](test_url_1 "") |
-| agent_version_2 |  [agent.v2](https://ai-url/agent.v2 "")  | [Click here](test_url_1 "") |
+| agent_version_1 | [agent.v1](https://ai-url/agent.v1 "") | [Click here](test_url_1 "") |
+| agent_version_2 | [agent.v2](https://ai-url/agent.v2 "") | [Click here](test_url_1 "") |
 
 ### Compare evaluation scores between variants
 
