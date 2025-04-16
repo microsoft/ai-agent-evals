@@ -9,8 +9,8 @@ from analysis.analysis import (
     EvaluationScore,
     EvaluationScoreCI,
     EvaluationScoreComparison,
-    EvaluationScoreDataType,
-)
+    EvaluationScoreDataType)
+
 from analysis.render import (
     fmt_badge,
     fmt_ci,
@@ -20,8 +20,7 @@ from analysis.render import (
     fmt_metric_value,
     fmt_pvalue,
     fmt_table_compare,
-    fmt_treatment_badge,
-)
+    fmt_treatment_badge)
 
 data_result_1 = {
     "inputs.id": [1, 2, 3],
