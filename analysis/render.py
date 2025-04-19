@@ -28,6 +28,19 @@ PALE_YELLOW = "f0e543"
 PALE_GREY = "e6e6e3"
 WHITE = "ffffff"
 
+COLOR_MAP = {
+    "ImprovedStrong": DARK_GREEN,
+    "ImprovedWeak": PALE_GREEN,
+    "DegradedStrong": DARK_RED,
+    "DegradedWeak": PALE_RED,
+    "ChangedStrong": DARK_BLUE,
+    "ChangedWeak": PALE_BLUE,
+    "Inconclusive": PALE_GREY,
+    "Warning": PALE_YELLOW,
+    "Pass": DARK_GREEN,
+    "Fail": DARK_RED,
+}
+
 
 def fmt_metric_value(
     x: float, data_type: EvaluationScoreDataType, sign: bool = False
@@ -77,17 +90,7 @@ def fmt_badge(label: str, message: str, color: str, tooltip: str = "") -> str:
     message : str
         Right-hand side of the badge.
     color : str
-        Badge color. Accepts hex, rgb, hsl, hsla, css named color, or a preset:
-            - ImprovedStrong: dark green
-            - ImprovedWeak: pale green
-            - DegradedStrong: dark red
-            - DegradedWeak: pale red
-            - ChangedStrong: dark blue
-            - ChangedWeak: pale blue
-            - Inconclusive: pale grey
-            - Warning: pale yellow
-            - Pass: dark green
-            - Fail: dark red
+        Badge color. Accepts hex, rgb, hsl, hsla, css named color, or a preset
     tooltip : str, optional
         Tooltip. Default: standard message for color presets, otherwise none.
     """
@@ -99,30 +102,7 @@ def fmt_badge(label: str, message: str, color: str, tooltip: str = "") -> str:
         elif color == "Inconclusive":
             tooltip = "Not statistically significant."
 
-    match color:
-        case "ImprovedStrong":
-            color = DARK_GREEN
-        case "ImprovedWeak":
-            color = PALE_GREEN
-        case "DegradedStrong":
-            color = DARK_RED
-        case "DegradedWeak":
-            color = PALE_RED
-        case "ChangedStrong":
-            color = DARK_BLUE
-        case "ChangedWeak":
-            color = PALE_BLUE
-        case "Inconclusive":
-            color = PALE_GREY
-        case "Warning":
-            color = PALE_YELLOW
-        case "Pass":
-            color = DARK_GREEN
-        case "Fail":
-            color = DARK_RED
-        case _:
-            # support custom colors
-            pass
+    color = COLOR_MAP.get(color, color)  # If color isn't in map, keep the original value
 
     def escape(s: str) -> str:
         return quote(s, safe="").replace("-", "--").replace("_", "__")

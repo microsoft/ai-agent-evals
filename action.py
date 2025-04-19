@@ -31,13 +31,14 @@ if env_path.exists():
 
     load_dotenv(dotenv_path=env_path)
 
-GITHUB_STEP_SUMMARY = os.getenv("GITHUB_STEP_SUMMARY")
+STEP_SUMMARY = os.getenv("GITHUB_STEP_SUMMARY") or os.getenv("ADO_STEP_SUMMARY")  
 
 AZURE_AI_PROJECT_CONNECTION_STRING = os.getenv("AZURE_AI_PROJECT_CONNECTION_STRING")
 DATA_PATH = os.getenv("DATA_PATH")
 AGENT_IDS = [x.strip() for x in os.getenv("AGENT_IDS", "").split(",") if x.strip()]
 BASELINE_AGENT_ID = os.getenv("BASELINE_AGENT_ID")
 
+# TODO: should these be action inputs?
 AZURE_OPENAI_DEPLOYMENT = "gpt-4o-mini"
 AZURE_OPENAI_API_VERSION = "2024-08-01-preview"
 
@@ -274,7 +275,7 @@ def main(
         )
         # display evaluation results
         print(f"Evaluation results for agent '{agent.name}':")
-        print(result)
+        #print(result) # TODO: do we need to print results here?
 
     # analyze evaluation results
     eval_results = {}
@@ -327,6 +328,6 @@ if __name__ == "__main__":
         working_dir=Path(DATA_PATH).parent,
     )
 
-    if GITHUB_STEP_SUMMARY:
-        with open(GITHUB_STEP_SUMMARY, "a", encoding="utf-8") as fp:
+    if STEP_SUMMARY:
+        with open(STEP_SUMMARY, "a", encoding="utf-8") as fp:
             fp.write(SUMMARY_MD)
