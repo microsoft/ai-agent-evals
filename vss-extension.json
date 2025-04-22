@@ -1,0 +1,105 @@
+{
+    "manifestVersion": 1,
+    "id": "microsoft-extension-ai-agent-evaluation",
+    "publisher": "ms-azure-exp-external",
+    "version": "0.0.1",
+    "name": "Azure AI Evaluations",
+    "public": false,
+    "categories": ["Azure Pipelines"],
+    "tags": ["Preview"],
+    "targets": [
+        {
+            "id": "Microsoft.VisualStudio.Services"
+        }
+    ],
+    "scopes": [
+        "vso.build"
+    ],
+    "demands": [
+        "api-version/3.0"
+    ],
+    "icons": {
+        "default": "logo.png"
+    },
+    "content": {
+        "details": {
+            "path": "overview.md"
+        },
+        "license": {
+            "path": "LICENSE"
+        }
+    },
+    "links": {
+        "getstarted": {
+            "uri": "https://learn.microsoft.com/en-us/dotnet/ai/quickstarts/evaluate-ai-response"
+        },
+        "learn": {
+            "uri": "https://learn.microsoft.com/en-us/dotnet/ai/conceptual/evaluation-libraries"
+        },
+        "privacypolicy": {
+            "uri": "https://privacy.microsoft.com/en-us/privacystatement"
+        }
+    },
+    "repository": {
+        "type": "git",
+        "uri": "https://github.com/microsoft/ai-agent-evals"
+    },
+    "contributions": [
+        {
+            "id": "build-results",
+            "type": "ms.vss-build-web.build-results-tab",
+            "description": "Add AI Evaluation summary tab to the build results view",
+            "targets": ["ms.vss-build-web.build-results-view"],
+            "properties": {
+                "name": "Azure AI Evaluation",
+                "uri": "dist/index.html",
+                "supportsTasks": ["5b7b4d7a-05e1-4f6a-b880-88e2dfa9f248"]
+            }
+        },
+        {
+            "id": "AIAgentEvaluation",
+            "type": "ms.vss-distributed-task.task",
+            "targets": [
+                "ms.vss-distributed-task.tasks"
+            ],
+            "properties": {
+                "name": "tasks/AIAgentEvaluation"
+            }
+        }
+    ],
+    "files": [
+        {
+            "path": "dist",
+            "addressable": true
+        },
+        {
+            "packagePath": "tasks/AIAgentEvaluation",
+            "path": "tasks/AIAgentEvaluation",
+            "addressable": false
+        },
+        {
+            "path": "logo.png",
+            "addressable": true
+        },
+        {
+            "path": "overview.md",
+            "addressable": true
+        },
+        {
+            "path": "LICENSE",
+            "addressable": true
+        },
+        {
+            "path": "action.py",
+            "packagePath": "tasks/AIAgentEvaluation/action.py"
+        },
+        {
+            "path": "requirements.txt",
+            "packagePath": "tasks/AIAgentEvaluation/requirements.txt"
+        },
+        {
+            "path": "analysis",
+            "packagePath": "tasks/AIAgentEvaluation/analysis"
+        }
+    ]
+}
