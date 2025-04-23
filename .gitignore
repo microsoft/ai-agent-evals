@@ -1,6 +1,13 @@
 # vsix
 *.vsix
 
+# ps_modules (generated from init-ado-extension.ps1)
+**/ps_modules/
+
+# dev generated files 
+vss-extension-dev.json
+tasks/AIAgentEvaluationDev/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
