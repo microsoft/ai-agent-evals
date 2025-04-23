@@ -1,5 +1,5 @@
 # download ps_modules
-Install-Module -Name VstsTaskSdk -AllowClobber
+Install-Module -Name VstsTaskSdk -Force -AllowClobber
 
 # Define task paths
 $taskPaths = @(
