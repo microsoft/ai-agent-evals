@@ -13,8 +13,31 @@ from pathlib import Path
 import yaml
 from azure.ai.projects.models import Agent
 
-from .analysis import EvaluationResult, EvaluationScore
+from .analysis import EvaluationResult, EvaluationScore, EvaluationResultView, EvaluationScoreDataType
 from .render import fmt_hyperlink, fmt_table_ci, fmt_table_compare
+
+
+def _should_include_score(score: dict, evaluator: dict, result_view: EvaluationResultView) -> bool:
+    """
+    Determines if a score should be included in the evaluation summary based on its type and the current view mode.
+    
+    Args:
+        score: Score metadata from evaluator-scores.yaml
+        evaluator: Evaluator metadata from evaluator-scores.yaml
+        result_view: The current view mode for evaluation results
+        
+    Returns:
+        True if the score should be included, False otherwise
+    """
+    # Always include operational metrics
+    if evaluator["class"] == "OperationalMetricsEvaluator":
+        return True
+        
+    is_boolean_score = score["type"] == EvaluationScoreDataType.BOOLEAN.value
+    is_raw_scores_view = result_view == EvaluationResultView.RAW_SCORES
+    
+    # Include boolean scores (like pass rates) in normal views, non-boolean scores in raw scores view
+    return (is_boolean_score and not is_raw_scores_view) or (not is_boolean_score and is_raw_scores_view)
 
 
 # pylint: disable-next=too-many-locals
@@ -24,6 +47,7 @@ def summarize(
     baseline: str,
     evaluators: list[str],
     agent_base_url: str,
+    result_view: EvaluationResultView
 ) -> str:
     """Generate a markdown summary of evaluation results.
 
@@ -33,6 +57,7 @@ def summarize(
         baseline: ID of the baseline agent for comparisons
         evaluators: List of evaluator class names to include in the summary
         agent_base_url: Base URL for agent links
+        result_view: The view mode to use for displaying evaluation results
 
     Returns:
         Formatted markdown string with evaluation summary
@@ -62,6 +87,11 @@ def summarize(
     with open(metadata_path, "r", encoding="utf-8") as f:
         score_metadata = yaml.safe_load(f)
 
+    if len(eval_results) >= 2:
+        md.append("\n### Compare evaluation scores between variants\n")
+    elif len(eval_results) == 1:
+        md.append("\n### Evaluation results\n")
+
     for section in score_metadata["sections"]:
         section_evals = [x["class"] for x in section["evaluators"]]
         if not any(x in evaluators for x in section_evals):
@@ -71,27 +101,28 @@ def summarize(
         for evaluator in section["evaluators"]:
             if evaluator["class"] not in evaluators:
                 continue
+                
             for score in evaluator["scores"]:
-                eval_scores.append(
-                    EvaluationScore(
-                        name=score["name"],
-                        evaluator=evaluator["key"],
-                        field=score["key"],
-                        data_type=score["type"],
-                        desired_direction=score["desired_direction"],
+                if _should_include_score(score, evaluator, result_view):
+                    eval_scores.append(
+                        EvaluationScore(
+                            name=score["name"],
+                            evaluator=evaluator["key"],
+                            field=score["key"],
+                            data_type=score["type"],
+                            desired_direction=score["desired_direction"],
+                        )
                     )
-                )
 
-        md_table = ""
-        if len(eval_results) >= 2:
-            md.append("\n### Compare evaluation scores between variants\n")
-            md_table = fmt_table_compare(eval_scores, eval_results, baseline)
-        elif len(eval_results) == 1:
-            md.append("\n### Evaluation results\n")
-            md_table = fmt_table_ci(eval_scores, eval_results[baseline])
+        if len(eval_scores) > 0:
+            md_table = ""
+            if len(eval_results) >= 2:
+                md_table = fmt_table_compare(eval_scores, eval_results, baseline)
+            elif len(eval_results) == 1:
+                md_table = fmt_table_ci(eval_scores, eval_results[baseline])
 
-        md.append(f"#### {section['name']}\n")
-        md.append(md_table)
-        md.append("")
+            md.append(f"#### {section['name']}\n")
+            md.append(md_table)
+            md.append("")
 
     return "\n".join(md)

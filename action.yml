@@ -18,6 +18,9 @@ inputs:
   baseline-agent-id:
     description: Agent ID of the baseline agent to compare against. By default, the first agent is used.
     required: false
+  evaluation-score-type:
+    description: Type of evaluation scores to compute. Options are "All" (default), "PassRates", "RawScores".
+    required: false
 
 runs:
   using: composite
@@ -37,7 +40,10 @@ runs:
       shell: bash
       run: python ${{ github.action_path }}/action.py
       env:
-        AZURE_AI_PROJECT_CONNECTION_STRING: ${{ inputs.azure-ai-project-connection-string }}
+        AZURE_AIPROJECT_CONNECTION_STRING : ${{ inputs.azure-aiproject-connection-string }}
+        DEPLOYMENT_NAME: ${{ github.event.inputs.deployment-name }}
+        API_VERSION: ${{ github.event.inputs.api-version }}
         DATA_PATH: ${{ inputs.data-path }}
         AGENT_IDS: ${{ inputs.agent-ids }}
         BASELINE_AGENT_ID: ${{ inputs.baseline-agent-id }}
+        EVALUATION_RESULT_VIEW: ${{ inputs.evaluation-result-view }}

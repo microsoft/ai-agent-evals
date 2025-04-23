@@ -53,6 +53,16 @@ class EvaluationResult:
         if self.df_result[TEST_ID].duplicated().any():
             raise ValueError(f"{TEST_ID} column must be unique")
 
+class EvaluationResultView(Enum):
+    """ Different views for displaying evaluation results
+    
+    Controls how evaluation results are presented to users,
+    with options for different levels of detail.
+    """
+
+    DEFAULT = "default" # Default view, showing only passing/defect rate
+    ALL = "all-scores" # All scores view, showing all evaluation scores
+    RAW_SCORES = "raw-scores-only" # Raw scores view, showing only raw metrics
 
 class EvaluationScoreDataType(Enum):
     """Data type of the evaluation score"""
@@ -114,7 +124,8 @@ class EvaluationScoreCI:
         ci_lower = None
         ci_upper = None
         if self.score.data_type == EvaluationScoreDataType.BOOLEAN:
-            result = binomtest(data.sum(), data.count())
+            pass_count = (data == "pass").sum() #data.value_counts().get('pass', 0)            
+            result = binomtest(pass_count, data.count())
             mean = result.proportion_estimate
             ci = result.proportion_ci(
                 confidence_level=confidence_level, method="wilsoncc"
@@ -181,8 +192,22 @@ class EvaluationScoreComparison:
         self.control_variant = control.variant
         self.treatment_variant = treatment.variant
         self.count = df_paired.shape[0]
-        self.control_mean = float(df_paired["score_c"].mean())
-        self.treatment_mean = float(df_paired["score_t"].mean())
+
+        if score.data_type == EvaluationScoreDataType.BOOLEAN:
+            # For boolean scores, compute the proportion of "pass" results
+            pass_rate_control = (df_paired["score_c"] == "pass").mean()
+            pass_rate_treatment = (df_paired["score_t"] == "pass").mean()
+            if score.desired_direction == DesiredDirection.INCREASE or DesiredDirection.NEUTRAL:
+                self.control_mean = float(pass_rate_control)
+                self.treatment_mean = float(pass_rate_treatment)
+            else:
+                self.control_mean = float(1.0 - pass_rate_control)
+                self.treatment_mean = float(1.0 - pass_rate_treatment)
+        else:
+            # For continuous and ordinal data types, use the regular mean
+            self.control_mean = float(df_paired["score_c"].mean())
+            self.treatment_mean = float(df_paired["score_t"].mean())
+            
         self.delta_estimate = self.treatment_mean - self.control_mean
         self.p_value = float(self._stat_test(df_paired))
 
@@ -215,7 +240,8 @@ class EvaluationScoreComparison:
             contingency_table = crosstab(
                 df_paired["score_c"],
                 df_paired["score_t"],
-                levels=([False, True], [False, True]),
+                #levels=([False, True], [False, True]),
+                levels=(["fail", "pass"], ["fail", "pass"]),
             ).count
 
             # McNemar's test for paired nominal data
