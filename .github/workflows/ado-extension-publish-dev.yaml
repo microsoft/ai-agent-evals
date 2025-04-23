@@ -39,41 +39,16 @@ jobs:
         run: |
           TOKEN=$(az account get-access-token --resource 499b84ac-1321-427f-aa17-267ca6975798 --query accessToken -o tsv)
           echo "ADO_TOKEN=$TOKEN" >> $GITHUB_ENV
-      
-      # Call Azure DevOps Profile API to verify token
-      - name: Verify Azure DevOps Token
-        run: |
-          RESPONSE=$(curl -s -X GET "https://app.vssps.visualstudio.com/_apis/profile/profiles/me" \
-            -H "Authorization: Bearer ${{ env.ADO_TOKEN }}" \
-            -H "Content-Type: application/json")
-          
-          echo "API Response:"
-          echo "$RESPONSE" | jq
-          
-          # Check if the response contains an error
-          if echo "$RESPONSE" | jq -e '.error' > /dev/null; then
-            echo "Token validation failed. See error above."
-            exit 1
-          else
-            echo "Token validated successfully!"
-          fi
 
-      - name: Run init-ado-extension.ps1
+      - name: Run init-ado-extension.ps1 and build-ado-extension-dev.ps1
         shell: pwsh
         run: |
           ./init-ado-extension.ps1
-
-      - name: Run build-ado-extension-dev.ps1
-        shell: pwsh
-        run: |
           ./build-ado-extension-dev.ps1
 
-      - name: Package extension
+      - name: Package & Publish extension to marketplace
         run: |
           tfx extension create --manifest-globs vss-extension-dev.json --output-path ./dist
-            
-      - name: Publish extension to marketplace
-        run: |
           tfx extension publish --manifest-globs vss-extension-dev.json --auth-type pat -t "${{ env.ADO_TOKEN }}" --share-with experimentation
             
       - name: Upload VSIX as artifact
