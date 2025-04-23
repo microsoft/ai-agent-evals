@@ -59,6 +59,22 @@ $vssExtension.id = "microsoft-extension-ai-agent-evaluation-dev"
 $vssExtension.publisher = "ms-azure-exp-dev"
 $vssExtension.name = "Azure AI Evaluations Dev"
 
+# Parse the current version
+$versionParts = $vssExtension.version -split '\.'
+$majorVersion = [int]$versionParts[0]
+$minorVersion = [int]$versionParts[1]
+
+# Calculate seconds since a reference date (e.g., January 1, 2023)
+$referenceDate = Get-Date -Year 2025 -Month 4 -Day 20 -Hour 0 -Minute 0 -Second 0
+$currentDate = Get-Date
+$secondsSinceReference = [math]::Floor(($currentDate - $referenceDate).TotalSeconds)
+
+# Use the seconds as the patch version to ensure it's strictly increasing
+# Format as "major.minor.patch"
+$vssExtension.version = "$majorVersion.$minorVersion.$secondsSinceReference"
+
+Write-Host "Updated version to $($vssExtension.version)"
+
 # Update contributions section
 $buildResultsContribution = $vssExtension.contributions | Where-Object { $_.id -eq "build-results" }
 if ($buildResultsContribution) {
