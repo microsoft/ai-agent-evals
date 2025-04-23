@@ -30,10 +30,10 @@ jobs:
         run: |
           ./init-ado-extension.ps1
 
-      - name: Run build-dev.ps1
+      - name: Run build-ado-extension-dev.ps1
         shell: pwsh
         run: |
-          ./build-dev.ps1
+          ./build-ado-extension-dev.ps1
 
       - name: Package extension
         run: |
