@@ -38,9 +38,6 @@ $taskJson.friendlyName = "AI Agent Evaluation (Dev)"
 $taskJson.description = "Evaluate AI Agents (Development Version)"
 $taskJson.instanceNameFormat = "AI Agent Evaluation (Dev)"
 
-# Update the execution target to point to the original run.ps1
-$taskJson.execution.PowerShell3.target = "../AIAgentEvaluation/run.ps1"
-
 # Write the modified task.json to the destination
 $destTaskJsonPath = Join-Path $destFolder "task.json"
 $taskJson | ConvertTo-Json -Depth 10 | Set-Content -Path $destTaskJsonPath -Encoding UTF8
