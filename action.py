@@ -14,12 +14,11 @@ from typing import Optional
 import azure.ai.evaluation as evals
 import pandas as pd
 import yaml
+
 from azure.ai.evaluation import evaluate
 from azure.ai.projects import AIProjectClient
 from azure.ai.projects.models import Agent, ConnectionType, MessageRole, RunStatus
 from azure.identity import DefaultAzureCredential
-
-from azure.ai.evaluation import AIAgentConverter
 
 import analysis
 
@@ -29,10 +28,9 @@ current_dir = Path(__file__).parent
 env_path = current_dir / ".env"
 if env_path.exists():
     from dotenv import load_dotenv
-
     load_dotenv(dotenv_path=env_path)
 
-STEP_SUMMARY = os.getenv("GITHUB_STEP_SUMMARY") or os.getenv("ADO_STEP_SUMMARY")  
+STEP_SUMMARY = os.getenv("GITHUB_STEP_SUMMARY") or os.getenv("ADO_STEP_SUMMARY")
 
 AZURE_AIPROJECT_CONNECTION_STRING = os.getenv("AZURE_AIPROJECT_CONNECTION_STRING")
 DEPLOYMENT_NAME = os.getenv("DEPLOYMENT_NAME")
@@ -99,31 +97,13 @@ def simulate_question_answer(
         else:
             raise ValueError(run.last_error)
 
-    # Test the converter
-    converter = AIAgentConverter(project_client)
-    filename = os.path.join(os.getcwd(), "agent_evaluation_input_data.jsonl")
-    evaluation_data = converter.prepare_evaluation_data(thread_ids=thread.id, filename=filename) 
-
-    print(f"Evaluation data saved to {filename}")
-
-    # tool_call = {
-    #     "type": "tool_call",
-    #     "tool_call_id": "call_CUdbkBfvVBla2YP3p24uhElJ",
-    #     "name": "fetch_weather",
-    #     "arguments": {"location": "Seattle"},
-    # }
-
-    # TODO: how to extract context from thread?
+    # Fast-follow work: move to AI Converter with new eval input format
     messages = project_client.agents.list_messages(thread_id=thread.id)
     last_msg = messages.get_last_text_message_by_role(MessageRole.AGENT)
     output = {
         "id": input["id"],
-        "query": input["query"], #evaluation_data[0]["query"], # #
-        "response": last_msg.text.value, #evaluation_data[0]["response"], #
-        #"context": last_msg.text.value, # FIXME
-        #"qrels ": 3,
-        #"tool_calls": [],
-        #"tool_definitions": evaluation_data[0]["tool_definitions"],
+        "query": input["query"],
+        "response": last_msg.text.value,
         "ground_truth": input.get("ground_truth"),
         "metrics": {
             "server-run-duration-in-seconds": (
@@ -406,7 +386,7 @@ if __name__ == "__main__":
         except ValueError as exc:
             valid_options = [e.value for e in analysis.EvaluationResultView]
             raise ValueError(f"EVALUATION_RESULT_VIEW must be one of {valid_options}") from exc
-            
+  
     # Load and validate input data
     try:
         input_data_path = Path(DATA_PATH)
@@ -430,6 +410,7 @@ if __name__ == "__main__":
         with open(STEP_SUMMARY, "a", encoding="utf-8") as fp:
             fp.write(SUMMARY_MD)
 
+    # REMOVE ME
     md_path = Path(".") / "evaluation.md"
     with open(md_path, "a", encoding="utf-8") as fp:
         fp.write(SUMMARY_MD)

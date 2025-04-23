@@ -1,14 +1,35 @@
 {
   "name": "MyTestData",
-  "evaluators": ["FluencyEvaluator", "ViolenceEvaluator"],
+  "evaluators": [
+    "IntentResolutionEvaluator",
+    "ToolCallAccuracyEvaluator",
+    "TaskAdherenceEvaluator",
+    "ResponseCompletenessEvaluator",
+    "CoherenceEvaluator",
+    "RelevanceEvaluator",
+    "FluencyEvaluator",
+    "SimilarityEvaluator",
+    "F1ScoreEvaluator",
+    "RougeScoreEvaluator",
+    "GleuScoreEvaluator",
+    "BleuScoreEvaluator",
+    "MeteorScoreEvaluator",
+    "ContentSafetyEvaluator",
+    "ViolenceEvaluator",
+    "SexualEvaluator",
+    "SelfHarmEvaluator",
+    "HateUnfairnessEvaluator",
+    "IndirectAttackEvaluator",
+    "ProtectedMaterialEvaluator"
+  ],
   "data": [
     {
-      "query": "Tell me about Tokyo?",
-      "ground_truth": "Tokyo is the capital of Japan and the largest city in the country. It is located on the eastern coast of Honshu, the largest of Japan's four main islands. Tokyo is the political, economic, and cultural center of Japan and is one of the world's most populous cities. It is also one of the world's most important financial centers and is home to the Tokyo Stock Exchange."
+      "query": "Tell me about Smart eyeware",
+      "ground_truth": "Smart eyewear refers to a category of wearable technology integrated into glasses that provide various functionalities beyond those of traditional eyewear."
     },
     {
-      "query": "Where is Italy?",
-      "ground_truth": "Italy is a country in southern Europe, located on the Italian Peninsula and the two largest islands in the Mediterranean Sea, Sicily and Sardinia. It is a unitary parliamentary republic with its capital in Rome, the largest city in Italy. Other major cities include Milan, Naples, Turin, and Palermo."
+      "query": "How long is the warranty for Smart eyeware",
+      "ground_truth": "Smart eyewear refers to a category of wearable technology integrated into glasses that provide various functionalities beyond those of traditional eyewear."
     }
   ]
 }

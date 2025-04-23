@@ -13,11 +13,19 @@ from pathlib import Path
 import yaml
 from azure.ai.projects.models import Agent
 
-from .analysis import EvaluationResult, EvaluationScore, EvaluationResultView, EvaluationScoreDataType
-from .render import fmt_hyperlink, fmt_table_ci, fmt_table_compare
+from .analysis import (
+    EvaluationResult, 
+    EvaluationResultView, 
+    EvaluationScore,
+    EvaluationScoreDataType,
+)
+from .render import (
+    fmt_hyperlink, 
+    fmt_table_ci, 
+    fmt_table_compare,
+)
 
-
-def _should_include_score(score: dict, evaluator: dict, result_view: EvaluationResultView) -> bool:
+def should_include_score(score: dict, evaluator: dict, result_view: EvaluationResultView) -> bool:
     """
     Determines if a score should be included in the evaluation summary based on its type and the current view mode.
     
@@ -32,13 +40,14 @@ def _should_include_score(score: dict, evaluator: dict, result_view: EvaluationR
     # Always include operational metrics
     if evaluator["class"] == "OperationalMetricsEvaluator":
         return True
-        
-    is_boolean_score = score["type"] == EvaluationScoreDataType.BOOLEAN.value
-    is_raw_scores_view = result_view == EvaluationResultView.RAW_SCORES
     
-    # Include boolean scores (like pass rates) in normal views, non-boolean scores in raw scores view
-    return (is_boolean_score and not is_raw_scores_view) or (not is_boolean_score and is_raw_scores_view)
+    if result_view == EvaluationResultView.ALL:
+        return True
 
+    if score["type"] == EvaluationScoreDataType.BOOLEAN.value:
+        return result_view == EvaluationResultView.DEFAULT
+    else:
+        return result_view == EvaluationResultView.RAW_SCORES
 
 # pylint: disable-next=too-many-locals
 def summarize(
@@ -100,10 +109,9 @@ def summarize(
         eval_scores = []
         for evaluator in section["evaluators"]:
             if evaluator["class"] not in evaluators:
-                continue
-                
+                continue       
             for score in evaluator["scores"]:
-                if _should_include_score(score, evaluator, result_view):
+                if should_include_score(score, evaluator, result_view):
                     eval_scores.append(
                         EvaluationScore(
                             name=score["name"],

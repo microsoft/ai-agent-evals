@@ -15,6 +15,8 @@ from scipy.stats.contingency import crosstab
 
 SAMPLE_SIZE_THRESHOLD = 10
 TEST_ID = "inputs.id"
+PASS_SCORE = "pass"
+FAIL_SCORE = "fail"
 
 
 def mcnemar(contingency_table: np.ndarray) -> float:
@@ -63,6 +65,7 @@ class EvaluationResultView(Enum):
     DEFAULT = "default" # Default view, showing only passing/defect rate
     ALL = "all-scores" # All scores view, showing all evaluation scores
     RAW_SCORES = "raw-scores-only" # Raw scores view, showing only raw metrics
+
 
 class EvaluationScoreDataType(Enum):
     """Data type of the evaluation score"""
@@ -124,7 +127,7 @@ class EvaluationScoreCI:
         ci_lower = None
         ci_upper = None
         if self.score.data_type == EvaluationScoreDataType.BOOLEAN:
-            pass_count = (data == "pass").sum() #data.value_counts().get('pass', 0)            
+            pass_count = (data == PASS_SCORE).sum()
             result = binomtest(pass_count, data.count())
             mean = result.proportion_estimate
             ci = result.proportion_ci(
@@ -194,15 +197,15 @@ class EvaluationScoreComparison:
         self.count = df_paired.shape[0]
 
         if score.data_type == EvaluationScoreDataType.BOOLEAN:
-            # For boolean scores, compute the proportion of "pass" results
-            pass_rate_control = (df_paired["score_c"] == "pass").mean()
-            pass_rate_treatment = (df_paired["score_t"] == "pass").mean()
-            if score.desired_direction == DesiredDirection.INCREASE or DesiredDirection.NEUTRAL:
-                self.control_mean = float(pass_rate_control)
-                self.treatment_mean = float(pass_rate_treatment)
-            else:
+            # For boolean scores, compute pass/fail rates based on direction
+            pass_rate_control = (df_paired["score_c"] == PASS_SCORE).mean()
+            pass_rate_treatment = (df_paired["score_t"] == PASS_SCORE).mean()
+            if score.desired_direction == DesiredDirection.DECREASE:
                 self.control_mean = float(1.0 - pass_rate_control)
                 self.treatment_mean = float(1.0 - pass_rate_treatment)
+            else:
+                self.control_mean = float(pass_rate_control)
+                self.treatment_mean = float(pass_rate_treatment)          
         else:
             # For continuous and ordinal data types, use the regular mean
             self.control_mean = float(df_paired["score_c"].mean())
@@ -240,8 +243,7 @@ class EvaluationScoreComparison:
             contingency_table = crosstab(
                 df_paired["score_c"],
                 df_paired["score_t"],
-                #levels=([False, True], [False, True]),
-                levels=(["fail", "pass"], ["fail", "pass"]),
+                levels=([FAIL_SCORE, PASS_SCORE], [FAIL_SCORE, PASS_SCORE]),
             ).count
 
             # McNemar's test for paired nominal data
