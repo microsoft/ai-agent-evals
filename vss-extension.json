@@ -2,7 +2,7 @@
     "manifestVersion": 1,
     "id": "microsoft-extension-ai-agent-evaluation",
     "publisher": "ms-azure-exp-external",
-    "version": "0.0.1",
+    "version": "0.0.15",
     "name": "Azure AI Evaluations",
     "public": false,
     "categories": ["Azure Pipelines"],
@@ -69,7 +69,8 @@
     ],
     "files": [
         {
-            "path": "dist",
+            "path": "tasks/AIAgentReport/dist",
+            "packagePath": "dist",
             "addressable": true
         },
         {

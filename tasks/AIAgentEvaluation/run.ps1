@@ -46,15 +46,27 @@ try {
     Write-Host "Baseline agent ID: $baselineAgentId"    
     Write-Host "Executing action.py"
 
-    $output = python "$scriptDir\action.py" 2>&1
+    $artifactFolder = "ai-agent-eval"
+    $artifactFile = "ai-agent-eval-summary.md"
+
+    $outputPath = if ($env:BUILD_ARTIFACTSTAGINGDIRECTORY) { $env:BUILD_ARTIFACTSTAGINGDIRECTORY } else { "." }
+    $reportPath = Join-Path -Path $outputPath -ChildPath $artifactFile
+
+    New-Item -Path $reportPath -ItemType "file" -Force | Out-Null
+    Write-Host "Report file created at $reportPath"
+    $env:ADO_STEP_SUMMARY = $reportPath
+
+    python "$scriptDir\action.py"
     if ($LASTEXITCODE -ne 0) {
         Write-Error "Python script failed with exit code $LASTEXITCODE"
-        $output | ForEach-Object { Write-Error $_ }
         exit 1
     } else {
         Write-Host "Python script executed successfully"
-        $output | ForEach-Object { Write-Host $_ }
+        Write-Host "##vso[artifact.upload artifactname=$artifactFolder]$reportPath"
     }
+} catch {
+    Write-Error "An error occurred: $($_.Exception.Message)"
+    exit 1
 } finally {
     Trace-VstsLeavingInvocation $MyInvocation
 }

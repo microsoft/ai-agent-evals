@@ -45,7 +45,7 @@ def summarize(
         return (
             f"| {agent.name} | "
             f"{fmt_hyperlink(agent.id, agent_url)} | "
-            f"{fmt_hyperlink('Click here', result_url) if result_url else ""} |"
+            f"{fmt_hyperlink('Click here', result_url) if result_url else ''} |"
         )
 
     md.append("### Agent variants\n")
