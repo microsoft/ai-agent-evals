@@ -22,3 +22,20 @@ foreach ($modulePath in $taskPaths) {
     Write-Host "VstsTaskSdk module copied to $modulePath"
 }
 
+
+# Build AIAgentReport front-end
+Write-Host "Building AIAgentReport web UI..."
+Push-Location -Path 'tasks/AIAgentReport'
+try {
+    npm ci
+    
+    npm run build
+    
+    Write-Host "AIAgentReport build completed successfully" -ForegroundColor Green
+} catch {
+    Write-Error "Error building AIAgentReport: $_"
+    exit 1
+} finally {
+    # Always return to the previous directory even if there are errors
+    Pop-Location
+}
