@@ -25,6 +25,22 @@ jobs:
       - name: Install tfx-cli
         run: npm install -g tfx-cli
 
+      # Login to Azure using OIDC
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      # Get Azure DevOps access token using Azure CLI
+      - name: Get Azure DevOps token
+        id: get-ado-token
+        run: |
+          TOKEN=$(az account get-access-token --resource 499b84ac-1321-427f-aa17-267ca6975798 --query accessToken -o tsv)
+          echo "ADO_TOKEN=$TOKEN" >> $GITHUB_ENV
+
+
       - name: Run init-ado-extension.ps1
         shell: pwsh
         run: |
@@ -41,7 +57,7 @@ jobs:
             
       - name: Publish extension to marketplace
         run: |
-          tfx extension publish --manifest-globs vss-extension-dev.json --token ${{ secrets.AZURE_DEVOPS_PAT }} --share-with experimentation
+          tfx extension publish --manifest-globs vss-extension-dev.json --token "${{ env.ADO_TOKEN }}" --share-with experimentation
             
       - name: Upload VSIX as artifact
         uses: actions/upload-artifact@v4
