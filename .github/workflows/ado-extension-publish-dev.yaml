@@ -57,7 +57,7 @@ jobs:
             
       - name: Publish extension to marketplace
         run: |
-          tfx extension publish --manifest-globs vss-extension-dev.json --token "${{ env.ADO_TOKEN }}" --share-with experimentation
+          tfx extension publish --manifest-globs vss-extension-dev.json --auth-type pat -t "${{ env.ADO_TOKEN }}" --share-with experimentation
             
       - name: Upload VSIX as artifact
         uses: actions/upload-artifact@v4
