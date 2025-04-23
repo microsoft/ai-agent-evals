@@ -1,1 +1,1 @@
-# Azure AI Evaluation ADO Extension
+# Azure AI Evaluation Azure DevOps Extension
