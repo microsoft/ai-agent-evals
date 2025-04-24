@@ -56,7 +56,7 @@ def summarize(
     baseline: str,
     evaluators: list[str],
     agent_base_url: str,
-    result_view: EvaluationResultView
+    result_view: EvaluationResultView,
 ) -> str:
     """Generate a markdown summary of evaluation results.
 

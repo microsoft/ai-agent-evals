@@ -3,7 +3,7 @@ from pathlib import Path
 import pandas as pd
 from azure.ai.projects.models import Agent
 
-from analysis.analysis import EvaluationResult
+from analysis.analysis import EvaluationResult, EvaluationResultView
 from analysis.summary import summarize
 
 agent_1 = Agent(id="agent.v1", name="agent_version_1")
@@ -38,6 +38,7 @@ def test_summarize_one_variant(snapshot):
         baseline=agent_1.id,
         evaluators=["FluencyEvaluator", "RelevanceEvaluator"],
         agent_base_url="https://ai-url/",
+        result_view=EvaluationResultView.ALL,
     )
 
     snapshot.snapshot_dir = Path("tests", "snapshots", "summarize")
@@ -66,6 +67,7 @@ def test_summarize_multiple_variants(snapshot):
         baseline=agent_1.id,
         evaluators=["FluencyEvaluator", "RelevanceEvaluator"],
         agent_base_url="https://ai-url/",
+        result_view=EvaluationResultView.ALL,
     )
 
     snapshot.snapshot_dir = Path("tests", "snapshots", "summarize")

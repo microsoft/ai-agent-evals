@@ -24,7 +24,7 @@ sections:
             key: "prompt-tokens"
             type: "Continuous"
             desired_direction: "Neutral"
-            range: [0, null]   
+            range: [0, null]
 
   - name: "AI quality (AI assisted)"
     evaluators:
@@ -51,7 +51,7 @@ sections:
             desired_direction: "Increase"
             range: [1, 5]
           - name: "Tool Call Accuracy passing rate"
-            key: tool_call_accuracy_result"
+            key: "tool_call_accuracy_result"
             type: "Boolean"
             desired_direction: "Increase"
 
@@ -68,18 +68,18 @@ sections:
             type: "Boolean"
             desired_direction: "Increase"
 
-      - class: "ResponseCompletenessEvaluator"
-        key: "response_completeness"
-        scores:
-          - name: "Response Completeness"
-            key: "response_completeness"
-            type: "Ordinal"
-            desired_direction: "Increase"
-            range: [1, 5]
-          - name: "Response Completeness passing rate"
-            key: "response_completeness_result"
-            type: "Boolean"
-            desired_direction: "Increase"
+      # - class: "ResponseCompletenessEvaluator"
+      #   key: "response_completeness"
+      #   scores:
+      #     - name: "Response Completeness"
+      #       key: "response_completeness"
+      #       type: "Ordinal"
+      #       desired_direction: "Increase"
+      #       range: [1, 5]
+      #     - name: "Response Completeness passing rate"
+      #       key: "response_completeness_result"
+      #       type: "Boolean"
+      #       desired_direction: "Increase"
 
       # Fast-follow: need context field
       # - class: "GroundednessEvaluator"
@@ -161,18 +161,19 @@ sections:
             type: "Boolean"
             desired_direction: "Increase"
 
-      - class: "SimilarityEvaluator"
-        key: "similarity"
-        scores:
-          - name: "Similarity"
-            key: "similarity"
-            type: "Ordinal"
-            desired_direction: "Increase"
-            range: [1, 5]
-          - name: "Similarity passing rate" 
-            key: "similarity_result"
-            type: "Boolean"
-            desired_direction: "Increase"
+      # Need ground-truth field
+      # - class: "SimilarityEvaluator"
+      #   key: "similarity"
+      #   scores:
+      #     - name: "Similarity"
+      #       key: "similarity"
+      #       type: "Ordinal"
+      #       desired_direction: "Increase"
+      #       range: [1, 5]
+      #     - name: "Similarity passing rate" 
+      #       key: "similarity_result"
+      #       type: "Boolean"
+      #       desired_direction: "Increase"
 
   - name: "Risk and safety"
     evaluators:
@@ -228,11 +229,10 @@ sections:
             type: "Boolean"
             desired_direction: "Decrease"
 
-      # Indirect attack has no defect rate and threshold
       - class: "IndirectAttackEvaluator"
         key: "indirect_attack"
         scores:
-          - name: "Indirect attack"
+          - name: "Indirect attack defect rate"
             key: "xpia_label"
             type: "Boolean"
             desired_direction: "Decrease"
@@ -249,104 +249,110 @@ sections:
             type: "Boolean"
             desired_direction: "Decrease"
 
-      # Indirect attack has no defect rate and threshold
       - class: "ProtectedMaterialEvaluator"
         key: "protected_material"
         scores:
-          - name: "Protected material"
+          - name: "Protected material defect rate"
             key: "protected_material_label"
             type: "Boolean"
             desired_direction: "Decrease"
-
-  - name: "AI quality (NLP)"
-    evaluators:
-      - class: "F1ScoreEvaluator"
-        key: "f1_score"
+      
+      - class: "CodeVulnerabilityEvaluator"
+        key: "code_vulnerability_defect_rate"
         scores:
-          - name: "F1 score"
-            key: "f1_score"
-            type: "Continuous"
-            desired_direction: "Increase"
-            range: [0, 1]
-          - name: "F1 score passing rate"
-            key: "f1_result"
+          - name: "Code vulnerability defect rate"
+            key: "code_vulnerability_label"
             type: "Boolean"
-            desired_direction: "Increase"
+            desired_direction: "Decrease"
 
-      - class: "RougeScoreEvaluator"
-        key: "rouge"
-        scores:
-          - name: "ROUGE precision"
-            key: "rouge_precision"
-            type: "Continuous"
-            desired_direction: "Increase"
-            range: [0, 1]
-          - name: "ROUGE precision passing rate"
-            key: "rouge_precision_result"
-            type: "Boolean"
-            desired_direction: "Increase"
-          - name: "ROUGE recall"
-            key: "rouge_recall"
-            type: "Continuous"
-            desired_direction: "Increase"
-            range: [0, 1]
-          - name: "ROUGE recall passing rate"
-            key: "rouge_recall_result"
-            type: "Boolean"
-            desired_direction: "Increase"
-          - name: "ROUGE F1 score"
-            key: "rouge_f1_score"
-            type: "Continuous"
-            desired_direction: "Increase"
-            range: [0, 1]
-          - name: "ROUGE F1 score passing rate" 
-            key: "rouge_f1_score_result"
-            type: "Boolean"
-            desired_direction: "Increase"
+  # - name: "AI quality (NLP)"
+  #   evaluators:
+  #     - class: "F1ScoreEvaluator"
+  #       key: "f1_score"
+  #       scores:
+  #         - name: "F1 score"
+  #           key: "f1_score"
+  #           type: "Continuous"
+  #           desired_direction: "Increase"
+  #           range: [0, 1]
+  #         - name: "F1 score passing rate"
+  #           key: "f1_result"
+  #           type: "Boolean"
+  #           desired_direction: "Increase"
 
-      - class: "GleuScoreEvaluator"
-        key: "gleu"
-        scores:
-          - name: "GLEU score"
-            key: "gleu_score"
-            type: "Continuous"
-            desired_direction: "Increase"
-            range: [0, 1]
-          - name: "GLEU passing rate"
-            key: "gleu_result"
-            type: "Boolean"
-            desired_direction: "Increase"
+  #     - class: "RougeScoreEvaluator"
+  #       key: "rouge"
+  #       scores:
+  #         - name: "ROUGE precision"
+  #           key: "rouge_precision"
+  #           type: "Continuous"
+  #           desired_direction: "Increase"
+  #           range: [0, 1]
+  #         - name: "ROUGE precision passing rate"
+  #           key: "rouge_precision_result"
+  #           type: "Boolean"
+  #           desired_direction: "Increase"
+  #         - name: "ROUGE recall"
+  #           key: "rouge_recall"
+  #           type: "Continuous"
+  #           desired_direction: "Increase"
+  #           range: [0, 1]
+  #         - name: "ROUGE recall passing rate"
+  #           key: "rouge_recall_result"
+  #           type: "Boolean"
+  #           desired_direction: "Increase"
+  #         - name: "ROUGE F1 score"
+  #           key: "rouge_f1_score"
+  #           type: "Continuous"
+  #           desired_direction: "Increase"
+  #           range: [0, 1]
+  #         - name: "ROUGE F1 score passing rate" 
+  #           key: "rouge_f1_score_result"
+  #           type: "Boolean"
+  #           desired_direction: "Increase"
 
-      - class: "BleuScoreEvaluator"
-        key: "bleu"
-        scores:
-          - name: "BLEU score"
-            key: "bleu_score"
-            type: "Continuous"
-            desired_direction: "Increase"
-            range: [0, 1]
-          - name: "BLEU passing rate"
-            key: "bleu_result"
-            type: "Boolean"
-            desired_direction: "Increase"
+  #     - class: "GleuScoreEvaluator"
+  #       key: "gleu"
+  #       scores:
+  #         - name: "GLEU score"
+  #           key: "gleu_score"
+  #           type: "Continuous"
+  #           desired_direction: "Increase"
+  #           range: [0, 1]
+  #         - name: "GLEU passing rate"
+  #           key: "gleu_result"
+  #           type: "Boolean"
+  #           desired_direction: "Increase"
 
-      - class: "MeteorScoreEvaluator"
-        key: "meteor"
-        scores:
-          - name: "METEOR score"
-            key: "meteor_score"
-            type: "Continuous"
-            desired_direction: "Increase"
-            range: [0, 1]
-          - name: "METEOR passing rate"
-            key: "meteor_result"
-            type: "Boolean"
-            desired_direction: "Increase"
+  #     - class: "BleuScoreEvaluator"
+  #       key: "bleu"
+  #       scores:
+  #         - name: "BLEU score"
+  #           key: "bleu_score"
+  #           type: "Continuous"
+  #           desired_direction: "Increase"
+  #           range: [0, 1]
+  #         - name: "BLEU passing rate"
+  #           key: "bleu_result"
+  #           type: "Boolean"
+  #           desired_direction: "Increase"
 
+  #     - class: "MeteorScoreEvaluator"
+  #       key: "meteor"
+  #       scores:
+  #         - name: "METEOR score"
+  #           key: "meteor_score"
+  #           type: "Continuous"
+  #           desired_direction: "Increase"
+  #           range: [0, 1]
+  #         - name: "METEOR passing rate"
+  #           key: "meteor_result"
+  #           type: "Boolean"
+  #           desired_direction: "Increase"
 
-  - name: "Composite"
-    evaluators:
-      # Fast-follow: need context field for Groundedness
+  # - name: "Composite"
+  #   evaluators:
+      # Fast-follow: need context and ground-truth fields
       # - class: "QAEvaluator"
       #   key: "qa"
       #   scores:
@@ -381,42 +387,43 @@ sections:
       #       desired_direction: "Increase"
       #       range: [0, 1]
 
-      - class: "ContentSafetyEvaluator"
-        key: "content_safety"
-        scores:
-          - name: "Violent content"
-            key: "violence_score"
-            type: "Ordinal"
-            desired_direction: "Decrease"
-            range: [0, 7]
-          - name: "Violent content defect rate"
-            key: "violence_result"
-            type: "Boolean"
-            desired_direction: "Decrease"
-          - name: "Sexual content"
-            key: "sexual_score"
-            type: "Ordinal"
-            desired_direction: "Decrease"
-            range: [0, 7]
-          - name: "Sexual content defect rate"
-            key: "sexual_result"
-            type: "Boolean"
-            desired_direction: "Decrease"
-          - name: "Self-harm-related content"
-            key: "self_harm_score"
-            type: "Ordinal"
-            desired_direction: "Decrease"
-            range: [0, 7]
-          - name: "Self-harm-related content defect rate"
-            key: "self_harm_result"
-            type: "Boolean"
-            desired_direction: "Decrease"
-          - name: "Hateful and unfair content"
-            key: "hate_unfairness_score"
-            type: "Ordinal"
-            desired_direction: "Decrease"
-            range: [0, 7]
-          - name: "Hateful and unfair content defect rate"
-            key: "hate_unfairness_result"
-            type: "Boolean"
-            desired_direction: "Decrease"
+      # Need ground-truth field for UngroundedAttributes 
+      # - class: "ContentSafetyEvaluator"
+      #   key: "content_safety"
+      #   scores:
+      #     - name: "Violent content"
+      #       key: "violence_score"
+      #       type: "Ordinal"
+      #       desired_direction: "Decrease"
+      #       range: [0, 7]
+      #     - name: "Violent content defect rate"
+      #       key: "violence_result"
+      #       type: "Boolean"
+      #       desired_direction: "Decrease"
+      #     - name: "Sexual content"
+      #       key: "sexual_score"
+      #       type: "Ordinal"
+      #       desired_direction: "Decrease"
+      #       range: [0, 7]
+      #     - name: "Sexual content defect rate"
+      #       key: "sexual_result"
+      #       type: "Boolean"
+      #       desired_direction: "Decrease"
+      #     - name: "Self-harm-related content"
+      #       key: "self_harm_score"
+      #       type: "Ordinal"
+      #       desired_direction: "Decrease"
+      #       range: [0, 7]
+      #     - name: "Self-harm-related content defect rate"
+      #       key: "self_harm_result"
+      #       type: "Boolean"
+      #       desired_direction: "Decrease"
+      #     - name: "Hateful and unfair content"
+      #       key: "hate_unfairness_score"
+      #       type: "Ordinal"
+      #       desired_direction: "Decrease"
+      #       range: [0, 7]
+      #     - name: "Hateful and unfair content defect rate"
+      #       key: "hate_unfairness_result"
+      #       type: "Boolean"
+      #       desired_direction: "Decrease"

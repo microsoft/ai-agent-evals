@@ -8,6 +8,7 @@ import json
 import os
 import time
 import uuid
+import random
 from pathlib import Path
 from typing import Optional
 
@@ -19,6 +20,8 @@ from azure.ai.evaluation import evaluate
 from azure.ai.projects import AIProjectClient
 from azure.ai.projects.models import Agent, ConnectionType, MessageRole, RunStatus
 from azure.identity import DefaultAzureCredential
+
+from azure.ai.evaluation import AIAgentConverter
 
 import analysis
 
@@ -50,22 +53,19 @@ def simulate_question_answer(
     1. Creates a new thread for the interaction.
     2. Sends a user message containing the query to the agent.
     3. Processes the run to generate the agent's response.
-    4. Handles retries in case of rate limit errors.
+    4. Handles retries with exponential backoff in case of rate limit errors.
     5. Extracts the agent's response and relevant metrics.
 
     Args:
         project_client (AIProjectClient): The client used to interact with the Azure AI Project.
         agent (Agent): The agent instance to simulate the interaction with.
         input (dict): A dictionary containing the input data for the interaction.
-                      It must include a "query" key and may include "id" and "ground_truth".
+                      It must include a "query" key and may include "id".
 
     Returns:
-        dict: A dictionary containing the following keys:
+        dict: A dictionary containing the evaluation input using thread data with added fields:
             - "id": The unique identifier for the input.
-            - "query": The original query sent to the agent.
-            - "response": The agent's response to the query.
-            - "ground_truth": The expected response, if provided in the input.
-            - "metrics": A dictionary of performance metrics
+            - "metrics": A dictionary of performance metrics.
 
     Raises:
         ValueError: If the run fails for reasons other than rate limits or if retries are exhausted.
@@ -76,44 +76,55 @@ def simulate_question_answer(
         thread.id, role=MessageRole.USER, content=input["query"]
     )
 
-    # TODO: improve error handling
-    retries = 5
-    wait_seconds = 20
-    for attempt in range(retries):
+    # Exponential backoff retry logic
+    max_retries = 5
+    base_wait_seconds = 2
+    for attempt in range(max_retries):
         start_time = time.time()
         run = project_client.agents.create_and_process_run(
             thread_id=thread.id, agent_id=agent.id
         )
         end_time = time.time()
+      
         if run.status == RunStatus.COMPLETED:
             break
-        if run.last_error.code == "rate_limit_exceeded" and attempt < retries - 1:
+
+        if run.last_error.code == "rate_limit_exceeded" and attempt < max_retries - 1:
+            # Calculate wait time with exponential backoff (2^attempt * base_wait_seconds)
+            # with a small random jitter to avoid thundering herd problem
+            jitter = random.uniform(0, 0.5)
+            wait_seconds = (2 ** attempt) * base_wait_seconds + jitter
             print(
-                f"Rate limit exceeded. "
+                f"Rate limit exceeded (attempt {attempt + 1}/{max_retries}). "
                 f"You may wish to increase your quota. "
-                f"Retrying in {wait_seconds} seconds..."
+                f"Retrying in {wait_seconds:.2f} seconds..."
             )
             time.sleep(wait_seconds)
         else:
-            raise ValueError(run.last_error)
+            if run.status != RunStatus.COMPLETED:
+                raise ValueError(run.last_error or "Run failed to complete")
+            
+    if run.status != RunStatus.COMPLETED:
+        raise ValueError(f"Failed to complete run after {max_retries} attempts")
 
-    # Fast-follow work: move to AI Converter with new eval input format
-    messages = project_client.agents.list_messages(thread_id=thread.id)
-    last_msg = messages.get_last_text_message_by_role(MessageRole.AGENT)
-    output = {
-        "id": input["id"],
-        "query": input["query"],
-        "response": last_msg.text.value,
-        "ground_truth": input.get("ground_truth"),
-        "metrics": {
-            "server-run-duration-in-seconds": (
-                run.completed_at - run.created_at
-            ).total_seconds(),
-            "client-run-duration-in-seconds": end_time - start_time,
-            "completion-tokens": run.usage.completion_tokens,
-            "prompt-tokens": run.usage.prompt_tokens,
-        },
+    # Collect performance metrics
+    metrics = {
+        "server-run-duration-in-seconds": (
+            run.completed_at - run.created_at
+        ).total_seconds(),
+        "client-run-duration-in-seconds": end_time - start_time,
+        "completion-tokens": run.usage.completion_tokens,
+        "prompt-tokens": run.usage.prompt_tokens,
     }
+
+    # Generate evaluation data from the thread
+    converter = AIAgentConverter(project_client)
+    filename = os.path.join(os.getcwd(), "agent_evaluation_input_data.jsonl")
+    evaluation_data = converter.prepare_evaluation_data(thread_ids=thread.id, filename=filename)
+
+    output = evaluation_data[0]
+    output["id"] = input.get("id", str(uuid.uuid4())) # Use provided ID or generate one
+    output["metrics"] = metrics
 
     return output
 
@@ -332,10 +343,12 @@ def main(
         with open(eval_output_paths[agent_id], "r", encoding="utf-8") as f:
             eval_result_data = json.load(f)
 
+        eval_rows = convert_pass_fail_to_boolean(eval_result_data)
+
         eval_results[agent_id] = analysis.EvaluationResult(
             variant=agent.name,
             ai_foundry_url=eval_result_data["studio_url"],
-            df_result=pd.DataFrame.from_records(eval_result_data["rows"]),
+            df_result=pd.DataFrame.from_records(eval_rows),
         )
 
     baseline_agent_id = baseline_agent_id or agent_ids[0]
@@ -356,6 +369,21 @@ def main(
         agent_base_url,
         result_view,
     )
+
+def convert_pass_fail_to_boolean(eval_result_data):
+    """ Convert "pass" and "fail" strings in evaluation results to booleans. """
+    eval_rows = eval_result_data["rows"]  
+    for row in eval_rows:
+        for key in row:
+                # Check if the field is an outputs field
+            if key.startswith("outputs."):
+                    # If the value is a string, check for "pass" or "fail"
+                if isinstance(row[key], str):
+                    if row[key].lower() == "pass":
+                        row[key] = True
+                    elif row[key].lower() == "fail":
+                        row[key] = False
+    return eval_rows
 
 
 if __name__ == "__main__":
@@ -386,7 +414,7 @@ if __name__ == "__main__":
         except ValueError as exc:
             valid_options = [e.value for e in analysis.EvaluationResultView]
             raise ValueError(f"EVALUATION_RESULT_VIEW must be one of {valid_options}") from exc
-  
+
     # Load and validate input data
     try:
         input_data_path = Path(DATA_PATH)

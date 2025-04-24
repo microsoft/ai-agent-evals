@@ -41,8 +41,8 @@ runs:
       run: python ${{ github.action_path }}/action.py
       env:
         AZURE_AIPROJECT_CONNECTION_STRING : ${{ inputs.azure-aiproject-connection-string }}
-        DEPLOYMENT_NAME: ${{ github.event.inputs.deployment-name }}
-        API_VERSION: ${{ github.event.inputs.api-version }}
+        DEPLOYMENT_NAME: ${{ inputs.deployment-name }}
+        API_VERSION: ${{ inputs.api-version }}
         DATA_PATH: ${{ inputs.data-path }}
         AGENT_IDS: ${{ inputs.agent-ids }}
         BASELINE_AGENT_ID: ${{ inputs.baseline-agent-id }}
