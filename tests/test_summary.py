@@ -72,3 +72,59 @@ def test_summarize_multiple_variants(snapshot):
 
     snapshot.snapshot_dir = Path("tests", "snapshots", "summarize")
     snapshot.assert_match(output, "two_variants.md")
+
+
+def test_summary_with_different_views(snapshot):
+    """Test summary generation with different evaluation result views."""
+    
+    # Create test data with both continuous and boolean results
+    test_data = {
+        "inputs.id": ["test1", "test2", "test3"],
+        "outputs.fluency.fluency": [0.8, 0.9, 0.7],          # Continuous score
+        "outputs.fluency.result": [True, True, False],        # Boolean result
+        "outputs.relevance.relevance": [4, 5, 3],             # Ordinal score
+        "outputs.relevance.result": [True, True, False],      # Boolean result
+    }
+    
+    result = EvaluationResult(
+        variant=agent_1.id,
+        df_result=pd.DataFrame(test_data),
+        ai_foundry_url="test_url_1",
+    )
+    results = {agent_1.id: result}
+    agents = {agent_1.id: agent_1}
+    
+    # Test DEFAULT view
+    default_output = summarize(
+        eval_results=results,
+        agents=agents,
+        baseline=agent_1.id,
+        evaluators=["FluencyEvaluator", "RelevanceEvaluator"],
+        agent_base_url="https://ai-url/",
+        result_view=EvaluationResultView.DEFAULT,
+    )
+    
+    # Test ALL view
+    all_output = summarize(
+        eval_results=results,
+        agents=agents,
+        baseline=agent_1.id,
+        evaluators=["FluencyEvaluator", "RelevanceEvaluator"],
+        agent_base_url="https://ai-url/",
+        result_view=EvaluationResultView.ALL,
+    )
+    
+    # Test RAW_SCORES view
+    raw_output = summarize(
+        eval_results=results,
+        agents=agents,
+        baseline=agent_1.id,
+        evaluators=["FluencyEvaluator", "RelevanceEvaluator"],
+        agent_base_url="https://ai-url/",
+        result_view=EvaluationResultView.RAW_SCORES,
+    )
+    
+    snapshot.snapshot_dir = Path("tests", "snapshots", "summarize")
+    snapshot.assert_match(default_output, "default_view.md")
+    snapshot.assert_match(all_output, "all_view.md")
+    snapshot.assert_match(raw_output, "raw_scores_view.md")

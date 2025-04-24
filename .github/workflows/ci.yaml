@@ -12,8 +12,11 @@ on:
       evaluation_result_view:
         description: 'Result view'
         required: false
-        default: 'default'
-        type: string
+        type: choice
+        options:
+          - 'default'
+          - 'all-scores'
+          - 'raw-scores-only'
       compare_view:
         description: 'Compare 2 AI Agents?'
         required: false
@@ -74,4 +77,4 @@ jobs:
           api-version: "2024-08-01-preview"
           data-path: ${{ github.workspace }}/tests/data/${{ github.event.inputs.data_file || 'golden-dataset-small.json' }}
           agent-ids: ${{ github.event.inputs.compare_view == 'true' && 'asst_qLmkrF8NEhh3HDhky8nWRVDk,asst_MSuB3GboqgJNw74ogzHDD2cQ' || 'asst_qLmkrF8NEhh3HDhky8nWRVDk' }}
-          evaluation-result-view: "default"
+          evaluation-result-view: ${{ github.event.inputs.evaluation_result_view || 'default' }}
