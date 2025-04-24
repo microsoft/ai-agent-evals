@@ -37,7 +37,7 @@ try {
      $evaluationResultView = Get-VstsInput -Name "evaluation-result-view"
      
      # Set as environment variables for Python script
-     $env:AZURE_AI_PROJECT_CONNECTION_STRING = $connectionString
+     $env:AZURE_AIPROJECT_CONNECTION_STRING = $connectionString
      $env:DEPLOYMENT_NAME = $deploymentName
      $env:API_VERSION = $apiVersion
      $env:DATA_PATH = $dataPath
