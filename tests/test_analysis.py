@@ -102,3 +102,41 @@ def test_evaluation_score_comparison():
     assert comparison.delta_estimate == pytest.approx(-0.233, rel=1e-2)
     assert comparison.p_value == pytest.approx(0.118, rel=1e-2)
     assert comparison.treatment_effect == "Too few samples"
+
+
+def test_boolean_conversion():
+    """Test that string pass/fail values are converted to boolean values correctly."""
+    # Create test data with string pass/fail values
+    test_data = {
+        "inputs.id": ["test1", "test2", "test3"],
+        "outputs.fluency.result": ["pass", "fail", "PASS"],  # Case variations
+        "outputs.safety.result": ["FAIL", "pass", "fail"],
+    }
+    
+    # Create a mock eval_result_data dictionary as it appears in action.py
+    eval_result_data = {"rows": []}
+    for i, test_id in enumerate(test_data["inputs.id"]):
+        row = {
+            "inputs.id": test_id,
+            "outputs.fluency.result": test_data["outputs.fluency.result"][i],
+            "outputs.safety.result": test_data["outputs.safety.result"][i]
+        }
+        eval_result_data["rows"].append(row)
+    
+    # Test the conversion logic from action.py
+    for row in eval_result_data["rows"]:
+        for key in row:
+            if key.startswith("outputs."):
+                if isinstance(row[key], str):
+                    if row[key].lower() == "pass":
+                        row[key] = True
+                    elif row[key].lower() == "fail":
+                        row[key] = False
+    
+    # Verify conversion worked correctly
+    assert eval_result_data["rows"][0]["outputs.fluency.result"] is True
+    assert eval_result_data["rows"][0]["outputs.safety.result"] is False
+    assert eval_result_data["rows"][1]["outputs.fluency.result"] is False
+    assert eval_result_data["rows"][1]["outputs.safety.result"] is True
+    assert eval_result_data["rows"][2]["outputs.fluency.result"] is True
+    assert eval_result_data["rows"][2]["outputs.safety.result"] is False

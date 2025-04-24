@@ -16,7 +16,6 @@ from scipy.stats.contingency import crosstab
 SAMPLE_SIZE_THRESHOLD = 10
 TEST_ID = "inputs.id"
 
-
 def mcnemar(contingency_table: np.ndarray) -> float:
     """McNemar's test for paired boolean data.
 
@@ -52,6 +51,17 @@ class EvaluationResult:
             raise ValueError(f"{TEST_ID} column is required in df_result")
         if self.df_result[TEST_ID].duplicated().any():
             raise ValueError(f"{TEST_ID} column must be unique")
+
+class EvaluationResultView(Enum):
+    """ Different views for displaying evaluation results
+    
+    Controls how evaluation results are presented to users,
+    with options for different levels of detail.
+    """
+
+    DEFAULT = "default" # Default view, showing only passing/defect rate
+    ALL = "all-scores" # All scores view, showing all evaluation scores
+    RAW_SCORES = "raw-scores-only" # Raw scores view, showing only raw metrics
 
 
 class EvaluationScoreDataType(Enum):
@@ -181,8 +191,22 @@ class EvaluationScoreComparison:
         self.control_variant = control.variant
         self.treatment_variant = treatment.variant
         self.count = df_paired.shape[0]
-        self.control_mean = float(df_paired["score_c"].mean())
-        self.treatment_mean = float(df_paired["score_t"].mean())
+
+        if score.data_type == EvaluationScoreDataType.BOOLEAN:
+            # For boolean scores, compute pass/fail rates based on direction
+            pass_rate_control = df_paired["score_c"].mean()
+            pass_rate_treatment = df_paired["score_t"].mean()
+            if score.desired_direction == DesiredDirection.DECREASE:
+                self.control_mean = float(1.0 - pass_rate_control)
+                self.treatment_mean = float(1.0 - pass_rate_treatment)
+            else:
+                self.control_mean = float(pass_rate_control)
+                self.treatment_mean = float(pass_rate_treatment)
+        else:
+            # For continuous and ordinal data types, use the regular mean
+            self.control_mean = float(df_paired["score_c"].mean())
+            self.treatment_mean = float(df_paired["score_t"].mean())
+    
         self.delta_estimate = self.treatment_mean - self.control_mean
         self.p_value = float(self._stat_test(df_paired))
 

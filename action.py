@@ -8,40 +8,40 @@ import json
 import os
 import time
 import uuid
+import random
 from pathlib import Path
 from typing import Optional
 
 import azure.ai.evaluation as evals
 import pandas as pd
 import yaml
+
 from azure.ai.evaluation import evaluate
 from azure.ai.projects import AIProjectClient
 from azure.ai.projects.models import Agent, ConnectionType, MessageRole, RunStatus
 from azure.identity import DefaultAzureCredential
 
+from azure.ai.evaluation import AIAgentConverter
+
 import analysis
 
 # NOTE: custom evaluators must be imported so evaluate() can pickle them
-
 
 current_dir = Path(__file__).parent
 env_path = current_dir / ".env"
 if env_path.exists():
     from dotenv import load_dotenv
-
     load_dotenv(dotenv_path=env_path)
 
-STEP_SUMMARY = os.getenv("GITHUB_STEP_SUMMARY") or os.getenv("ADO_STEP_SUMMARY")  
+STEP_SUMMARY = os.getenv("GITHUB_STEP_SUMMARY") or os.getenv("ADO_STEP_SUMMARY")
 
-AZURE_AI_PROJECT_CONNECTION_STRING = os.getenv("AZURE_AI_PROJECT_CONNECTION_STRING")
+AZURE_AIPROJECT_CONNECTION_STRING = os.getenv("AZURE_AIPROJECT_CONNECTION_STRING")
+DEPLOYMENT_NAME = os.getenv("DEPLOYMENT_NAME")
+API_VERSION = os.getenv("API_VERSION")
 DATA_PATH = os.getenv("DATA_PATH")
 AGENT_IDS = [x.strip() for x in os.getenv("AGENT_IDS", "").split(",") if x.strip()]
 BASELINE_AGENT_ID = os.getenv("BASELINE_AGENT_ID")
-
-# TODO: should these be action inputs?
-AZURE_OPENAI_DEPLOYMENT = "gpt-4o-mini"
-AZURE_OPENAI_API_VERSION = "2024-08-01-preview"
-
+EVALUATION_RESULT_VIEW = os.getenv("EVALUATION_RESULT_VIEW")
 
 def simulate_question_answer(
     project_client: AIProjectClient, agent: Agent, input: dict
@@ -53,73 +53,78 @@ def simulate_question_answer(
     1. Creates a new thread for the interaction.
     2. Sends a user message containing the query to the agent.
     3. Processes the run to generate the agent's response.
-    4. Handles retries in case of rate limit errors.
+    4. Handles retries with exponential backoff in case of rate limit errors.
     5. Extracts the agent's response and relevant metrics.
 
     Args:
         project_client (AIProjectClient): The client used to interact with the Azure AI Project.
         agent (Agent): The agent instance to simulate the interaction with.
         input (dict): A dictionary containing the input data for the interaction.
-                      It must include a "query" key and may include "id" and "ground_truth".
+                      It must include a "query" key and may include "id".
 
     Returns:
-        dict: A dictionary containing the following keys:
+        dict: A dictionary containing the evaluation input using thread data with added fields:
             - "id": The unique identifier for the input.
-            - "query": The original query sent to the agent.
-            - "response": The agent's response to the query.
-            - "ground_truth": The expected response, if provided in the input.
-            - "metrics": A dictionary of performance metrics
+            - "metrics": A dictionary of performance metrics.
 
     Raises:
         ValueError: If the run fails for reasons other than rate limits or if retries are exhausted.
     """
-
-    # TODO: validate input schema
 
     thread = project_client.agents.create_thread()
     project_client.agents.create_message(
         thread.id, role=MessageRole.USER, content=input["query"]
     )
 
-    # TODO: improve error handling
-    retries = 5
-    wait_seconds = 20
-    for attempt in range(retries):
+    # Exponential backoff retry logic
+    max_retries = 5
+    base_wait_seconds = 2
+    for attempt in range(max_retries):
         start_time = time.time()
         run = project_client.agents.create_and_process_run(
             thread_id=thread.id, agent_id=agent.id
         )
         end_time = time.time()
+      
         if run.status == RunStatus.COMPLETED:
             break
-        if run.last_error.code == "rate_limit_exceeded" and attempt < retries - 1:
+
+        if run.last_error.code == "rate_limit_exceeded" and attempt < max_retries - 1:
+            # Calculate wait time with exponential backoff (2^attempt * base_wait_seconds)
+            # with a small random jitter to avoid thundering herd problem
+            jitter = random.uniform(0, 0.5)
+            wait_seconds = (2 ** attempt) * base_wait_seconds + jitter
             print(
-                f"Rate limit exceeded. "
+                f"Rate limit exceeded (attempt {attempt + 1}/{max_retries}). "
                 f"You may wish to increase your quota. "
-                f"Retrying in {wait_seconds} seconds..."
+                f"Retrying in {wait_seconds:.2f} seconds..."
             )
             time.sleep(wait_seconds)
         else:
-            raise ValueError(run.last_error)
+            if run.status != RunStatus.COMPLETED:
+                raise ValueError(run.last_error or "Run failed to complete")
+            
+    if run.status != RunStatus.COMPLETED:
+        raise ValueError(f"Failed to complete run after {max_retries} attempts")
 
-    # TODO: how to extract context from thread?
-    messages = project_client.agents.list_messages(thread_id=thread.id)
-    last_msg = messages.get_last_text_message_by_role(MessageRole.AGENT)
-    output = {
-        "id": input["id"],
-        "query": input["query"],
-        "response": last_msg.text.value,
-        # "context": context, # FIXME
-        "ground_truth": input.get("ground_truth"),
-        "metrics": {
-            "server-run-duration-in-seconds": (
-                run.completed_at - run.created_at
-            ).total_seconds(),
-            "client-run-duration-in-seconds": end_time - start_time,
-            "completion-tokens": run.usage.completion_tokens,
-            "prompt-tokens": run.usage.prompt_tokens,
-        },
+    # Collect performance metrics
+    metrics = {
+        "server-run-duration-in-seconds": (
+            run.completed_at - run.created_at
+        ).total_seconds(),
+        "client-run-duration-in-seconds": end_time - start_time,
+        "completion-tokens": run.usage.completion_tokens,
+        "prompt-tokens": run.usage.prompt_tokens,
     }
+
+    # Generate evaluation data from the thread
+    converter = AIAgentConverter(project_client)
+    filename = os.path.join(os.getcwd(), "agent_evaluation_input_data.jsonl")
+    evaluation_data = converter.prepare_evaluation_data(thread_ids=thread.id, filename=filename)
+
+    output = evaluation_data[0]
+    output["id"] = input.get("id", str(uuid.uuid4())) # Use provided ID or generate one
+    output["metrics"] = metrics
 
     return output
 
@@ -180,6 +185,58 @@ def create_evaluators(class_names: list[str], args_default: dict) -> dict:
     return evaluators
 
 
+def validate_input_data(data: dict) -> None:
+    """
+    Validates that the input data has the required structure and fields.
+    
+    Args:
+        data: The input data to validate
+        
+    Raises:
+        ValueError: If the input data is missing required fields or has invalid types
+    """
+    # Validate required fields in the input data
+    required_fields = ["name", "evaluators", "data"]
+    missing_fields = [field for field in required_fields if field not in data]
+
+    if missing_fields:
+        raise ValueError(f"Input data is missing required fields: {', '.join(missing_fields)}")
+
+    # Validate field types
+    if not isinstance(data["name"], str):
+        raise ValueError("Input data 'name' must be a string")
+
+    if not isinstance(data["evaluators"], list):
+        raise ValueError("Input data 'evaluators' must be a list")
+
+    if not isinstance(data["data"], list):
+        raise ValueError("Input data 'data' must be a list")
+
+    if not data["data"]:
+        raise ValueError("Input data 'data' list cannot be empty")
+
+    # Validate that each item in data has a 'query' field
+    for i, item in enumerate(data["data"]):
+        if not isinstance(item, dict):
+            raise ValueError(f"Item at index {i} in 'data' must be a dictionary")
+        if "query" not in item:
+            raise ValueError(f"Item at index {i} in 'data' is missing required field 'query'")
+
+    # Validate that all evaluator names exist in the available evaluators
+    available_evaluators = []
+    evaluator_path = Path(__file__).parent / "analysis" / "evaluator-scores.yaml"
+    with open(evaluator_path, "r", encoding="utf-8") as f:
+        metadata = yaml.safe_load(f)
+        for section in metadata["sections"]:
+            for evaluator in section["evaluators"]:
+                available_evaluators.append(evaluator["class"])
+
+    unknown_evaluators = [e for e in data["evaluators"] if e not in available_evaluators 
+                          and e != "OperationalMetricsEvaluator"]
+    if unknown_evaluators:
+        raise ValueError(f"Unknown evaluators specified: {', '.join(unknown_evaluators)}")
+
+
 def main(
     credential,
     conn_str: str,
@@ -187,6 +244,7 @@ def main(
     agent_ids: list[str],
     baseline_agent_id: Optional[str] = None,
     working_dir: Path = Path("."),
+    result_view: analysis.EvaluationResultView = analysis.EvaluationResultView.DEFAULT,
 ) -> str:
     """
     Main function to evaluate AI agents using simulated conversations and analysis.
@@ -201,6 +259,8 @@ def main(
             comparison. Defaults to the first agent in `agent_ids` if not provided.
         working_dir (Path, optional): The working directory for storing intermediate
             evaluation files. Defaults to the current directory.
+        result_view (analysis.EvaluationResultView, optional): The view type for
+            displaying evaluation results. Defaults to `EvaluationResultView.DEFAULT`.
 
     Returns:
         str: A summary of the evaluation results, including analysis and comparison
@@ -225,11 +285,12 @@ def main(
 
     # use default evaluator model config
     default_connection = project_client.connections.get_default(
-        connection_type=ConnectionType.AZURE_OPEN_AI, include_credentials=True
+        connection_type=ConnectionType.AZURE_OPEN_AI,
+        include_credentials=True #TODO: OK to use ConnectionType AZURE_OPEN_AI? Can it be something else?
     )
     model_config = default_connection.to_evaluator_model_config(
-        deployment_name=AZURE_OPENAI_DEPLOYMENT,
-        api_version=AZURE_OPENAI_API_VERSION,
+        deployment_name=DEPLOYMENT_NAME,
+        api_version=API_VERSION, #TODO: is api version necessary?
         include_credentials=True,
     )
 
@@ -266,7 +327,7 @@ def main(
 
     # evaluate locally
     for agent_id, agent in agents.items():
-        result = evaluate(
+        evaluate(
             data=eval_input_paths[agent_id],
             evaluators=evaluators,
             evaluation_name=f"Evaluating agent '{agent.name}' upon dataset '{input_data['name']}'",
@@ -275,7 +336,6 @@ def main(
         )
         # display evaluation results
         print(f"Evaluation results for agent '{agent.name}':")
-        #print(result) # TODO: do we need to print results here?
 
     # analyze evaluation results
     eval_results = {}
@@ -283,10 +343,12 @@ def main(
         with open(eval_output_paths[agent_id], "r", encoding="utf-8") as f:
             eval_result_data = json.load(f)
 
+        eval_rows = convert_pass_fail_to_boolean(eval_result_data)
+
         eval_results[agent_id] = analysis.EvaluationResult(
             variant=agent.name,
             ai_foundry_url=eval_result_data["studio_url"],
-            df_result=pd.DataFrame.from_records(eval_result_data["rows"]),
+            df_result=pd.DataFrame.from_records(eval_rows),
         )
 
     baseline_agent_id = baseline_agent_id or agent_ids[0]
@@ -305,29 +367,78 @@ def main(
         baseline_agent_id,
         input_data["evaluators"] + ["OperationalMetricsEvaluator"],
         agent_base_url,
+        result_view,
     )
+
+def convert_pass_fail_to_boolean(eval_result_data):
+    """ Convert "pass" and "fail" strings in evaluation results to booleans. """
+    eval_rows = eval_result_data["rows"]  
+    for row in eval_rows:
+        for key in row:
+                # Check if the field is an outputs field
+            if key.startswith("outputs."):
+                    # If the value is a string, check for "pass" or "fail"
+                if isinstance(row[key], str):
+                    if row[key].lower() == "pass":
+                        row[key] = True
+                    elif row[key].lower() == "fail":
+                        row[key] = False
+    return eval_rows
 
 
 if __name__ == "__main__":
     # Check required environment variables
-    if not AZURE_AI_PROJECT_CONNECTION_STRING:
+    if not AZURE_AIPROJECT_CONNECTION_STRING:
         raise ValueError(
-            "AZURE_AI_PROJECT_CONNECTION_STRING environment variable is not set"
+            "AZURE_AIPROJECT_CONNECTION_STRING environment variable is not set"
         )
+    if not DEPLOYMENT_NAME:
+        raise ValueError("DEPLOYMENT_NAME environment variable is not set or empty")
+    if not API_VERSION:
+        raise ValueError("API_VERSION environment variable is not set or empty")
     if not DATA_PATH:
         raise ValueError("DATA_PATH environment variable is not set")
     if not AGENT_IDS:
         raise ValueError("AGENT_IDS environment variable is not set or empty")
 
+    # Check optional environment variables
+    if BASELINE_AGENT_ID and BASELINE_AGENT_ID not in AGENT_IDS:
+        raise ValueError(
+            f"BASELINE_AGENT_ID '{BASELINE_AGENT_ID}' is not in AGENT_IDS '{AGENT_IDS}'"
+        )
+
+    result_view = analysis.EvaluationResultView.DEFAULT
+    if EVALUATION_RESULT_VIEW:
+        try:
+            result_view = analysis.EvaluationResultView(EVALUATION_RESULT_VIEW)
+        except ValueError as exc:
+            valid_options = [e.value for e in analysis.EvaluationResultView]
+            raise ValueError(f"EVALUATION_RESULT_VIEW must be one of {valid_options}") from exc
+
+    # Load and validate input data
+    try:
+        input_data_path = Path(DATA_PATH)
+        input_data = json.loads(input_data_path.read_text(encoding="utf-8"))
+        validate_input_data(input_data)
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"Input data at {DATA_PATH} is not valid JSON") from exc
+
+    # Run evaluation and output summary
     SUMMARY_MD = main(
         credential=DefaultAzureCredential(),
-        conn_str=AZURE_AI_PROJECT_CONNECTION_STRING,
-        input_data=json.loads(Path(DATA_PATH).read_text(encoding="utf-8")),
+        conn_str=AZURE_AIPROJECT_CONNECTION_STRING,
+        input_data=input_data,
         agent_ids=AGENT_IDS,
         baseline_agent_id=BASELINE_AGENT_ID,
-        working_dir=Path(DATA_PATH).parent,
+        working_dir=input_data_path.parent,
+        result_view=result_view
     )
 
     if STEP_SUMMARY:
         with open(STEP_SUMMARY, "a", encoding="utf-8") as fp:
+            fp.write(SUMMARY_MD)
+
+    # REMOVE ME
+    if env_path.exists():
+        with open(Path(".") / "evaluation.md", "a", encoding="utf-8") as fp:
             fp.write(SUMMARY_MD)
