@@ -1,40 +1,31 @@
 ---
-name: Continuous Integration
+name: Test Action
 
 on:
   workflow_dispatch:
-  pull_request:
-    branches:
-      - main
+    inputs:
+      data_file:
+        description: 'Path to the data file for agent evaluation'
+        required: false
+        default: 'golden-dataset-small.json'
+        type: string
+      evaluation_result_view:
+        description: 'Type of evaluation scores to compute'
+        required: false
+        default: 'default'
+        type: string
+      compare_view:
+        description: 'Compare 2 agents'
+        required: false
+        default: 'true'
+        type: boolean
   push:
-    branches:
-      - main
 
 permissions:
   id-token: write
   contents: read
 
 jobs:
-  run-tests:
-    name: Run Tests
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements-dev.txt
-
-      - name: Run tests
-        run: python -m pytest
-
   run-action:
     name: Test Action
     runs-on: ubuntu-latest
@@ -57,5 +48,5 @@ jobs:
           deployment-name: "gpt-4o-mini"
           api-version: "2024-08-01-preview"
           data-path: ${{ github.workspace }}/tests/data/${{ github.event.inputs.data_file || 'golden-dataset-small.json' }}
-          agent-ids: "asst_6ScdM6tAPLIxfo6HY3Ro8Y4K, asst_chwHMbUnovWbQ0HDJKlGXDfi"
-          evaluation-result-view: "all-scores"
+          agent-ids: ${{ github.event.inputs.compare_view == 'true' && 'asst_6ScdM6tAPLIxfo6HY3Ro8Y4K, asst_chwHMbUnovWbQ0HDJKlGXDfi' || 'asst_6ScdM6tAPLIxfo6HY3Ro8Y4K' }}
+          evaluation-result-view: ${{ github.event.inputs.evaluation_result_view}} || "all-scores"
