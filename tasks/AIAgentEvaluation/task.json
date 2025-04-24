@@ -14,12 +14,28 @@
     "instanceNameFormat": "AI Agent Evaluation",
     "inputs": [
       {
-        "name": "azure-ai-project-connection-string",
+        "name": "azure-aiproject-connection-string",
         "type": "string",
         "label": "Azure AI Project Connection String",
         "defaultValue": "",
         "required": true,
-        "helpMarkDown": "The connection string for the Azure AI Project. This is used to connect to Azure OpenAI to simulate conversations with each agent, and to connect to the Azure AI Evaluation SDK to perform the evaluation."
+        "helpMarkDown": "The connection string for the Azure AI Project. This is used to connect to Azure AI Foundry to simulate conversations with each agent, and to connect to the Azure AI Evaluation SDK to perform the evaluation."
+      },
+      {
+        "name": "deployment-name",
+        "type": "string",
+        "label": "Deployment Name",
+        "defaultValue": "",
+        "required": true,
+        "helpMarkDown": "The name of the Azure AI model deployment to use for evaluation."
+      },
+      {
+        "name": "api-version",
+        "type": "string",
+        "label": "API Version",
+        "required": true,
+        "defaultValue": "",
+        "helpMarkDown": "The API version to use when connecting to model deployment."
       },
       {
         "name": "data-path",
@@ -44,6 +60,14 @@
         "defaultValue": "",
         "required": false,
         "helpMarkDown": "Agent ID of the baseline agent to compare against. By default, the first agent is used."
+      },
+      {
+        "name": "evaluation-result-view",
+        "type": "string",
+        "label": "Evaluation Result View",
+        "defaultValue": "default",
+        "required": false,
+        "helpMarkDown": "The evaluation result view. Options are \"default\" (boolean scores only such as passing and defect rates), \"all-scores\" (all scores), \"raw-scores-only\" (all non-boolean scores)"
       }
     ],
     "execution": {

@@ -28,16 +28,22 @@ try {
      }
 
      Write-Host "Reading task inputs..."
-     $connectionString = Get-VstsInput -Name "azure-ai-project-connection-string" -Require
+     $connectionString = Get-VstsInput -Name "azure-aiproject-connection-string" -Require
+     $deploymentName = Get-VstsInput -Name "deployment-name" -Require
+     $apiVersion = Get-VstsInput -Name "api-version" -Require
      $dataPath = Get-VstsInput -Name "data-path" -Require
      $agentIds = Get-VstsInput -Name "agent-ids" -Require
      $baselineAgentId = Get-VstsInput -Name "baseline-agent-id"
+     $evaluationResultView = Get-VstsInput -Name "evaluation-result-view"
      
      # Set as environment variables for Python script
      $env:AZURE_AI_PROJECT_CONNECTION_STRING = $connectionString
+     $env:DEPLOYMENT_NAME = $deploymentName
+     $env:API_VERSION = $apiVersion
      $env:DATA_PATH = $dataPath
      $env:AGENT_IDS = $agentIds
      $env:BASELINE_AGENT_ID = $baselineAgentId
+     $env:EVALUATION_RESULT_VIEW = $evaluationResultView
 
        # Log inputs (mask sensitive information)
     Write-Host "Connection string: $connectionString"

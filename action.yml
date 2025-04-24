@@ -12,7 +12,7 @@ inputs:
     required: true
   api-version:
     description: The API version to use when connecting to model deployment.
-    required: false
+    required: true
   data-path:
     description: >
       Path to the input data file containing the conversation starters. Each conversation starter

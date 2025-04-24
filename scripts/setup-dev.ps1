@@ -11,6 +11,9 @@ $repoRoot = Split-Path -Path $scriptsFolder -Parent
 $utilsPath = Join-Path -Path $scriptsFolder -ChildPath "utilities.ps1"
 . $utilsPath
 
+$setupPath = Join-Path -Path $scriptsFolder -ChildPath "setup.ps1"
+. $setupPath
+
 # Define the source and destination paths
 $sourceFolder = Join-Path -Path $repoRoot -ChildPath "tasks\AIAgentEvaluation"
 $destFolder = Join-Path -Path $repoRoot -ChildPath "tasks\AIAgentEvaluationDev"

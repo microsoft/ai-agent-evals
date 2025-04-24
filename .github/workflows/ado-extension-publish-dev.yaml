@@ -40,10 +40,9 @@ jobs:
           TOKEN=$(az account get-access-token --resource 499b84ac-1321-427f-aa17-267ca6975798 --query accessToken -o tsv)
           echo "ADO_TOKEN=$TOKEN" >> $GITHUB_ENV
 
-      - name: Run setup and setup-dev scripts
+      - name: Run setup-dev scripts
         shell: pwsh
         run: |
-          ./scripts/setup.ps1
           ./scripts/setup-dev.ps1
 
       - name: Package & Publish extension to marketplace
