@@ -439,6 +439,6 @@ if __name__ == "__main__":
             fp.write(SUMMARY_MD)
 
     # REMOVE ME
-    md_path = Path(".") / "evaluation.md"
-    with open(md_path, "a", encoding="utf-8") as fp:
-        fp.write(SUMMARY_MD)
+    if env_path.exists():
+        with open(Path(".") / "evaluation.md", "a", encoding="utf-8") as fp:
+            fp.write(SUMMARY_MD)
