@@ -2,7 +2,7 @@
     "manifestVersion": 1,
     "id": "microsoft-extension-ai-agent-evaluation",
     "publisher": "ms-azure-exp-external",
-    "version": "0.0.15",
+    "version": "0.0.x",
     "name": "Azure AI Evaluations",
     "public": false,
     "categories": ["Azure Pipelines"],

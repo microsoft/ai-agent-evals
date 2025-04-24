@@ -6,6 +6,7 @@
 
 # dev generated files 
 vss-extension-dev.json
+vss-extension-prod.json
 tasks/AIAgentEvaluationDev/
 
 # Byte-compiled / optimized / DLL files
