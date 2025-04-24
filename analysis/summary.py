@@ -109,7 +109,7 @@ def summarize(
         eval_scores = []
         for evaluator in section["evaluators"]:
             if evaluator["class"] not in evaluators:
-                continue       
+                continue
             for score in evaluator["scores"]:
                 if should_include_score(score, evaluator, result_view):
                     eval_scores.append(
