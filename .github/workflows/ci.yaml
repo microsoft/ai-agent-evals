@@ -5,10 +5,13 @@ on:
   workflow_dispatch:
     inputs:
       data_file:
-        description: 'Path to the data file for agent evaluation'
+        description: 'Data file'
         required: false
         default: 'golden-dataset-small.json'
-        type: string
+        type: choice
+        options:
+          - 'golden-dataset-small.json'
+          - 'golden-dataset.json'
       evaluation_result_view:
         description: 'Result view'
         required: false
