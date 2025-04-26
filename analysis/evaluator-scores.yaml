@@ -353,78 +353,78 @@ sections:
 
   # - name: "Composite"
   #   evaluators:
-      # Fast-follow: need context and ground-truth fields
-      # - class: "QAEvaluator"
-      #   key: "qa"
-      #   scores:
-      #     - name: "Groundedness"
-      #       key: "groundedness"
-      #       type: "Ordinal"
-      #       desired_direction: "Increase"
-      #       range: [1, 5]
-      #     - name: "Relevance"
-      #       key: "relevance"
-      #       type: "Ordinal"
-      #       desired_direction: "Increase"
-      #       range: [1, 5]
-      #     - name: "Coherence"
-      #       key: "coherence"
-      #       type: "Ordinal"
-      #       desired_direction: "Increase"
-      #       range: [1, 5]
-      #     - name: "Fluency"
-      #       key: "fluency"
-      #       type: "Ordinal"
-      #       desired_direction: "Increase"
-      #       range: [1, 5]
-      #     - name: "Similarity"
-      #       key: "similarity"
-      #       type: "Ordinal"
-      #       desired_direction: "Increase"
-      #       range: [1, 5]
-      #     - name: "F1 score"
-      #       key: "f1_score"
-      #       type: "Continuous"
-      #       desired_direction: "Increase"
-      #       range: [0, 1]
+  # Fast-follow: need context and ground-truth fields
+  # - class: "QAEvaluator"
+  #   key: "qa"
+  #   scores:
+  #     - name: "Groundedness"
+  #       key: "groundedness"
+  #       type: "Ordinal"
+  #       desired_direction: "Increase"
+  #       range: [1, 5]
+  #     - name: "Relevance"
+  #       key: "relevance"
+  #       type: "Ordinal"
+  #       desired_direction: "Increase"
+  #       range: [1, 5]
+  #     - name: "Coherence"
+  #       key: "coherence"
+  #       type: "Ordinal"
+  #       desired_direction: "Increase"
+  #       range: [1, 5]
+  #     - name: "Fluency"
+  #       key: "fluency"
+  #       type: "Ordinal"
+  #       desired_direction: "Increase"
+  #       range: [1, 5]
+  #     - name: "Similarity"
+  #       key: "similarity"
+  #       type: "Ordinal"
+  #       desired_direction: "Increase"
+  #       range: [1, 5]
+  #     - name: "F1 score"
+  #       key: "f1_score"
+  #       type: "Continuous"
+  #       desired_direction: "Increase"
+  #       range: [0, 1]
 
-      # Need ground-truth field for UngroundedAttributes
-      # - class: "ContentSafetyEvaluator"
-      #   key: "content_safety"
-      #   scores:
-      #     - name: "Violent content"
-      #       key: "violence_score"
-      #       type: "Ordinal"
-      #       desired_direction: "Decrease"
-      #       range: [0, 7]
-      #     - name: "Violent content defect rate"
-      #       key: "violence_result"
-      #       type: "Boolean"
-      #       desired_direction: "Decrease"
-      #     - name: "Sexual content"
-      #       key: "sexual_score"
-      #       type: "Ordinal"
-      #       desired_direction: "Decrease"
-      #       range: [0, 7]
-      #     - name: "Sexual content defect rate"
-      #       key: "sexual_result"
-      #       type: "Boolean"
-      #       desired_direction: "Decrease"
-      #     - name: "Self-harm-related content"
-      #       key: "self_harm_score"
-      #       type: "Ordinal"
-      #       desired_direction: "Decrease"
-      #       range: [0, 7]
-      #     - name: "Self-harm-related content defect rate"
-      #       key: "self_harm_result"
-      #       type: "Boolean"
-      #       desired_direction: "Decrease"
-      #     - name: "Hateful and unfair content"
-      #       key: "hate_unfairness_score"
-      #       type: "Ordinal"
-      #       desired_direction: "Decrease"
-      #       range: [0, 7]
-      #     - name: "Hateful and unfair content defect rate"
-      #       key: "hate_unfairness_result"
-      #       type: "Boolean"
-      #       desired_direction: "Decrease"
+  # Need ground-truth field for UngroundedAttributes
+  # - class: "ContentSafetyEvaluator"
+  #   key: "content_safety"
+  #   scores:
+  #     - name: "Violent content"
+  #       key: "violence_score"
+  #       type: "Ordinal"
+  #       desired_direction: "Decrease"
+  #       range: [0, 7]
+  #     - name: "Violent content defect rate"
+  #       key: "violence_result"
+  #       type: "Boolean"
+  #       desired_direction: "Decrease"
+  #     - name: "Sexual content"
+  #       key: "sexual_score"
+  #       type: "Ordinal"
+  #       desired_direction: "Decrease"
+  #       range: [0, 7]
+  #     - name: "Sexual content defect rate"
+  #       key: "sexual_result"
+  #       type: "Boolean"
+  #       desired_direction: "Decrease"
+  #     - name: "Self-harm-related content"
+  #       key: "self_harm_score"
+  #       type: "Ordinal"
+  #       desired_direction: "Decrease"
+  #       range: [0, 7]
+  #     - name: "Self-harm-related content defect rate"
+  #       key: "self_harm_result"
+  #       type: "Boolean"
+  #       desired_direction: "Decrease"
+  #     - name: "Hateful and unfair content"
+  #       key: "hate_unfairness_score"
+  #       type: "Ordinal"
+  #       desired_direction: "Decrease"
+  #       range: [0, 7]
+  #     - name: "Hateful and unfair content defect rate"
+  #       key: "hate_unfairness_result"
+  #       type: "Boolean"
+  #       desired_direction: "Decrease"

@@ -2,7 +2,9 @@
 
 This GitHub Action enables offline evaluation of Azure AI agents within your CI/CD pipelines. It is designed to streamline the evaluation process, allowing you to assess agent performance and make informed decisions before deploying to production.
 
-Offline evaluation involves testing AI agents using test datasets to measure their performance on various quality and safety metrics such as fluency, coherence and content safety. After setting up an [Azure AI Agent Service](hhttps://learn.microsoft.com/en-us/azure/ai-services/agents/), offline pre-production evaluation is crucial for AI application validation during integration testing, allowing developers to identify potential issues and make improvements before releasing an update to your Azure AI agent.
+Offline evaluation involves testing AI agents using test datasets to measure their performance on various quality and safety metrics such as fluency, coherence and content safety.
+
+After setting up an [Azure AI Agent Service](hhttps://learn.microsoft.com/en-us/azure/ai-services/agents/), offline pre-production evaluation is crucial for AI application validation during integration testing, allowing developers to identify potential issues and make improvements before releasing an update to your Azure AI agent.
 
 ## Features
 
@@ -46,7 +48,7 @@ Todo - add some explanation, screenshots
 To use this GitHub Action, add this GitHub Action to your CI/CD workflows and specify the trigger criteria (e.g., on commit).
 
 ```yaml
-name: 'AI Agent Evaluation'
+name: "AI Agent Evaluation"
 
 on:
   workflow_dispatch:
@@ -82,7 +84,7 @@ jobs:
         with:
           azure-ai-project-connection-string: ${{ vars.AZURE_AIPROJECT_CONNECTION_STRING }}
           data-path: ${{ github.workspace }}/data/golden-dataset.json
-          agent-ids: 'agent-id-1, agent-id-2'
+          agent-ids: "agent-id-1, agent-id-2"
 ```
 
 ## Evaluation Outputs
