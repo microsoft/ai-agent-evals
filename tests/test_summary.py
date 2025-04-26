@@ -1,3 +1,9 @@
+"""
+Tests for the summary functionality in the analysis module.
+
+The tests use snapshot testing to verify the output matches expected results.
+"""
+
 from pathlib import Path
 
 import pandas as pd

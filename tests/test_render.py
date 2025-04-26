@@ -24,17 +24,12 @@ from analysis.render import (
     fmt_treatment_badge,
 )
 
-data_result_1 = {
-    "inputs.id": [1, 2, 3],
-    "outputs.fluency.score": [0.8, 0.9, 0.85],
-    "outputs.accuracy.score": [4, 5, 4],
-}
-
-data_result_2 = {
-    "inputs.id": [1, 2, 3],
-    "outputs.fluency.score": [0.6, 0.5, 0.75],
-    "outputs.accuracy.score": [3, 4, 5],
-}
+from tests.test_analysis import (
+    data_result_1,
+    data_result_2,
+    test_score_1,
+    test_score_2,
+)
 
 
 def test_fmt_metric_value():
@@ -106,7 +101,7 @@ def test_fmt_hyperlink(test_case, text, url, tooltip, snapshot):
         ("special-characters", "A_B", "C-D", "Pass", ""),
     ],
 )
-# pylint: disable-next=too-many-arguments
+# pylint: disable-next=too-many-arguments, too-many-positional-arguments
 def test_fmt_badge(test_case, label, message, color, tooltip, snapshot):
     """Test formatting of badges."""
     output = fmt_badge(label, message, color, tooltip)
@@ -266,15 +261,10 @@ def test_fmt_treatment_badge(test_case, result_1, result_2, snapshot):
     treatment_result = EvaluationResult(
         variant="test_variant_2", df_result=pd.DataFrame(result_2)
     )
-    score = EvaluationScore(
-        name="fluency",
-        evaluator="fluency",
-        field="score",
-        data_type=EvaluationScoreDataType.CONTINUOUS,
-        desired_direction=DesiredDirection.INCREASE,
-    )
 
-    comparison = EvaluationScoreComparison(control_result, treatment_result, score)
+    comparison = EvaluationScoreComparison(
+        control_result, treatment_result, test_score_1
+    )
 
     output = fmt_treatment_badge(comparison)
 
@@ -291,15 +281,10 @@ def test_fmt_control_badge(snapshot):
     treatment_result = EvaluationResult(
         variant="test_variant_2", df_result=pd.DataFrame(data_result_2)
     )
-    score = EvaluationScore(
-        name="fluency",
-        evaluator="fluency",
-        field="score",
-        data_type=EvaluationScoreDataType.CONTINUOUS,
-        desired_direction=DesiredDirection.INCREASE,
-    )
 
-    comparison = EvaluationScoreComparison(control_result, treatment_result, score)
+    comparison = EvaluationScoreComparison(
+        control_result, treatment_result, test_score_1
+    )
 
     output = fmt_control_badge(comparison)
 
@@ -380,21 +365,7 @@ def test_fmt_table_compare(snapshot):
     result_2 = EvaluationResult(
         variant="test_variant_2", df_result=pd.DataFrame(data_result_2)
     )
-    score1 = EvaluationScore(
-        name="fluency",
-        evaluator="fluency",
-        field="score",
-        data_type=EvaluationScoreDataType.CONTINUOUS,
-        desired_direction=DesiredDirection.INCREASE,
-    )
-    score2 = EvaluationScore(
-        name="accuracy",
-        evaluator="accuracy",
-        field="score",
-        data_type=EvaluationScoreDataType.ORDINAL,
-        desired_direction=DesiredDirection.DECREASE,
-    )
-    scores = [score1, score2]
+    scores = [test_score_1, test_score_2]
     results = {"test_variant_1": result_1, "test_varaint_2": result_2}
 
     output = fmt_table_compare(scores, results, result_1.variant)
@@ -428,21 +399,7 @@ def test_fmt_table_ci(snapshot):
         ),
     )
 
-    score1 = EvaluationScore(
-        name="fluency",
-        evaluator="fluency",
-        field="score",
-        data_type=EvaluationScoreDataType.CONTINUOUS,
-        desired_direction=DesiredDirection.INCREASE,
-    )
-    score2 = EvaluationScore(
-        name="accuracy",
-        evaluator="accuracy",
-        field="score",
-        data_type=EvaluationScoreDataType.ORDINAL,
-        desired_direction=DesiredDirection.DECREASE,
-    )
-    scores = [score1, score2]
+    scores = [test_score_1, test_score_2]
 
     output = fmt_table_ci(scores, result)
 

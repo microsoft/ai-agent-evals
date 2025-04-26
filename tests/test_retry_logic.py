@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from action import simulate_question_answer
-from azure.ai.projects.models import RunStatus
+from azure.ai.projects.models import RunStatus  # pylint: disable=wrong-import-order
 
 
 class MockError:

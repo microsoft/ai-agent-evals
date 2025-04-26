@@ -10,6 +10,9 @@ from analysis.analysis import (
     EvaluationScoreDataType,
 )
 
+from action import convert_pass_fail_to_boolean
+
+
 data_result_1 = {
     "inputs.id": [1, 2, 3],
     "outputs.fluency.score": [0.8, 0.9, 0.85],
@@ -22,21 +25,30 @@ data_result_2 = {
     "outputs.accuracy.score": [3, 4, 5],
 }
 
+test_score_1 = EvaluationScore(
+    name="fluency",
+    evaluator="fluency",
+    field="score",
+    data_type=EvaluationScoreDataType.CONTINUOUS,
+    desired_direction=DesiredDirection.INCREASE,
+)
+
+test_score_2 = EvaluationScore(
+    name="accuracy",
+    evaluator="accuracy",
+    field="score",
+    data_type=EvaluationScoreDataType.ORDINAL,
+    desired_direction=DesiredDirection.DECREASE,
+)
+
 
 def test_create_score():
     # Test creating a basic evaluation score
-    score = EvaluationScore(
-        name="fluency",
-        evaluator="fluency",
-        field="score",
-        data_type=EvaluationScoreDataType.CONTINUOUS,
-        desired_direction=DesiredDirection.INCREASE,
-    )
-    assert score.name == "fluency"
-    assert score.evaluator == "fluency"
-    assert score.field == "score"
-    assert score.data_type == EvaluationScoreDataType.CONTINUOUS
-    assert score.desired_direction == DesiredDirection.INCREASE
+    assert test_score_1.name == "fluency"
+    assert test_score_1.evaluator == "fluency"
+    assert test_score_1.field == "score"
+    assert test_score_1.data_type == EvaluationScoreDataType.CONTINUOUS
+    assert test_score_1.desired_direction == DesiredDirection.INCREASE
 
 
 def test_create_evaluation_result():
@@ -124,14 +136,7 @@ def test_boolean_conversion():
         eval_result_data["rows"].append(row)
 
     # Test the conversion logic from action.py
-    for row in eval_result_data["rows"]:
-        for key in row:
-            if key.startswith("outputs."):
-                if isinstance(row[key], str):
-                    if row[key].lower() == "pass":
-                        row[key] = True
-                    elif row[key].lower() == "fail":
-                        row[key] = False
+    convert_pass_fail_to_boolean(eval_result_data)
 
     # Verify conversion worked correctly
     assert eval_result_data["rows"][0]["outputs.fluency.result"] is True

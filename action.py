@@ -249,7 +249,7 @@ def validate_input_data(data: dict) -> None:
 def main(
     credential,
     conn_str: str,
-    input: dict,
+    input_data_set: dict,
     agent_ids: list[str],
     baseline_agent_id: str | None = None,
     working_dir: Path | None = None,
@@ -308,14 +308,14 @@ def main(
     eval_output_paths = {id: working_dir / f"eval-output_{id}.json" for id in agent_ids}
 
     # facilitate paired comparisons by adding GUIDs to input data
-    for row in input["data"]:
+    for row in input_data_set["data"]:
         if "id" not in row:
             row["id"] = str(uuid.uuid4())
 
     # simulate conversations with each agent to produce evaluation inputs
     for agent_id, agent in agents.items():
         eval_input_paths[agent_id].unlink(missing_ok=True)
-        for row in input["data"]:
+        for row in input_data_set["data"]:
             try:
                 eval_input = simulate_question_answer(project_client, agent, row)
                 with eval_input_paths[agent_id].open("a", encoding="utf-8") as f:
@@ -333,14 +333,14 @@ def main(
         "azure_ai_project": project_client.scope,
         "rouge_type": evals.RougeType.ROUGE_L,
     }
-    evaluators = create_evaluators(input["evaluators"], args_default)
+    evaluators = create_evaluators(input_data_set["evaluators"], args_default)
 
     # evaluate locally
     for agent_id, agent in agents.items():
         evaluate(
             data=eval_input_paths[agent_id],
             evaluators=evaluators,
-            evaluation_name=f"Evaluating agent '{agent.name}' upon dataset '{input['name']}'",
+            evaluation_name=f"Evaluating agent '{agent.name}' upon dataset '{input_data_set['name']}'",
             azure_ai_project=project_client.scope,
             output_path=eval_output_paths[agent_id],
         )
@@ -375,7 +375,7 @@ def main(
         eval_results,
         agents,
         baseline_agent_id,
-        input["evaluators"] + ["OperationalMetricsEvaluator"],
+        input_data_set["evaluators"] + ["OperationalMetricsEvaluator"],
         agent_base_url,
         eval_result_view,
     )
@@ -438,7 +438,7 @@ if __name__ == "__main__":
     SUMMARY_MD = main(
         credential=DefaultAzureCredential(),
         conn_str=AZURE_AIPROJECT_CONNECTION_STRING,
-        input=input_data,
+        input_data_set=input_data,
         agent_ids=AGENT_IDS,
         baseline_agent_id=BASELINE_AGENT_ID,
         working_dir=input_data_path.parent,

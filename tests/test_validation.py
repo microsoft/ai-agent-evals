@@ -1,3 +1,5 @@
+"""Unit tests for the input data validation function."""
+
 import pytest
 from action import validate_input_data
 

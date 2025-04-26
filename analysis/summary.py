@@ -26,7 +26,7 @@ def should_include_score(
     score: dict, evaluator: dict, result_view: EvaluationResultView
 ) -> bool:
     """
-    Determines if a score should be included in the evaluation summary based on its type and the current view mode.
+    Determines if a score should be included in the result view.
 
     Args:
         score: Score metadata from evaluator-scores.yaml
@@ -49,7 +49,7 @@ def should_include_score(
     return result_view == EvaluationResultView.RAW_SCORES
 
 
-# pylint: disable-next=too-many-locals
+# pylint: disable-next=too-many-locals, too-many-arguments, too-many-positional-arguments
 def summarize(
     eval_results: dict[str, EvaluationResult],
     agents: dict[str, Agent],
@@ -107,34 +107,39 @@ def summarize(
 
     for section in score_metadata["sections"]:
         section_evals = [x["class"] for x in section["evaluators"]]
-        if not any(x in evaluators for x in section_evals):
-            continue
-
-        eval_scores = []
-        for evaluator in section["evaluators"]:
-            if evaluator["class"] not in evaluators:
-                continue
-            for score in evaluator["scores"]:
-                if should_include_score(score, evaluator, result_view):
-                    eval_scores.append(
-                        EvaluationScore(
-                            name=score["name"],
-                            evaluator=evaluator["key"],
-                            field=score["key"],
-                            data_type=score["type"],
-                            desired_direction=score["desired_direction"],
-                        )
-                    )
-
-        if len(eval_scores) > 0:
-            md_table = ""
-            if len(eval_results) >= 2:
-                md_table = fmt_table_compare(eval_scores, eval_results, baseline)
-            elif len(eval_results) == 1:
-                md_table = fmt_table_ci(eval_scores, eval_results[baseline])
-
-            md.append(f"#### {section['name']}\n")
-            md.append(md_table)
-            md.append("")
+        if any(x in evaluators for x in section_evals):
+            append_eval_section(
+                eval_results, baseline, evaluators, result_view, md, section
+            )
 
     return "\n".join(md)
+
+
+# pylint: disable-next=too-many-arguments, too-many-positional-arguments
+def append_eval_section(eval_results, baseline, evaluators, result_view, md, section):
+    eval_scores = []
+    for evaluator in section["evaluators"]:
+        if evaluator["class"] not in evaluators:
+            continue
+        for score in evaluator["scores"]:
+            if should_include_score(score, evaluator, result_view):
+                eval_scores.append(
+                    EvaluationScore(
+                        name=score["name"],
+                        evaluator=evaluator["key"],
+                        field=score["key"],
+                        data_type=score["type"],
+                        desired_direction=score["desired_direction"],
+                    )
+                )
+
+    if len(eval_scores) > 0:
+        md_table = ""
+        if len(eval_results) >= 2:
+            md_table = fmt_table_compare(eval_scores, eval_results, baseline)
+        elif len(eval_results) == 1:
+            md_table = fmt_table_ci(eval_scores, eval_results[baseline])
+
+        md.append(f"#### {section['name']}\n")
+        md.append(md_table)
+        md.append("")
