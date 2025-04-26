@@ -2,8 +2,8 @@
 
 import pandas as pd
 import pytest
-
 from action import convert_pass_fail_to_boolean
+
 from analysis.analysis import (
     DesiredDirection,
     EvaluationResult,
@@ -12,7 +12,6 @@ from analysis.analysis import (
     EvaluationScoreComparison,
     EvaluationScoreDataType,
 )
-
 
 data_result_1 = {
     "inputs.id": [1, 2, 3],

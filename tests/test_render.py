@@ -4,6 +4,12 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
+from tests.test_analysis import (
+    data_result_1,
+    data_result_2,
+    test_score_1,
+    test_score_2,
+)
 
 from analysis.analysis import (
     DesiredDirection,
@@ -24,13 +30,6 @@ from analysis.render import (
     fmt_table_ci,
     fmt_table_compare,
     fmt_treatment_badge,
-)
-
-from tests.test_analysis import (
-    data_result_1,
-    data_result_2,
-    test_score_1,
-    test_score_2,
 )
 
 

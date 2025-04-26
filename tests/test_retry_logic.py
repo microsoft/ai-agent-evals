@@ -10,12 +10,14 @@ from azure.ai.projects.models import RunStatus  # pylint: disable=wrong-import-o
 
 
 class MockError:
+    """Mock error class to simulate error handling in the run."""
 
     def __init__(self, code):
         self.code = code
 
 
 class MockRun:
+    """Mock run class to simulate the behavior of a run in the project client."""
 
     def __init__(self, status, error_code=None):
         self.status = status
