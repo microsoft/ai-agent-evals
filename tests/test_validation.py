@@ -1,5 +1,4 @@
 import pytest
-
 from action import validate_input_data
 
 

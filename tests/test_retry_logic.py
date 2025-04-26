@@ -2,9 +2,9 @@ import datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
-from azure.ai.projects.models import RunStatus
 
 from action import simulate_question_answer
+from azure.ai.projects.models import RunStatus
 
 
 class MockError:
