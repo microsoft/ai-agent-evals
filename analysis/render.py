@@ -39,6 +39,7 @@ COLOR_MAP = {
     "Warning": PALE_YELLOW,
     "Pass": DARK_GREEN,
     "Fail": DARK_RED,
+    "Information": PALE_GREY,
 }
 
 
@@ -114,6 +115,7 @@ def fmt_badge(label: str, message: str, color: str, tooltip: str = "") -> str:
     return fmt_image(url, alt_text, tooltip)
 
 
+
 def fmt_treatment_badge(x: EvaluationScoreComparison) -> str:
     """Format a treatment effect as a badge"""
     effect = x.treatment_effect
@@ -157,20 +159,21 @@ def fmt_control_badge(x: EvaluationScoreComparison) -> str:
     value = fmt_metric_value(x.control_mean, x.score.data_type)
     return fmt_badge("Baseline", value, WHITE)
 
-
 def fmt_ci(x: EvaluationScoreCI) -> str:
-    """Format a confidence interval"""
+    """Format a confidence interval as a badge"""
     if x.ci_lower is None or x.ci_upper is None:
-        md_ci = "n/a"
+        color = "Information"
+        tooltip_stat = "Confidence interval not applicable for this score type"
+        return fmt_badge("", "N/A", color, tooltip_stat)
     elif x.count < 10:
-        md_ci = "Too few samples"
+        color = "Information"
+        tooltip_stat = "Too few samples to determine confidence interval"
+        return fmt_badge("", "Too few samples", color, tooltip_stat)
     else:
         md_lower = fmt_metric_value(x.ci_lower, x.score.data_type)
         md_upper = fmt_metric_value(x.ci_upper, x.score.data_type)
         md_ci = f"({md_lower}, {md_upper})"
-
-    return md_ci
-
+        return md_ci 
 
 def fmt_table_compare(
     scores: list[EvaluationScore],
@@ -227,11 +230,15 @@ def fmt_table_ci(scores: list[EvaluationScore], result: EvaluationResult) -> str
                     result.variant: fmt_metric_value(
                         result_ci.mean, result_ci.score.data_type
                     ),
-                    "95% CI": fmt_ci(result_ci),
+                    "95% Confidence Interval": fmt_ci(result_ci),
                 }
             )
         except ValueError as e:
             print(f"Error comparing score {score.name}: {e}")
 
     df_summary = pd.DataFrame.from_records(records)
-    return df_summary.to_markdown(index=False)
+
+    # First column (Evaluation score) left-aligned, all other columns right-aligned
+    alignments = ['left'] + ['right'] * (len(df_summary.columns) - 1)
+    
+    return df_summary.to_markdown(index=False, colalign=alignments)

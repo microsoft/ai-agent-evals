@@ -42,18 +42,19 @@ sections:
             type: "Boolean"
             desired_direction: "Increase"
 
-      - class: "ToolCallAccuracyEvaluator"
-        key: "tool_call_accuracy"
-        scores:
-          - name: "Tool Call Accuracy"
-            key: "tool_call_accuracy"
-            type: "Ordinal"
-            desired_direction: "Increase"
-            range: [1, 5]
-          - name: "Tool Call Accuracy passing rate"
-            key: "tool_call_accuracy_result"
-            type: "Boolean"
-            desired_direction: "Increase"
+      # Cannot support build-in tools
+      # - class: "ToolCallAccuracyEvaluator"
+      #   key: "tool_call_accuracy"
+      #   scores:
+      #     - name: "Tool Call Accuracy"
+      #       key: "tool_call_accuracy"
+      #       type: "Ordinal"
+      #       desired_direction: "Increase"
+      #       range: [1, 5]
+      #     - name: "Tool Call Accuracy passing rate"
+      #       key: "tool_call_accuracy_result"
+      #       type: "Boolean"
+      #       desired_direction: "Increase"
 
       - class: "TaskAdherenceEvaluator"
         key: "task_adherence"

@@ -1,8 +1,7 @@
 {
-  "name": "golden-dataset",
+  "name": "test-dataset",
   "evaluators": [
     "IntentResolutionEvaluator",
-    "ToolCallAccuracyEvaluator",
     "TaskAdherenceEvaluator",
     "CoherenceEvaluator",
     "RelevanceEvaluator",

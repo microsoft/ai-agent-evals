@@ -1,0 +1,15 @@
+{
+  "name": "test-dataset-tiny",
+  "evaluators": [
+    "IntentResolutionEvaluator",
+    "FluencyEvaluator"
+  ],
+  "data": [
+    {
+      "query": "Tell me about Smart eyeware"
+    },
+    {
+      "query": "How long is the warranty for Smart eyeware"
+    }
+  ]
+}

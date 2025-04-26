@@ -10,9 +10,6 @@ inputs:
   deployment-name:
     description: The name of the Azure AI model deployment to use for evaluation.
     required: true
-  api-version:
-    description: The API version to use when connecting to model deployment.
-    required: false
   data-path:
     description: >
       Path to the input data file containing the conversation starters. Each conversation starter
@@ -33,6 +30,10 @@ inputs:
       "all-scores" (all scores), "raw-scores-only" (all non-boolean scores).
     required: false
     default: "default"
+  api-version:
+    description: The API version to use when connecting to model deployment.
+    required: false
+    default: ""
 
 runs:
   using: composite

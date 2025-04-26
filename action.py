@@ -85,7 +85,7 @@ def simulate_question_answer(
             thread_id=thread.id, agent_id=agent.id
         )
         end_time = time.time()
-      
+
         if run.status == RunStatus.COMPLETED:
             break
 
@@ -103,7 +103,7 @@ def simulate_question_answer(
         else:
             if run.status != RunStatus.COMPLETED:
                 raise ValueError(run.last_error or "Run failed to complete")
-            
+        
     if run.status != RunStatus.COMPLETED:
         raise ValueError(f"Failed to complete run after {max_retries} attempts")
 
@@ -119,8 +119,7 @@ def simulate_question_answer(
 
     # Generate evaluation data from the thread
     converter = AIAgentConverter(project_client)
-    filename = os.path.join(os.getcwd(), "agent_evaluation_input_data.jsonl")
-    evaluation_data = converter.prepare_evaluation_data(thread_ids=thread.id, filename=filename)
+    evaluation_data = converter.prepare_evaluation_data(thread_ids=thread.id)
 
     output = evaluation_data[0]
     output["id"] = input.get("id", str(uuid.uuid4())) # Use provided ID or generate one
@@ -286,11 +285,11 @@ def main(
     # use default evaluator model config
     default_connection = project_client.connections.get_default(
         connection_type=ConnectionType.AZURE_OPEN_AI,
-        include_credentials=True #TODO: OK to use ConnectionType AZURE_OPEN_AI? Can it be something else?
+        include_credentials=True
     )
     model_config = default_connection.to_evaluator_model_config(
         deployment_name=DEPLOYMENT_NAME,
-        api_version=API_VERSION, #TODO: is api version necessary?
+        api_version=API_VERSION or "",
         include_credentials=True,
     )
 
@@ -394,8 +393,6 @@ if __name__ == "__main__":
         )
     if not DEPLOYMENT_NAME:
         raise ValueError("DEPLOYMENT_NAME environment variable is not set or empty")
-    if not API_VERSION:
-        raise ValueError("API_VERSION environment variable is not set or empty")
     if not DATA_PATH:
         raise ValueError("DATA_PATH environment variable is not set")
     if not AGENT_IDS:

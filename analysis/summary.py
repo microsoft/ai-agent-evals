@@ -72,7 +72,8 @@ def summarize(
         Formatted markdown string with evaluation summary
     """
     md = []
-    md.append("## Azure AI Evaluation\n")
+    view_label = "" if result_view == EvaluationResultView.DEFAULT else f"({result_view.value})"
+    md.append(f"## Azure AI Evaluation {view_label}\n")
 
     def format_agent_row(agent: Agent, agent_url: str) -> str:
         result_url = eval_results[agent.id].ai_foundry_url
