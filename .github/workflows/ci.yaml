@@ -7,7 +7,7 @@ on:
       data_file:
         description: 'Data file'
         required: false
-        default: 'golden-dataset-tiny.json'
+        default: 'dataset-tiny.json'
         type: choice
         options:
           - 'dataset-tiny.json'

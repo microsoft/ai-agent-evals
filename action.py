@@ -337,10 +337,13 @@ def main(
 
     # evaluate locally
     for agent_id, agent in agents.items():
+        eval_name = (
+            f"Evaluating agent '{agent.name}' upon dataset '{input_data_set['name']}'"
+        )
         evaluate(
             data=eval_input_paths[agent_id],
             evaluators=evaluators,
-            evaluation_name=f"Evaluating agent '{agent.name}' upon dataset '{input_data_set['name']}'",
+            evaluation_name=eval_name,
             azure_ai_project=project_client.scope,
             output_path=eval_output_paths[agent_id],
         )

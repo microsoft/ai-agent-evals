@@ -1,6 +1,9 @@
+"""Tests for the analysis module functionality"""
+
 import pandas as pd
 import pytest
 
+from action import convert_pass_fail_to_boolean
 from analysis.analysis import (
     DesiredDirection,
     EvaluationResult,
@@ -9,8 +12,6 @@ from analysis.analysis import (
     EvaluationScoreComparison,
     EvaluationScoreDataType,
 )
-
-from action import convert_pass_fail_to_boolean
 
 
 data_result_1 = {
@@ -43,7 +44,7 @@ test_score_2 = EvaluationScore(
 
 
 def test_create_score():
-    # Test creating a basic evaluation score
+    """Test creating an evaluation score."""
     assert test_score_1.name == "fluency"
     assert test_score_1.evaluator == "fluency"
     assert test_score_1.field == "score"
@@ -52,7 +53,7 @@ def test_create_score():
 
 
 def test_create_evaluation_result():
-    # Test creating an evaluation result with multiple scores
+    """Test creating an evaluation result with multiple scores"""
     result = EvaluationResult(
         variant="test_variant",
         df_result=pd.DataFrame(data_result_1),
@@ -64,7 +65,7 @@ def test_create_evaluation_result():
 
 
 def test_evaluation_confidence_interval():
-    # Test creating a confidence interval for an evaluation result
+    """Test creating a confidence interval for an evaluation result"""
     result = EvaluationResult(
         variant="test_variant",
         df_result=pd.DataFrame(data_result_1),
@@ -84,7 +85,7 @@ def test_evaluation_confidence_interval():
 
 
 def test_evaluation_score_comparison():
-    # Test comparing two evaluation results
+    """Test comparing two evaluation results"""
     control_result = EvaluationResult(
         variant="test_variant_1",
         df_result=pd.DataFrame(data_result_1),

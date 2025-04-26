@@ -117,6 +117,7 @@ def summarize(
 
 # pylint: disable-next=too-many-arguments, too-many-positional-arguments
 def append_eval_section(eval_results, baseline, evaluators, result_view, md, section):
+    """Append a section of evaluation scores to the markdown summary."""
     eval_scores = []
     for evaluator in section["evaluators"]:
         if evaluator["class"] not in evaluators:

@@ -1,3 +1,6 @@
+# pylint: disable=too-few-public-methods
+"""Unit tests for the agent call retry function."""
+
 import datetime
 from unittest.mock import MagicMock, patch
 
@@ -50,8 +53,8 @@ def test_exponential_backoff(mock_sleep):
     mock_project_client.agents.list_messages.return_value = MagicMock()
 
     # Patch AIAgentConverter to avoid actual file operations
-    with patch("action.AIAgentConverter") as MockConverter:
-        MockConverter.return_value = mock_converter
+    with patch("action.AIAgentConverter") as action_mock_converter:
+        action_mock_converter.return_value = mock_converter
         mock_converter.prepare_evaluation_data.return_value = [
             {"query": "test query", "response": "test response"}
         ]
