@@ -2,17 +2,18 @@ import datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from action import simulate_question_answer
 from azure.ai.projects.models import RunStatus
 
 
 class MockError:
+
     def __init__(self, code):
         self.code = code
 
 
 class MockRun:
+
     def __init__(self, status, error_code=None):
         self.status = status
         self.last_error = MockError(error_code) if error_code else None
