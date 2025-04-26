@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
-from tests.test_analysis import (
+from test_analysis import (
     data_result_1,
     data_result_2,
     test_score_1,

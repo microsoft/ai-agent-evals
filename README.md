@@ -15,7 +15,7 @@ Offline evaluation involves testing AI agents using test datasets to measure the
 | Name                               | Description                                                                                                                                             |
 | :--------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | azure-ai-project-connection-string | Connection string of your Azure AI Project                                                                                                              |
-| agent-ids                          | Id of the agent(s) to evaluate. If multiple are provided, all agents will be evaluated and compared against the baseline with statistical test results. |
+| agent-ids                          | ID of the agent(s) to evaluate. If multiple are provided, all agents will be evaluated and compared against the baseline with statistical test results. |
 | data-path                          | Path to the data file that contains the evaluators and input for evaluations                                                                            |
 
 Here is a sample data file.
@@ -39,13 +39,13 @@ Here is a sample data file.
 
 ## Outputs
 
-TODO - add some explanation, screenshots
+Todo - add some explanation, screenshots
 
 ## Sample workflow
 
 To use this GitHub Action, add this GitHub Action to your CI/CD workflows and specify the trigger criteria (e.g., on commit).
 
-```
+```yaml
 name: 'AI Agent Evaluation'
 
 on:
@@ -85,7 +85,7 @@ jobs:
           agent-ids: 'agent-id-1, agent-id-2'
 ```
 
-## Outputs
+## Evaluation Outputs
 
 Evaluation results will be output to the summary section for each AI Evaluation GitHub Action run under Actions in GitHub.com.
 
@@ -93,7 +93,7 @@ Evaluation results will be output to the summary section for each AI Evaluation 
 
 This project welcomes contributions and suggestions. Most contributions require you to agree to a
 Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
-the rights to use your contribution. For details, visit https://cla.opensource.microsoft.com.
+the rights to use your contribution. For details, visit [here](https://cla.opensource.microsoft.com).
 
 When you submit a pull request, a CLA bot will automatically determine whether you need to provide
 a CLA and decorate the PR appropriately (e.g., status check, comment). Simply follow the instructions
