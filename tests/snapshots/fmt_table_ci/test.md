@@ -1,0 +1,4 @@
+| Evaluation score   |   test_variant |                                                                                       95% Confidence Interval |
+|:-------------------|---------------:|--------------------------------------------------------------------------------------------------------------:|
+| fluency            |           0.85 |                                                                                                (0.821, 0.879) |
+| accuracy           |            4.4 | ![: N/A](https://img.shields.io/badge/-N%2FA-e6e6e3 "Confidence interval not applicable for this score type") |

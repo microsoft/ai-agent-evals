@@ -26,6 +26,3 @@ dev = [
     "pytest",
     "pytest-snapshot",
 ]
-
-[tool.setuptools]
-packages = ["analysis"]

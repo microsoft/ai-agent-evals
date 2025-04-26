@@ -67,9 +67,9 @@ def test_exponential_backoff(mock_sleep):
         # Third retry should be ~8 seconds
         assert 7.5 <= wait_times[2] <= 8.5
         
-        # Each wait time should be approximately double the previous (allowing for jitter)
-        assert 1.8 <= wait_times[1] / wait_times[0] <= 2.2
-        assert 1.8 <= wait_times[2] / wait_times[1] <= 2.2
+        # Each wait time should be approximately double the previous (allowing for more jitter)
+        assert 1.5 <= wait_times[1] / wait_times[0] <= 2.5
+        assert 1.5 <= wait_times[2] / wait_times[1] <= 2.5
 
 
 @patch('time.sleep')

@@ -238,7 +238,9 @@ def fmt_table_ci(scores: list[EvaluationScore], result: EvaluationResult) -> str
 
     df_summary = pd.DataFrame.from_records(records)
 
-    # First column (Evaluation score) left-aligned, all other columns right-aligned
-    alignments = ['left'] + ['right'] * (len(df_summary.columns) - 1)
+    if not df_summary.empty:
+        # First column (Evaluation score) left-aligned, all other columns right-aligned
+        alignments = ['left'] + ['right'] * (len(df_summary.columns) - 1)
+        return df_summary.to_markdown(index=False, colalign=alignments)
     
-    return df_summary.to_markdown(index=False, colalign=alignments)
+    return ""

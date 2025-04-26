@@ -1,4 +1,4 @@
-## Azure AI Evaluation
+## Azure AI Evaluation (all-scores)
 
 ### Agent variants
 

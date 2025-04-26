@@ -81,9 +81,9 @@ def test_summary_with_different_views(snapshot):
     test_data = {
         "inputs.id": ["test1", "test2", "test3"],
         "outputs.fluency.fluency": [0.8, 0.9, 0.7],          # Continuous score
-        "outputs.fluency.result": [True, True, False],        # Boolean result
+        "outputs.fluency.fluency_result": [True, True, False],        # Boolean result
         "outputs.relevance.relevance": [4, 5, 3],             # Ordinal score
-        "outputs.relevance.result": [True, True, False],      # Boolean result
+        "outputs.relevance.relevance_result": [True, True, False],      # Boolean result
     }
     
     result = EvaluationResult(
