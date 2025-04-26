@@ -8,13 +8,11 @@ from action import simulate_question_answer
 
 
 class MockError:
-
     def __init__(self, code):
         self.code = code
 
 
 class MockRun:
-
     def __init__(self, status, error_code=None):
         self.status = status
         self.last_error = MockError(error_code) if error_code else None
