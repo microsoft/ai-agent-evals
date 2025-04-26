@@ -245,7 +245,14 @@ class EvaluationScoreComparison:
     # pylint: disable-next=too-many-return-statements
     def treatment_effect(
         self,
-    ) -> Literal["Zero samples", "Too few samples", "Inconclusive", "Changed", "Improved", "Degraded",]:
+    ) -> Literal[
+        "Zero samples",
+        "Too few samples",
+        "Inconclusive",
+        "Changed",
+        "Improved",
+        "Degraded",
+    ]:
         """Treatment effect based on the p-value and desired direction"""
         if self.count == 0:
             return "Zero samples"

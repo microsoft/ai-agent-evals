@@ -28,4 +28,4 @@ jobs:
         uses: super-linter/super-linter/slim@v7.1.0 # x-release-please-version
         env:
           MULTI_STATUS: false
-          FILTER_REGEX_EXCLUDE: (.*tests/snapshots/.*\.md|SECURITY\.md|SUPPORT\.md)
+            FILTER_REGEX_EXCLUDE: (.*tests/snapshots/.*\.md|SECURITY\.md|SUPPORT\.md|.*samples/.*)
