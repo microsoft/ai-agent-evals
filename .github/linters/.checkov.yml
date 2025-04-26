@@ -1,2 +1,0 @@
-skip-check:
-  - CKV_GHA_7  # Justification: Input parameters under workflow_dispatch is OK

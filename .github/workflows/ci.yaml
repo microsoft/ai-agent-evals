@@ -56,4 +56,4 @@ jobs:
           azure-aiproject-connection-string: "eastus2.api.azureml.ms;040c3674-68d4-431e-b456-a8542c77b8d1;rg-aprilk-ai-agent-test-01b;ai-project-56uji2dklqysk"
           deployment-name: "gpt-4o-mini"
           data-path: ${{ github.workspace }}/samples/data/dataset-tiny.json
-          agent-ids: 'asst_qLmkrF8NEhh3HDhky8nWRVDk,asst_MSuB3GboqgJNw74ogzHDD2cQ'
+          agent-ids: "asst_qLmkrF8NEhh3HDhky8nWRVDk,asst_MSuB3GboqgJNw74ogzHDD2cQ"
