@@ -1,26 +1,43 @@
 ---
-name: Continuous Integration
-
+name: Test Local Action
 on:
-  workflow_dispatch:
-  pull_request:
-    branches:
-      - main
   push:
-    branches:
-      - main
+  workflow_dispatch:
+    inputs:
+      data_file:
+        description: "Data file"
+        required: false
+        default: "dataset-tiny.json"
+        type: choice
+        options:
+          - "dataset-tiny.json"
+          - "dataset-small.json"
+          - "dataset.json"
+      evaluation_result_view:
+        description: "Result view"
+        required: false
+        type: choice
+        options:
+          - "default"
+          - "all-scores"
+          - "raw-scores-only"
+      compare_view:
+        description: "Compare 2 AI Agents?"
+        required: false
+        default: "true"
+        type: boolean
 
 permissions:
   id-token: write
   contents: read
 
 jobs:
-  run-tests:
-    name: Run Tests
+  run-action:
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v4
+      # required because action is unpublished
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -30,18 +47,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install ".[dev]"
-
-      - name: Run tests
-        run: python -m pytest
-
-  run-action:
-    name: Test Action
-    runs-on: ubuntu-latest
-    steps:
-      # required because action is unpublished
-      - name: Checkout code
-        uses: actions/checkout@v4
+          pip install "."
 
       - name: Azure login using Federated Credentials
         uses: azure/login@v2
