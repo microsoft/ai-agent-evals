@@ -39,123 +39,123 @@ dev = [
 ]
 
 
-[tool.black]
-line-length = 120
-target-version = ["py310"]
-include = '\.pyi?$'
-exclude = '''
-/(
-    \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | _build
-  | buck-out
-  | build
-  | dist
-  | tests/snapshots
-)/
-'''
+# [tool.black]
+# line-length = 120
+# target-version = ["py310"]
+# include = '\.pyi?$'
+# exclude = '''
+# /(
+#     \.git
+#   | \.hg
+#   | \.mypy_cache
+#   | \.tox
+#   | \.venv
+#   | _build
+#   | buck-out
+#   | build
+#   | dist
+#   | tests/snapshots
+# )/
+# '''
 
-[tool.ruff]
-target-version = "py310"
-line-length = 120
-select = [
-    "E",   # pycodestyle errors
-    "F",   # pyflakes
-    "I",   # isort
-    "W",   # pycodestyle warnings
-    "C4",  # flake8-comprehensions
-    "B",   # flake8-bugbear
-    "UP",  # pyupgrade
-]
-ignore = [
-    #"E203",  # whitespace before ':' - conflicts with black
-]
-# Files to exclude from linting
-exclude = [
-    ".git",
-    ".hg",
-    ".mypy_cache",
-    ".tox",
-    ".venv",
-    "_build",
-    "buck-out",
-    "build",
-    "dist",
-    "tests/snapshots",
-    "SECURITY.md",
-    "SUPPORT.md",
-]
+# [tool.ruff]
+# target-version = "py310"
+# line-length = 120
+# select = [
+#     "E",   # pycodestyle errors
+#     "F",   # pyflakes
+#     "I",   # isort
+#     "W",   # pycodestyle warnings
+#     "C4",  # flake8-comprehensions
+#     "B",   # flake8-bugbear
+#     "UP",  # pyupgrade
+# ]
+# ignore = [
+#     #"E203",  # whitespace before ':' - conflicts with black
+# ]
+# # Files to exclude from linting
+# exclude = [
+#     ".git",
+#     ".hg",
+#     ".mypy_cache",
+#     ".tox",
+#     ".venv",
+#     "_build",
+#     "buck-out",
+#     "build",
+#     "dist",
+#     "tests/snapshots",
+#     "SECURITY.md",
+#     "SUPPORT.md",
+# ]
 
-[tool.ruff.isort]
-known-first-party = ["analysis"]
+# [tool.ruff.isort]
+# known-first-party = ["analysis"]
 
-[tool.isort]
-profile = "black"
-line_length = 120
-# Files to skip during import sorting
-skip = [
-    ".git",
-    ".hg",
-    ".mypy_cache",
-    ".tox",
-    ".venv",
-    "_build",
-    "buck-out",
-    "build",
-    "dist",
-    "tests/snapshots",
-    "SECURITY.md",
-    "SUPPORT.md",
-]
+# [tool.isort]
+# profile = "black"
+# line_length = 120
+# # Files to skip during import sorting
+# skip = [
+#     ".git",
+#     ".hg",
+#     ".mypy_cache",
+#     ".tox",
+#     ".venv",
+#     "_build",
+#     "buck-out",
+#     "build",
+#     "dist",
+#     "tests/snapshots",
+#     "SECURITY.md",
+#     "SUPPORT.md",
+# ]
 
-[tool.pylint]
-max-line-length = 120
-disable = [
-    "missing-docstring",
-    "line-too-long",
-    "invalid-name",
-    "too-many-arguments",
-    "too-many-locals",
-    "too-many-statements",
-    "too-many-branches",
-    "too-many-instance-attributes",
-    "too-few-public-methods",
-    "duplicate-code",
-]
-good-names = ["i", "j", "k", "ex", "Run", "_"]
-# Files or directories to ignore
-ignore = [
-    "tests/snapshots",
-]
-# Patterns to exclude
-ignore-patterns = [
-    "SECURITY\\.md$",
-    "SUPPORT\\.md$",
-]
+# [tool.pylint]
+# max-line-length = 120
+# disable = [
+#     "missing-docstring",
+#     "line-too-long",
+#     "invalid-name",
+#     "too-many-arguments",
+#     "too-many-locals",
+#     "too-many-statements",
+#     "too-many-branches",
+#     "too-many-instance-attributes",
+#     "too-few-public-methods",
+#     "duplicate-code",
+# ]
+# good-names = ["i", "j", "k", "ex", "Run", "_"]
+# # Files or directories to ignore
+# ignore = [
+#     "tests/snapshots",
+# ]
+# # Patterns to exclude
+# ignore-patterns = [
+#     "SECURITY\\.md$",
+#     "SUPPORT\\.md$",
+# ]
 
-[tool.mypy]
-python_version = "3.10"
-ignore_missing_imports = true
-# Files to exclude
-exclude = [
-    "tests/snapshots",
-]
+# [tool.mypy]
+# python_version = "3.10"
+# ignore_missing_imports = true
+# # Files to exclude
+# exclude = [
+#     "tests/snapshots",
+# ]
 
-# Flake8 configuration in .flake8 file since it has better support there
+# # Flake8 configuration in .flake8 file since it has better support there
 
-[tool.pyink]
-line-length = 120
-pyink-indentation = 4
-# Paths to exclude
-exclude = [
-    "tests/snapshots/.*",
-    "SECURITY.md",
-    "SUPPORT.md",
-    ".*\\.md",
-    ".*\\.yaml",
-    ".*\\.yml",
-    ".*\\.json",
-]
+# [tool.pyink]
+# line-length = 120
+# pyink-indentation = 4
+# # Paths to exclude
+# exclude = [
+#     "tests/snapshots/.*",
+#     "SECURITY.md",
+#     "SUPPORT.md",
+#     ".*\\.md",
+#     ".*\\.yaml",
+#     ".*\\.yml",
+#     ".*\\.json",
+# ]

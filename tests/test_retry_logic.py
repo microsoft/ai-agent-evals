@@ -17,7 +17,9 @@ class MockRun:
         self.status = status
         self.last_error = MockError(error_code) if error_code else None
         self.completed_at = datetime.datetime.now()
-        self.created_at = datetime.datetime.now() - datetime.timedelta(seconds=1)  # 1 second ago
+        self.created_at = datetime.datetime.now() - datetime.timedelta(
+            seconds=1
+        )  # 1 second ago
         self.usage = MagicMock()
         self.usage.completion_tokens = 100
         self.usage.prompt_tokens = 50
@@ -49,7 +51,9 @@ def test_exponential_backoff(mock_sleep):
     # Patch AIAgentConverter to avoid actual file operations
     with patch("action.AIAgentConverter") as MockConverter:
         MockConverter.return_value = mock_converter
-        mock_converter.prepare_evaluation_data.return_value = [{"query": "test query", "response": "test response"}]
+        mock_converter.prepare_evaluation_data.return_value = [
+            {"query": "test query", "response": "test response"}
+        ]
 
         # Call the function
         input_data = {"query": "test query", "id": "test_id_1"}

@@ -13,11 +13,18 @@ from pathlib import Path
 import yaml
 from azure.ai.projects.models import Agent
 
-from .analysis import EvaluationResult, EvaluationResultView, EvaluationScore, EvaluationScoreDataType
+from .analysis import (
+    EvaluationResult,
+    EvaluationResultView,
+    EvaluationScore,
+    EvaluationScoreDataType,
+)
 from .render import fmt_hyperlink, fmt_table_ci, fmt_table_compare
 
 
-def should_include_score(score: dict, evaluator: dict, result_view: EvaluationResultView) -> bool:
+def should_include_score(
+    score: dict, evaluator: dict, result_view: EvaluationResultView
+) -> bool:
     """
     Determines if a score should be included in the evaluation summary based on its type and the current view mode.
 
@@ -65,13 +72,19 @@ def summarize(
         Formatted markdown string with evaluation summary
     """
     md = []
-    view_label = "" if result_view == EvaluationResultView.DEFAULT else f"({result_view.value})"
+    view_label = (
+        "" if result_view == EvaluationResultView.DEFAULT else f"({result_view.value})"
+    )
     md.append(f"## Azure AI Evaluation {view_label}\n")
 
     def format_agent_row(agent: Agent, agent_url: str) -> str:
         result_url = eval_results[agent.id].ai_foundry_url
         result_link = fmt_hyperlink("Click here", result_url) if result_url else ""
-        return f"| {agent.name} | " f"{fmt_hyperlink(agent.id, agent_url)} | " f"{result_link} |"
+        return (
+            f"| {agent.name} | "
+            f"{fmt_hyperlink(agent.id, agent_url)} | "
+            f"{result_link} |"
+        )
 
     md.append("### Agent variants\n")
     md.append("| Agent name | Agent ID | Evaluation results |")

@@ -41,7 +41,9 @@ BASELINE_AGENT_ID = os.getenv("BASELINE_AGENT_ID")
 EVALUATION_RESULT_VIEW = os.getenv("EVALUATION_RESULT_VIEW")
 
 
-def simulate_question_answer(project_client: AIProjectClient, agent: Agent, input: dict) -> dict:
+def simulate_question_answer(
+    project_client: AIProjectClient, agent: Agent, input: dict
+) -> dict:
     """
     Simulates a question-answering interaction with an agent.
 
@@ -67,14 +69,18 @@ def simulate_question_answer(project_client: AIProjectClient, agent: Agent, inpu
         ValueError: If the run fails for reasons other than rate limits or if retries are exhausted.
     """
     thread = project_client.agents.create_thread()
-    project_client.agents.create_message(thread.id, role=MessageRole.USER, content=input["query"])
+    project_client.agents.create_message(
+        thread.id, role=MessageRole.USER, content=input["query"]
+    )
 
     # Exponential backoff retry logic
     max_retries = 5
     base_wait_seconds = 2
     for attempt in range(max_retries):
         start_time = time.time()
-        run = project_client.agents.create_and_process_run(thread_id=thread.id, agent_id=agent.id)
+        run = project_client.agents.create_and_process_run(
+            thread_id=thread.id, agent_id=agent.id
+        )
         end_time = time.time()
 
         if run.status == RunStatus.COMPLETED:
@@ -100,7 +106,9 @@ def simulate_question_answer(project_client: AIProjectClient, agent: Agent, inpu
 
     # Collect performance metrics
     metrics = {
-        "server-run-duration-in-seconds": (run.completed_at - run.created_at).total_seconds(),
+        "server-run-duration-in-seconds": (
+            run.completed_at - run.created_at
+        ).total_seconds(),
         "client-run-duration-in-seconds": end_time - start_time,
         "completion-tokens": run.usage.completion_tokens,
         "prompt-tokens": run.usage.prompt_tokens,
@@ -157,7 +165,11 @@ def create_evaluators(class_names: list[str], args_default: dict) -> dict:
         args_required = {
             k
             for k, v in init_signature.parameters.items()
-            if (v.kind is v.POSITIONAL_OR_KEYWORD and k != "self" and v.default is v.empty)
+            if (
+                v.kind is v.POSITIONAL_OR_KEYWORD
+                and k != "self"
+                and v.default is v.empty
+            )
         }
         args_used = {k: args_default[k] for k in args_required}
 
@@ -184,7 +196,9 @@ def validate_input_data(data: dict) -> None:
     missing_fields = [field for field in required_fields if field not in data]
 
     if missing_fields:
-        raise ValueError(f"Input data is missing required fields: {', '.join(missing_fields)}")
+        raise ValueError(
+            f"Input data is missing required fields: {', '.join(missing_fields)}"
+        )
 
     # Validate field types
     if not isinstance(data["name"], str):
@@ -204,7 +218,9 @@ def validate_input_data(data: dict) -> None:
         if not isinstance(item, dict):
             raise ValueError(f"Item at index {i} in 'data' must be a dictionary")
         if "query" not in item:
-            raise ValueError(f"Item at index {i} in 'data' is missing required field 'query'")
+            raise ValueError(
+                f"Item at index {i} in 'data' is missing required field 'query'"
+            )
 
     # Validate that all evaluator names exist in the available evaluators
     available_evaluators = []
@@ -216,10 +232,14 @@ def validate_input_data(data: dict) -> None:
                 available_evaluators.append(evaluator["class"])
 
     unknown_evaluators = [
-        e for e in data["evaluators"] if e not in available_evaluators and e != "OperationalMetricsEvaluator"
+        e
+        for e in data["evaluators"]
+        if e not in available_evaluators and e != "OperationalMetricsEvaluator"
     ]
     if unknown_evaluators:
-        raise ValueError(f"Unknown evaluators specified: {', '.join(unknown_evaluators)}")
+        raise ValueError(
+            f"Unknown evaluators specified: {', '.join(unknown_evaluators)}"
+        )
 
 
 def main(
@@ -265,7 +285,9 @@ def main(
           used for comparison.
     """
     working_dir = Path(".") if working_dir is None else working_dir
-    project_client = AIProjectClient.from_connection_string(conn_str, credential=credential)
+    project_client = AIProjectClient.from_connection_string(
+        conn_str, credential=credential
+    )
 
     # use default evaluator model config
     default_connection = project_client.connections.get_default(
@@ -295,7 +317,9 @@ def main(
                 with eval_input_paths[agent_id].open("a", encoding="utf-8") as f:
                     f.write(json.dumps(eval_input) + "\n")
             except Exception as e:
-                print(f"An error occurred while simulating question-answer for agent {agent_id}: {e}")
+                print(
+                    f"An error occurred while simulating question-answer for agent {agent_id}: {e}"
+                )
 
     # create evaluator instances
     args_default = {
@@ -371,7 +395,9 @@ def convert_pass_fail_to_boolean(eval_result_data):
 if __name__ == "__main__":
     # Check required environment variables
     if not AZURE_AIPROJECT_CONNECTION_STRING:
-        raise ValueError("AZURE_AIPROJECT_CONNECTION_STRING environment variable is not set")
+        raise ValueError(
+            "AZURE_AIPROJECT_CONNECTION_STRING environment variable is not set"
+        )
     if not DEPLOYMENT_NAME:
         raise ValueError("DEPLOYMENT_NAME environment variable is not set or empty")
     if not DATA_PATH:
@@ -381,7 +407,9 @@ if __name__ == "__main__":
 
     # Check optional environment variables
     if BASELINE_AGENT_ID and BASELINE_AGENT_ID not in AGENT_IDS:
-        raise ValueError(f"BASELINE_AGENT_ID '{BASELINE_AGENT_ID}' is not in AGENT_IDS '{AGENT_IDS}'")
+        raise ValueError(
+            f"BASELINE_AGENT_ID '{BASELINE_AGENT_ID}' is not in AGENT_IDS '{AGENT_IDS}'"
+        )
 
     result_view = analysis.EvaluationResultView.DEFAULT
     if EVALUATION_RESULT_VIEW:
@@ -389,7 +417,9 @@ if __name__ == "__main__":
             result_view = analysis.EvaluationResultView(EVALUATION_RESULT_VIEW)
         except ValueError as exc:
             valid_options = [e.value for e in analysis.EvaluationResultView]
-            raise ValueError(f"EVALUATION_RESULT_VIEW must be one of {valid_options}") from exc
+            raise ValueError(
+                f"EVALUATION_RESULT_VIEW must be one of {valid_options}"
+            ) from exc
 
     # Load and validate input data
     try:

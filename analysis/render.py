@@ -43,7 +43,9 @@ COLOR_MAP = {
 }
 
 
-def fmt_metric_value(x: float, data_type: EvaluationScoreDataType, sign: bool = False) -> str:
+def fmt_metric_value(
+    x: float, data_type: EvaluationScoreDataType, sign: bool = False
+) -> str:
     """Format a metric value"""
     if data_type == EvaluationScoreDataType.ORDINAL:
         spec = ".2f"
@@ -101,7 +103,9 @@ def fmt_badge(label: str, message: str, color: str, tooltip: str = "") -> str:
         elif color == "Inconclusive":
             tooltip = "Not statistically significant."
 
-    color = COLOR_MAP.get(color, color)  # If color isn't in map, keep the original value
+    color = COLOR_MAP.get(
+        color, color
+    )  # If color isn't in map, keep the original value
 
     def escape(s: str) -> str:
         return quote(s, safe="").replace("-", "--").replace("_", "__")
@@ -192,14 +196,18 @@ def fmt_table_compare(
         try:
             row = {"Evaluation score": score.name}
 
-            compare_result = EvaluationScoreComparison(results[baseline], results[baseline], score=score)
+            compare_result = EvaluationScoreComparison(
+                results[baseline], results[baseline], score=score
+            )
             row[results[baseline].variant] = fmt_control_badge(compare_result)
 
             for variant, variant_result in results.items():
                 if variant == baseline:
                     continue
 
-                compare_result = EvaluationScoreComparison(results[baseline], variant_result, score=score)
+                compare_result = EvaluationScoreComparison(
+                    results[baseline], variant_result, score=score
+                )
                 row[variant_result.variant] = fmt_treatment_badge(compare_result)
 
             records.append(row)
@@ -223,7 +231,9 @@ def fmt_table_ci(scores: list[EvaluationScore], result: EvaluationResult) -> str
             records.append(
                 {
                     "Evaluation score": score.name,
-                    result.variant: fmt_metric_value(result_ci.mean, result_ci.score.data_type),
+                    result.variant: fmt_metric_value(
+                        result_ci.mean, result_ci.score.data_type
+                    ),
                     "95% Confidence Interval": fmt_ci(result_ci),
                 }
             )

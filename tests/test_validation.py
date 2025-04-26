@@ -21,7 +21,10 @@ def test_valid_input_data():
 def test_missing_required_fields():
     """Test that validation fails when required fields are missing."""
     # Missing name field
-    invalid_data_1 = {"evaluators": ["IntentResolutionEvaluator"], "data": [{"query": "test query"}]}
+    invalid_data_1 = {
+        "evaluators": ["IntentResolutionEvaluator"],
+        "data": [{"query": "test query"}],
+    }
 
     with pytest.raises(ValueError) as excinfo:
         validate_input_data(invalid_data_1)
@@ -35,7 +38,10 @@ def test_missing_required_fields():
     assert "missing required fields" in str(excinfo.value)
 
     # Missing data field
-    invalid_data_3 = {"name": "Test Dataset", "evaluators": ["IntentResolutionEvaluator"]}
+    invalid_data_3 = {
+        "name": "Test Dataset",
+        "evaluators": ["IntentResolutionEvaluator"],
+    }
 
     with pytest.raises(ValueError) as excinfo:
         validate_input_data(invalid_data_3)

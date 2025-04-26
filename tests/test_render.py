@@ -66,7 +66,10 @@ def test_fmt_pvalue():
 
 def test_fmt_image():
     """Test formatting of image markdown."""
-    assert fmt_image("https://example.com/image.png", "Alt text") == '![Alt text](https://example.com/image.png "")'
+    assert (
+        fmt_image("https://example.com/image.png", "Alt text")
+        == '![Alt text](https://example.com/image.png "")'
+    )
 
 
 @pytest.mark.parametrize(
@@ -257,8 +260,12 @@ def test_fmt_badge(test_case, label, message, color, tooltip, snapshot):
 def test_fmt_treatment_badge(test_case, result_1, result_2, snapshot):
     """Test formatting of badges."""
 
-    control_result = EvaluationResult(variant="test_variant_1", df_result=pd.DataFrame(result_1))
-    treatment_result = EvaluationResult(variant="test_variant_2", df_result=pd.DataFrame(result_2))
+    control_result = EvaluationResult(
+        variant="test_variant_1", df_result=pd.DataFrame(result_1)
+    )
+    treatment_result = EvaluationResult(
+        variant="test_variant_2", df_result=pd.DataFrame(result_2)
+    )
     score = EvaluationScore(
         name="fluency",
         evaluator="fluency",
@@ -278,8 +285,12 @@ def test_fmt_treatment_badge(test_case, result_1, result_2, snapshot):
 def test_fmt_control_badge(snapshot):
     """Test formatting of control badges."""
 
-    control_result = EvaluationResult(variant="test_variant_1", df_result=pd.DataFrame(data_result_1))
-    treatment_result = EvaluationResult(variant="test_variant_2", df_result=pd.DataFrame(data_result_2))
+    control_result = EvaluationResult(
+        variant="test_variant_1", df_result=pd.DataFrame(data_result_1)
+    )
+    treatment_result = EvaluationResult(
+        variant="test_variant_2", df_result=pd.DataFrame(data_result_2)
+    )
     score = EvaluationScore(
         name="fluency",
         evaluator="fluency",
@@ -308,7 +319,10 @@ def test_fmt_control_badge(snapshot):
         ),
         (
             "not-applicable",
-            {"inputs.id": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "outputs.ordinal.score": [1, 2, 3, 1, 2, 3, 1, 2, 3, 1]},
+            {
+                "inputs.id": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                "outputs.ordinal.score": [1, 2, 3, 1, 2, 3, 1, 2, 3, 1],
+            },
             "ordinal",
             EvaluationScoreDataType.ORDINAL,
             "N/A",
@@ -340,7 +354,9 @@ def test_fmt_control_badge(snapshot):
 def test_fmt_ci(test_case, result, evaluator, score_data_type, expected_contains):
     """Test formatting of confidence intervals."""
 
-    result_obj = EvaluationResult(variant="test_variant", df_result=pd.DataFrame(result))
+    result_obj = EvaluationResult(
+        variant="test_variant", df_result=pd.DataFrame(result)
+    )
     score = EvaluationScore(
         name="test_score",
         evaluator=evaluator,
@@ -358,8 +374,12 @@ def test_fmt_ci(test_case, result, evaluator, score_data_type, expected_contains
 def test_fmt_table_compare(snapshot):
     """Test formatting of table comparison."""
 
-    result_1 = EvaluationResult(variant="test_variant_1", df_result=pd.DataFrame(data_result_1))
-    result_2 = EvaluationResult(variant="test_variant_2", df_result=pd.DataFrame(data_result_2))
+    result_1 = EvaluationResult(
+        variant="test_variant_1", df_result=pd.DataFrame(data_result_1)
+    )
+    result_2 = EvaluationResult(
+        variant="test_variant_2", df_result=pd.DataFrame(data_result_2)
+    )
     score1 = EvaluationScore(
         name="fluency",
         evaluator="fluency",
@@ -391,7 +411,18 @@ def test_fmt_table_ci(snapshot):
         df_result=pd.DataFrame(
             {
                 "inputs.id": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-                "outputs.fluency.score": [0.8, 0.9, 0.85, 0.8, 0.9, 0.85, 0.8, 0.9, 0.85, 0.85],
+                "outputs.fluency.score": [
+                    0.8,
+                    0.9,
+                    0.85,
+                    0.8,
+                    0.9,
+                    0.85,
+                    0.8,
+                    0.9,
+                    0.85,
+                    0.85,
+                ],
                 "outputs.accuracy.score": [4, 5, 4, 4, 5, 4, 4, 5, 4, 5],
             }
         ),

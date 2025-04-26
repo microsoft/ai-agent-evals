@@ -128,7 +128,9 @@ class EvaluationScoreCI:
         if self.score.data_type == EvaluationScoreDataType.BOOLEAN:
             result = binomtest(data.sum(), data.count())
             mean = result.proportion_estimate
-            ci = result.proportion_ci(confidence_level=confidence_level, method="wilsoncc")
+            ci = result.proportion_ci(
+                confidence_level=confidence_level, method="wilsoncc"
+            )
             ci_lower = ci.low
             ci_upper = ci.high
 
@@ -163,13 +165,22 @@ class EvaluationScoreComparison:
     ):
         # Ensure the evaluation key is present in both dataframes
         col_score = f"outputs.{score.evaluator}.{score.field}"
-        if col_score not in control.df_result.columns or col_score not in treatment.df_result.columns:
+        if (
+            col_score not in control.df_result.columns
+            or col_score not in treatment.df_result.columns
+        ):
             raise ValueError(f"{col_score} column is required in both results")
 
-        df_c = control.df_result[[TEST_ID, col_score]].rename(columns={col_score: "score"})
-        df_t = treatment.df_result[[TEST_ID, col_score]].rename(columns={col_score: "score"})
+        df_c = control.df_result[[TEST_ID, col_score]].rename(
+            columns={col_score: "score"}
+        )
+        df_t = treatment.df_result[[TEST_ID, col_score]].rename(
+            columns={col_score: "score"}
+        )
 
-        df_paired = df_c.merge(df_t, how="inner", on=TEST_ID, suffixes=("_c", "_t"), validate="one_to_one")
+        df_paired = df_c.merge(
+            df_t, how="inner", on=TEST_ID, suffixes=("_c", "_t"), validate="one_to_one"
+        )
 
         # raise exception if there are unmatched rows (will cause contradictions)
         if df_paired.shape[0] < max(df_c.shape[0], df_t.shape[0]):
@@ -265,8 +276,14 @@ class EvaluationScoreComparison:
             return "Inconclusive"
         if self.score.desired_direction == DesiredDirection.NEUTRAL:
             return "Changed"
-        if self.score.desired_direction == DesiredDirection.INCREASE and self.treatment_mean > self.control_mean:
+        if (
+            self.score.desired_direction == DesiredDirection.INCREASE
+            and self.treatment_mean > self.control_mean
+        ):
             return "Improved"
-        if self.score.desired_direction == DesiredDirection.DECREASE and self.treatment_mean < self.control_mean:
+        if (
+            self.score.desired_direction == DesiredDirection.DECREASE
+            and self.treatment_mean < self.control_mean
+        ):
             return "Improved"
         return "Degraded"
