@@ -41,8 +41,9 @@ BASELINE_AGENT_ID = os.getenv("BASELINE_AGENT_ID")
 EVALUATION_RESULT_VIEW = os.getenv("EVALUATION_RESULT_VIEW")
 
 
+# pylint: disable=too-many-locals
 def simulate_question_answer(
-    project_client: AIProjectClient, agent: Agent, input: dict
+    project_client: AIProjectClient, agent: Agent, input_data: dict
 ) -> dict:
     """
     Simulates a question-answering interaction with an agent.
@@ -57,7 +58,7 @@ def simulate_question_answer(
     Args:
         project_client (AIProjectClient): The client used to interact with the Azure AI Project.
         agent (Agent): The agent instance to simulate the interaction with.
-        input (dict): A dictionary containing the input data for the interaction.
+        input_data (dict): A dictionary containing the input data for the interaction.
                       It must include a "query" key and may include "id".
 
     Returns:
@@ -70,7 +71,7 @@ def simulate_question_answer(
     """
     thread = project_client.agents.create_thread()
     project_client.agents.create_message(
-        thread.id, role=MessageRole.USER, content=input["query"]
+        thread.id, role=MessageRole.USER, content=input_data["query"]
     )
 
     # Exponential backoff retry logic
@@ -119,7 +120,9 @@ def simulate_question_answer(
     evaluation_data = converter.prepare_evaluation_data(thread_ids=thread.id)
 
     output = evaluation_data[0]
-    output["id"] = input.get("id", str(uuid.uuid4()))  # Use provided ID or generate one
+    output["id"] = input_data.get(
+        "id", str(uuid.uuid4())
+    )  # Use provided ID or generate one
     output["metrics"] = metrics
 
     return output
@@ -242,6 +245,7 @@ def validate_input_data(data: dict) -> None:
         )
 
 
+# pylint: disable=too-many-locals
 def main(
     credential,
     conn_str: str,
