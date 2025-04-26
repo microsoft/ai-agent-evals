@@ -5,26 +5,26 @@ on:
   workflow_dispatch:
     inputs:
       data_file:
-        description: 'Data file'
+        description: "Data file"
         required: false
-        default: 'dataset-tiny.json'
+        default: "dataset-tiny.json"
         type: choice
         options:
-          - 'dataset-tiny.json'
-          - 'dataset-small.json'
-          - 'dataset.json'
+          - "dataset-tiny.json"
+          - "dataset-small.json"
+          - "dataset.json"
       evaluation_result_view:
-        description: 'Result view'
+        description: "Result view"
         required: false
         type: choice
         options:
-          - 'default'
-          - 'all-scores'
-          - 'raw-scores-only'
+          - "default"
+          - "all-scores"
+          - "raw-scores-only"
       compare_view:
-        description: 'Compare 2 AI Agents?'
+        description: "Compare 2 AI Agents?"
         required: false
-        default: 'true'
+        default: "true"
         type: boolean
   pull_request:
     branches:

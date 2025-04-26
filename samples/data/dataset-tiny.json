@@ -1,9 +1,6 @@
 {
   "name": "test-dataset-tiny",
-  "evaluators": [
-    "IntentResolutionEvaluator",
-    "FluencyEvaluator"
-  ],
+  "evaluators": ["IntentResolutionEvaluator", "FluencyEvaluator"],
   "data": [
     {
       "query": "Tell me about Smart eyeware"

@@ -53,7 +53,7 @@ runs:
       shell: bash
       run: python ${{ github.action_path }}/action.py
       env:
-        AZURE_AIPROJECT_CONNECTION_STRING : ${{ inputs.azure-aiproject-connection-string }}
+        AZURE_AIPROJECT_CONNECTION_STRING: ${{ inputs.azure-aiproject-connection-string }}
         DEPLOYMENT_NAME: ${{ inputs.deployment-name }}
         API_VERSION: ${{ inputs.api-version }}
         DATA_PATH: ${{ inputs.data-path }}
