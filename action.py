@@ -43,7 +43,7 @@ EVALUATION_RESULT_VIEW = os.getenv("EVALUATION_RESULT_VIEW")
 
 # pylint: disable=too-many-locals
 def simulate_question_answer(
-    project_client: AIProjectClient, agent: Agent, input_data: dict
+    project_client: AIProjectClient, agent: Agent, input_queries: dict
 ) -> dict:
     """
     Simulates a question-answering interaction with an agent.
@@ -58,7 +58,7 @@ def simulate_question_answer(
     Args:
         project_client (AIProjectClient): The client used to interact with the Azure AI Project.
         agent (Agent): The agent instance to simulate the interaction with.
-        input_data (dict): A dictionary containing the input data for the interaction.
+        input_queries (dict): A dictionary containing the input data for the interaction.
                       It must include a "query" key and may include "id".
 
     Returns:
@@ -71,7 +71,7 @@ def simulate_question_answer(
     """
     thread = project_client.agents.create_thread()
     project_client.agents.create_message(
-        thread.id, role=MessageRole.USER, content=input_data["query"]
+        thread.id, role=MessageRole.USER, content=input_queries["query"]
     )
 
     # Exponential backoff retry logic
@@ -120,7 +120,7 @@ def simulate_question_answer(
     evaluation_data = converter.prepare_evaluation_data(thread_ids=thread.id)
 
     output = evaluation_data[0]
-    output["id"] = input_data.get(
+    output["id"] = input_queries.get(
         "id", str(uuid.uuid4())
     )  # Use provided ID or generate one
     output["metrics"] = metrics
@@ -245,15 +245,15 @@ def validate_input_data(data: dict) -> None:
         )
 
 
-# pylint: disable=too-many-locals
+# pylint: disable=too-many-locals, too-many-arguments, too-many-positional-arguments
 def main(
     credential,
     conn_str: str,
-    input_data: dict,
+    input: dict,
     agent_ids: list[str],
     baseline_agent_id: str | None = None,
     working_dir: Path | None = None,
-    result_view: analysis.EvaluationResultView = analysis.EvaluationResultView.DEFAULT,
+    eval_result_view: analysis.EvaluationResultView = analysis.EvaluationResultView.DEFAULT,
 ) -> str:
     """
     Main function to evaluate AI agents using simulated conversations and analysis.
@@ -261,14 +261,14 @@ def main(
     Args:
         credential: The credential object for authentication.
         conn_str (str): The connection string for the AI project.
-        input_data (dict): The input data containing evaluation details, including
+        input (dict): The input data containing evaluation details, including
             the dataset and evaluator configurations.
         agent_ids (list[str]): A list of agent IDs to be evaluated.
         baseline_agent_id (Optional[str], optional): The ID of the baseline agent for
             comparison. Defaults to the first agent in `agent_ids` if not provided.
         working_dir (Path, optional): The working directory for storing intermediate
             evaluation files. Defaults to the current directory.
-        result_view (analysis.EvaluationResultView, optional): The view type for
+        eval_result_view (analysis.EvaluationResultView, optional): The view type for
             displaying evaluation results. Defaults to `EvaluationResultView.DEFAULT`.
 
     Returns:
@@ -308,18 +308,19 @@ def main(
     eval_output_paths = {id: working_dir / f"eval-output_{id}.json" for id in agent_ids}
 
     # facilitate paired comparisons by adding GUIDs to input data
-    for row in input_data["data"]:
+    for row in input["data"]:
         if "id" not in row:
             row["id"] = str(uuid.uuid4())
 
     # simulate conversations with each agent to produce evaluation inputs
     for agent_id, agent in agents.items():
         eval_input_paths[agent_id].unlink(missing_ok=True)
-        for row in input_data["data"]:
+        for row in input["data"]:
             try:
                 eval_input = simulate_question_answer(project_client, agent, row)
                 with eval_input_paths[agent_id].open("a", encoding="utf-8") as f:
                     f.write(json.dumps(eval_input) + "\n")
+            # pylint: disable=broad-exception-caught
             except Exception as e:
                 print(
                     f"An error occurred while simulating question-answer for agent {agent_id}: {e}"
@@ -332,14 +333,14 @@ def main(
         "azure_ai_project": project_client.scope,
         "rouge_type": evals.RougeType.ROUGE_L,
     }
-    evaluators = create_evaluators(input_data["evaluators"], args_default)
+    evaluators = create_evaluators(input["evaluators"], args_default)
 
     # evaluate locally
     for agent_id, agent in agents.items():
         evaluate(
             data=eval_input_paths[agent_id],
             evaluators=evaluators,
-            evaluation_name=f"Evaluating agent '{agent.name}' upon dataset '{input_data['name']}'",
+            evaluation_name=f"Evaluating agent '{agent.name}' upon dataset '{input['name']}'",
             azure_ai_project=project_client.scope,
             output_path=eval_output_paths[agent_id],
         )
@@ -374,9 +375,9 @@ def main(
         eval_results,
         agents,
         baseline_agent_id,
-        input_data["evaluators"] + ["OperationalMetricsEvaluator"],
+        input["evaluators"] + ["OperationalMetricsEvaluator"],
         agent_base_url,
-        result_view,
+        eval_result_view,
     )
 
 
@@ -437,11 +438,11 @@ if __name__ == "__main__":
     SUMMARY_MD = main(
         credential=DefaultAzureCredential(),
         conn_str=AZURE_AIPROJECT_CONNECTION_STRING,
-        input_data=input_data,
+        input=input_data,
         agent_ids=AGENT_IDS,
         baseline_agent_id=BASELINE_AGENT_ID,
         working_dir=input_data_path.parent,
-        result_view=result_view,
+        eval_result_view=result_view,
     )
 
     if STEP_SUMMARY:
