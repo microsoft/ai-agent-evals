@@ -43,9 +43,7 @@ COLOR_MAP = {
 }
 
 
-def fmt_metric_value(
-    x: float, data_type: EvaluationScoreDataType, sign: bool = False
-) -> str:
+def fmt_metric_value(x: float, data_type: EvaluationScoreDataType, sign: bool = False) -> str:
     """Format a metric value"""
     if data_type == EvaluationScoreDataType.ORDINAL:
         spec = ".2f"
@@ -115,7 +113,6 @@ def fmt_badge(label: str, message: str, color: str, tooltip: str = "") -> str:
     return fmt_image(url, alt_text, tooltip)
 
 
-
 def fmt_treatment_badge(x: EvaluationScoreComparison) -> str:
     """Format a treatment effect as a badge"""
     effect = x.treatment_effect
@@ -159,21 +156,24 @@ def fmt_control_badge(x: EvaluationScoreComparison) -> str:
     value = fmt_metric_value(x.control_mean, x.score.data_type)
     return fmt_badge("Baseline", value, WHITE)
 
+
 def fmt_ci(x: EvaluationScoreCI) -> str:
     """Format a confidence interval as a badge"""
     if x.ci_lower is None or x.ci_upper is None:
         color = "Information"
         tooltip_stat = "Confidence interval not applicable for this score type"
         return fmt_badge("", "N/A", color, tooltip_stat)
-    elif x.count < 10:
+
+    if x.count < 10:
         color = "Information"
         tooltip_stat = "Too few samples to determine confidence interval"
         return fmt_badge("", "Too few samples", color, tooltip_stat)
-    else:
-        md_lower = fmt_metric_value(x.ci_lower, x.score.data_type)
-        md_upper = fmt_metric_value(x.ci_upper, x.score.data_type)
-        md_ci = f"({md_lower}, {md_upper})"
-        return md_ci 
+
+    md_lower = fmt_metric_value(x.ci_lower, x.score.data_type)
+    md_upper = fmt_metric_value(x.ci_upper, x.score.data_type)
+    md_ci = f"({md_lower}, {md_upper})"
+    return md_ci
+
 
 def fmt_table_compare(
     scores: list[EvaluationScore],
@@ -192,18 +192,14 @@ def fmt_table_compare(
         try:
             row = {"Evaluation score": score.name}
 
-            compare_result = EvaluationScoreComparison(
-                results[baseline], results[baseline], score=score
-            )
+            compare_result = EvaluationScoreComparison(results[baseline], results[baseline], score=score)
             row[results[baseline].variant] = fmt_control_badge(compare_result)
 
             for variant, variant_result in results.items():
                 if variant == baseline:
                     continue
 
-                compare_result = EvaluationScoreComparison(
-                    results[baseline], variant_result, score=score
-                )
+                compare_result = EvaluationScoreComparison(results[baseline], variant_result, score=score)
                 row[variant_result.variant] = fmt_treatment_badge(compare_result)
 
             records.append(row)
@@ -227,9 +223,7 @@ def fmt_table_ci(scores: list[EvaluationScore], result: EvaluationResult) -> str
             records.append(
                 {
                     "Evaluation score": score.name,
-                    result.variant: fmt_metric_value(
-                        result_ci.mean, result_ci.score.data_type
-                    ),
+                    result.variant: fmt_metric_value(result_ci.mean, result_ci.score.data_type),
                     "95% Confidence Interval": fmt_ci(result_ci),
                 }
             )
@@ -240,7 +234,7 @@ def fmt_table_ci(scores: list[EvaluationScore], result: EvaluationResult) -> str
 
     if not df_summary.empty:
         # First column (Evaluation score) left-aligned, all other columns right-aligned
-        alignments = ['left'] + ['right'] * (len(df_summary.columns) - 1)
+        alignments = ["left"] + ["right"] * (len(df_summary.columns) - 1)
         return df_summary.to_markdown(index=False, colalign=alignments)
-    
+
     return ""

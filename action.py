@@ -6,22 +6,18 @@
 import inspect
 import json
 import os
+import random
 import time
 import uuid
-import random
 from pathlib import Path
-from typing import Optional
 
 import azure.ai.evaluation as evals
 import pandas as pd
 import yaml
-
-from azure.ai.evaluation import evaluate
+from azure.ai.evaluation import AIAgentConverter, evaluate
 from azure.ai.projects import AIProjectClient
 from azure.ai.projects.models import Agent, ConnectionType, MessageRole, RunStatus
 from azure.identity import DefaultAzureCredential
-
-from azure.ai.evaluation import AIAgentConverter
 
 import analysis
 
@@ -31,6 +27,7 @@ current_dir = Path(__file__).parent
 env_path = current_dir / ".env"
 if env_path.exists():
     from dotenv import load_dotenv
+
     load_dotenv(dotenv_path=env_path)
 
 STEP_SUMMARY = os.getenv("GITHUB_STEP_SUMMARY") or os.getenv("ADO_STEP_SUMMARY")
@@ -43,9 +40,8 @@ AGENT_IDS = [x.strip() for x in os.getenv("AGENT_IDS", "").split(",") if x.strip
 BASELINE_AGENT_ID = os.getenv("BASELINE_AGENT_ID")
 EVALUATION_RESULT_VIEW = os.getenv("EVALUATION_RESULT_VIEW")
 
-def simulate_question_answer(
-    project_client: AIProjectClient, agent: Agent, input: dict
-) -> dict:
+
+def simulate_question_answer(project_client: AIProjectClient, agent: Agent, input: dict) -> dict:
     """
     Simulates a question-answering interaction with an agent.
 
@@ -70,20 +66,15 @@ def simulate_question_answer(
     Raises:
         ValueError: If the run fails for reasons other than rate limits or if retries are exhausted.
     """
-
     thread = project_client.agents.create_thread()
-    project_client.agents.create_message(
-        thread.id, role=MessageRole.USER, content=input["query"]
-    )
+    project_client.agents.create_message(thread.id, role=MessageRole.USER, content=input["query"])
 
     # Exponential backoff retry logic
     max_retries = 5
     base_wait_seconds = 2
     for attempt in range(max_retries):
         start_time = time.time()
-        run = project_client.agents.create_and_process_run(
-            thread_id=thread.id, agent_id=agent.id
-        )
+        run = project_client.agents.create_and_process_run(thread_id=thread.id, agent_id=agent.id)
         end_time = time.time()
 
         if run.status == RunStatus.COMPLETED:
@@ -93,25 +84,23 @@ def simulate_question_answer(
             # Calculate wait time with exponential backoff (2^attempt * base_wait_seconds)
             # with a small random jitter to avoid thundering herd problem
             jitter = random.uniform(0, 0.5)
-            wait_seconds = (2 ** attempt) * base_wait_seconds + jitter
+            wait_seconds = (2**attempt) * base_wait_seconds + jitter
             print(
                 f"Rate limit exceeded (attempt {attempt + 1}/{max_retries}). "
                 f"You may wish to increase your quota. "
-                f"Retrying in {wait_seconds:.2f} seconds..."
+                f"Retrying in {wait_seconds: .2f} seconds..."
             )
             time.sleep(wait_seconds)
         else:
             if run.status != RunStatus.COMPLETED:
                 raise ValueError(run.last_error or "Run failed to complete")
-        
+
     if run.status != RunStatus.COMPLETED:
         raise ValueError(f"Failed to complete run after {max_retries} attempts")
 
     # Collect performance metrics
     metrics = {
-        "server-run-duration-in-seconds": (
-            run.completed_at - run.created_at
-        ).total_seconds(),
+        "server-run-duration-in-seconds": (run.completed_at - run.created_at).total_seconds(),
         "client-run-duration-in-seconds": end_time - start_time,
         "completion-tokens": run.usage.completion_tokens,
         "prompt-tokens": run.usage.prompt_tokens,
@@ -122,7 +111,7 @@ def simulate_question_answer(
     evaluation_data = converter.prepare_evaluation_data(thread_ids=thread.id)
 
     output = evaluation_data[0]
-    output["id"] = input.get("id", str(uuid.uuid4())) # Use provided ID or generate one
+    output["id"] = input.get("id", str(uuid.uuid4()))  # Use provided ID or generate one
     output["metrics"] = metrics
 
     return output
@@ -146,7 +135,7 @@ def create_evaluators(class_names: list[str], args_default: dict) -> dict:
         KeyError: If a required argument for an evaluator class is missing in `args_default`.
     """
     path = Path(__file__).parent / "analysis" / "evaluator-scores.yaml"
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         evaluator_metadata = yaml.safe_load(f)
 
     evaluators = {}
@@ -168,11 +157,7 @@ def create_evaluators(class_names: list[str], args_default: dict) -> dict:
         args_required = {
             k
             for k, v in init_signature.parameters.items()
-            if (
-                v.kind is v.POSITIONAL_OR_KEYWORD
-                and k != "self"
-                and v.default is v.empty
-            )
+            if (v.kind is v.POSITIONAL_OR_KEYWORD and k != "self" and v.default is v.empty)
         }
         args_used = {k: args_default[k] for k in args_required}
 
@@ -187,10 +172,10 @@ def create_evaluators(class_names: list[str], args_default: dict) -> dict:
 def validate_input_data(data: dict) -> None:
     """
     Validates that the input data has the required structure and fields.
-    
+
     Args:
         data: The input data to validate
-        
+
     Raises:
         ValueError: If the input data is missing required fields or has invalid types
     """
@@ -224,14 +209,15 @@ def validate_input_data(data: dict) -> None:
     # Validate that all evaluator names exist in the available evaluators
     available_evaluators = []
     evaluator_path = Path(__file__).parent / "analysis" / "evaluator-scores.yaml"
-    with open(evaluator_path, "r", encoding="utf-8") as f:
+    with open(evaluator_path, encoding="utf-8") as f:
         metadata = yaml.safe_load(f)
         for section in metadata["sections"]:
             for evaluator in section["evaluators"]:
                 available_evaluators.append(evaluator["class"])
 
-    unknown_evaluators = [e for e in data["evaluators"] if e not in available_evaluators 
-                          and e != "OperationalMetricsEvaluator"]
+    unknown_evaluators = [
+        e for e in data["evaluators"] if e not in available_evaluators and e != "OperationalMetricsEvaluator"
+    ]
     if unknown_evaluators:
         raise ValueError(f"Unknown evaluators specified: {', '.join(unknown_evaluators)}")
 
@@ -241,8 +227,8 @@ def main(
     conn_str: str,
     input_data: dict,
     agent_ids: list[str],
-    baseline_agent_id: Optional[str] = None,
-    working_dir: Path = Path("."),
+    baseline_agent_id: str | None = None,
+    working_dir: Path | None = None,
     result_view: analysis.EvaluationResultView = analysis.EvaluationResultView.DEFAULT,
 ) -> str:
     """
@@ -278,14 +264,12 @@ def main(
         - The evaluation results are analyzed and summarized, with a baseline agent
           used for comparison.
     """
-    project_client = AIProjectClient.from_connection_string(
-        conn_str, credential=credential
-    )
+    working_dir = Path(".") if working_dir is None else working_dir
+    project_client = AIProjectClient.from_connection_string(conn_str, credential=credential)
 
     # use default evaluator model config
     default_connection = project_client.connections.get_default(
-        connection_type=ConnectionType.AZURE_OPEN_AI,
-        include_credentials=True
+        connection_type=ConnectionType.AZURE_OPEN_AI, include_credentials=True
     )
     model_config = default_connection.to_evaluator_model_config(
         deployment_name=DEPLOYMENT_NAME,
@@ -311,9 +295,7 @@ def main(
                 with eval_input_paths[agent_id].open("a", encoding="utf-8") as f:
                     f.write(json.dumps(eval_input) + "\n")
             except Exception as e:
-                print(
-                    f"An error occurred while simulating question-answer for agent {agent_id}: {e}"
-                )
+                print(f"An error occurred while simulating question-answer for agent {agent_id}: {e}")
 
     # create evaluator instances
     args_default = {
@@ -334,12 +316,12 @@ def main(
             output_path=eval_output_paths[agent_id],
         )
         # display evaluation results
-        print(f"Evaluation results for agent '{agent.name}':")
+        print(f"Evaluation results for agent '{agent.name}': ")
 
     # analyze evaluation results
     eval_results = {}
     for agent_id, agent in agents.items():
-        with open(eval_output_paths[agent_id], "r", encoding="utf-8") as f:
+        with open(eval_output_paths[agent_id], encoding="utf-8") as f:
             eval_result_data = json.load(f)
 
         eval_rows = convert_pass_fail_to_boolean(eval_result_data)
@@ -369,14 +351,15 @@ def main(
         result_view,
     )
 
+
 def convert_pass_fail_to_boolean(eval_result_data):
-    """ Convert "pass" and "fail" strings in evaluation results to booleans. """
-    eval_rows = eval_result_data["rows"]  
+    """Convert "pass" and "fail" strings in evaluation results to booleans."""
+    eval_rows = eval_result_data["rows"]
     for row in eval_rows:
         for key in row:
-                # Check if the field is an outputs field
+            # Check if the field is an outputs field
             if key.startswith("outputs."):
-                    # If the value is a string, check for "pass" or "fail"
+                # If the value is a string, check for "pass" or "fail"
                 if isinstance(row[key], str):
                     if row[key].lower() == "pass":
                         row[key] = True
@@ -388,9 +371,7 @@ def convert_pass_fail_to_boolean(eval_result_data):
 if __name__ == "__main__":
     # Check required environment variables
     if not AZURE_AIPROJECT_CONNECTION_STRING:
-        raise ValueError(
-            "AZURE_AIPROJECT_CONNECTION_STRING environment variable is not set"
-        )
+        raise ValueError("AZURE_AIPROJECT_CONNECTION_STRING environment variable is not set")
     if not DEPLOYMENT_NAME:
         raise ValueError("DEPLOYMENT_NAME environment variable is not set or empty")
     if not DATA_PATH:
@@ -400,9 +381,7 @@ if __name__ == "__main__":
 
     # Check optional environment variables
     if BASELINE_AGENT_ID and BASELINE_AGENT_ID not in AGENT_IDS:
-        raise ValueError(
-            f"BASELINE_AGENT_ID '{BASELINE_AGENT_ID}' is not in AGENT_IDS '{AGENT_IDS}'"
-        )
+        raise ValueError(f"BASELINE_AGENT_ID '{BASELINE_AGENT_ID}' is not in AGENT_IDS '{AGENT_IDS}'")
 
     result_view = analysis.EvaluationResultView.DEFAULT
     if EVALUATION_RESULT_VIEW:
@@ -428,7 +407,7 @@ if __name__ == "__main__":
         agent_ids=AGENT_IDS,
         baseline_agent_id=BASELINE_AGENT_ID,
         working_dir=input_data_path.parent,
-        result_view=result_view
+        result_view=result_view,
     )
 
     if STEP_SUMMARY:

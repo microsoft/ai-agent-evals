@@ -1,0 +1,27 @@
+[MASTER]
+# Python version
+py-version = 3.10
+
+[FORMAT]
+# Maximum number of characters on a single line
+max-line-length = 120
+
+[MESSAGES CONTROL]
+# Disable specific messages or categories
+disable = missing-docstring,
+         line-too-long,
+         invalid-name,
+         too-many-arguments,
+         too-many-locals,
+         too-many-statements,
+         too-many-branches,
+         too-many-instance-attributes,
+         too-few-public-methods,
+         import-error,
+         redefined-builtin,
+         redefined-outer-name,
+         broad-exception-caught
+
+[BASIC]
+# Good variable names
+good-names = i, j, k, ex, Run, _

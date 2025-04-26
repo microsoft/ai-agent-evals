@@ -13,41 +13,34 @@ from pathlib import Path
 import yaml
 from azure.ai.projects.models import Agent
 
-from .analysis import (
-    EvaluationResult, 
-    EvaluationResultView, 
-    EvaluationScore,
-    EvaluationScoreDataType,
-)
-from .render import (
-    fmt_hyperlink, 
-    fmt_table_ci, 
-    fmt_table_compare,
-)
+from .analysis import EvaluationResult, EvaluationResultView, EvaluationScore, EvaluationScoreDataType
+from .render import fmt_hyperlink, fmt_table_ci, fmt_table_compare
+
 
 def should_include_score(score: dict, evaluator: dict, result_view: EvaluationResultView) -> bool:
     """
     Determines if a score should be included in the evaluation summary based on its type and the current view mode.
-    
+
     Args:
         score: Score metadata from evaluator-scores.yaml
         evaluator: Evaluator metadata from evaluator-scores.yaml
         result_view: The current view mode for evaluation results
-        
+
     Returns:
         True if the score should be included, False otherwise
     """
     # Always include operational metrics
     if evaluator["class"] == "OperationalMetricsEvaluator":
         return True
-    
+
     if result_view == EvaluationResultView.ALL:
         return True
 
     if score["type"] == EvaluationScoreDataType.BOOLEAN.value:
         return result_view == EvaluationResultView.DEFAULT
-    else:
-        return result_view == EvaluationResultView.RAW_SCORES
+
+    return result_view == EvaluationResultView.RAW_SCORES
+
 
 # pylint: disable-next=too-many-locals
 def summarize(
@@ -77,11 +70,8 @@ def summarize(
 
     def format_agent_row(agent: Agent, agent_url: str) -> str:
         result_url = eval_results[agent.id].ai_foundry_url
-        return (
-            f"| {agent.name} | "
-            f"{fmt_hyperlink(agent.id, agent_url)} | "
-            f"{fmt_hyperlink('Click here', result_url) if result_url else ""} |"
-        )
+        result_link = fmt_hyperlink("Click here", result_url) if result_url else ""
+        return f"| {agent.name} | " f"{fmt_hyperlink(agent.id, agent_url)} | " f"{result_link} |"
 
     md.append("### Agent variants\n")
     md.append("| Agent name | Agent ID | Evaluation results |")
@@ -94,7 +84,7 @@ def summarize(
 
     # load hardcoded evaluator score metadata
     metadata_path = Path(__file__).parent / "evaluator-scores.yaml"
-    with open(metadata_path, "r", encoding="utf-8") as f:
+    with open(metadata_path, encoding="utf-8") as f:
         score_metadata = yaml.safe_load(f)
 
     if len(eval_results) >= 2:

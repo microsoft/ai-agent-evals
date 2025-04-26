@@ -48,4 +48,3 @@ jobs:
           agent-ids: ${{ env.agent-ids }}
           baseline-agent-id: ${{ env.baseline-agent-id }}
           evaluation-result-view: ${{ env.evaluation-result-view }}
-        

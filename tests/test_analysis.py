@@ -112,17 +112,17 @@ def test_boolean_conversion():
         "outputs.fluency.result": ["pass", "fail", "PASS"],  # Case variations
         "outputs.safety.result": ["FAIL", "pass", "fail"],
     }
-    
+
     # Create a mock eval_result_data dictionary as it appears in action.py
     eval_result_data = {"rows": []}
     for i, test_id in enumerate(test_data["inputs.id"]):
         row = {
             "inputs.id": test_id,
             "outputs.fluency.result": test_data["outputs.fluency.result"][i],
-            "outputs.safety.result": test_data["outputs.safety.result"][i]
+            "outputs.safety.result": test_data["outputs.safety.result"][i],
         }
         eval_result_data["rows"].append(row)
-    
+
     # Test the conversion logic from action.py
     for row in eval_result_data["rows"]:
         for key in row:
@@ -132,7 +132,7 @@ def test_boolean_conversion():
                         row[key] = True
                     elif row[key].lower() == "fail":
                         row[key] = False
-    
+
     # Verify conversion worked correctly
     assert eval_result_data["rows"][0]["outputs.fluency.result"] is True
     assert eval_result_data["rows"][0]["outputs.safety.result"] is False

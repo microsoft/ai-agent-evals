@@ -157,7 +157,7 @@ sections:
             type: "Ordinal"
             desired_direction: "Increase"
             range: [1, 5]
-          - name: "Fluency passing rate"  
+          - name: "Fluency passing rate"
             key: "fluency_result"
             type: "Boolean"
             desired_direction: "Increase"
@@ -171,7 +171,7 @@ sections:
       #       type: "Ordinal"
       #       desired_direction: "Increase"
       #       range: [1, 5]
-      #     - name: "Similarity passing rate" 
+      #     - name: "Similarity passing rate"
       #       key: "similarity_result"
       #       type: "Boolean"
       #       desired_direction: "Increase"
@@ -257,7 +257,7 @@ sections:
             key: "protected_material_label"
             type: "Boolean"
             desired_direction: "Decrease"
-      
+
       - class: "CodeVulnerabilityEvaluator"
         key: "code_vulnerability_defect_rate"
         scores:
@@ -307,7 +307,7 @@ sections:
   #           type: "Continuous"
   #           desired_direction: "Increase"
   #           range: [0, 1]
-  #         - name: "ROUGE F1 score passing rate" 
+  #         - name: "ROUGE F1 score passing rate"
   #           key: "rouge_f1_score_result"
   #           type: "Boolean"
   #           desired_direction: "Increase"
@@ -388,7 +388,7 @@ sections:
       #       desired_direction: "Increase"
       #       range: [0, 1]
 
-      # Need ground-truth field for UngroundedAttributes 
+      # Need ground-truth field for UngroundedAttributes
       # - class: "ContentSafetyEvaluator"
       #   key: "content_safety"
       #   scores:
