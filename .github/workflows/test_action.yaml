@@ -1,7 +1,6 @@
 ---
 name: Test Local Action
 on:
-  push:
   workflow_dispatch:
     inputs:
       data_file:
