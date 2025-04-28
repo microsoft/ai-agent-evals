@@ -112,13 +112,15 @@ jobs:
           # Replace placeholders with values for your Azure AI Project
           azure-aiproject-connection-string: "<your-ai-project-conn-str>"
           deployment-name: "<your-deployment-name>"
-          agent-ids: "<your-ai-agent-id>"
+          agent-ids: "<your-ai-agent-ids>"
           data-path: ${{ github.workspace }}/path/to/your/data-file
 ```
 
 ## Evaluation Outputs
 
 Evaluation results will be output to the summary section for each AI Evaluation GitHub Action run under Actions in GitHub.com.
+
+Below is a sample report for comparing two agents.
 
 ![Sample output to compare multiple agent evaluations](sample-output.png)
 
