@@ -184,6 +184,7 @@ def create_evaluators(class_names: list[str], args_default: dict) -> dict:
     return evaluators
 
 
+# pylint: disable=too-many-branches
 def validate_input_data(data: dict) -> None:
     """
     Validates that the input data has the required structure and fields.
