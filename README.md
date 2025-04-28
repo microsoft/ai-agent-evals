@@ -2,7 +2,7 @@
 
 This GitHub Action enables offline evaluation of [Azure AI Agents](https://learn.microsoft.com/en-us/azure/ai-services/agents/) within your CI/CD pipelines. It is designed to streamline the offline evaluation process, allowing you to identify potential issues and make improvements before releasing an update to production.
 
-To use this action, all you need to provide is a data set with test queries and a list of evaluators. This action will invoke your agent(s) with the queries, collect the performance data incuding latency and token counts, run the evaluations, and generate a summary report.
+To use this action, all you need to provide is a data set with test queries and a list of evaluators. This action will invoke your agent(s) with the queries, collect the performance data including latency and token counts, run the evaluations, and generate a summary report.
 
 ## Features
 
@@ -53,7 +53,7 @@ The input data file should be a JSON file with the following structure:
 | data[].query | string   | Yes      | The query text to evaluate     |
 | data[].id    | string   | No       | Optional ID for the query      |
 
-Here is a minimal data file
+Below is a sample data file.
 
 ```JSON
 {
@@ -72,11 +72,11 @@ Here is a minimal data file
 
 #### Additional Sample Data Files
 
-| File Name                                                          | Description                                                                                                      |
-| ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
-| [samples/data/dataset-tiny.json](samples/data/dataset-tiny.json)   | Small dataset with minimal test queries and evaluators                                                           |
-| [samples/data/dataset-small.json](samples/data/dataset-small.json) | Small dataset with a small number of test queries and all supported evaluators                                   |
-| [samples/data/dataset.json](samples/data/dataset.json)             | Dataset with all supported evaluators and enough queries for confidence interval calcualtion and statiscal test. |
+| Filename                                                           | Description                                                                                                        |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| [samples/data/dataset-tiny.json](samples/data/dataset-tiny.json)   | Small dataset with minimal test queries and evaluators                                                             |
+| [samples/data/dataset-small.json](samples/data/dataset-small.json) | Small dataset with a small number of test queries and all supported evaluators                                     |
+| [samples/data/dataset.json](samples/data/dataset.json)             | Dataset with all supported evaluators and enough queries for confidence interval calcualtion and statistical test. |
 
 ## Sample workflow
 
@@ -88,9 +88,6 @@ name: "AI Agent Evaluation"
 on:
   workflow_dispatch:
   push:
-    branches:
-      - main
-  pull_request:
     branches:
       - main
 
@@ -112,10 +109,11 @@ jobs:
       - name: Run Evaluation
         uses: microsoft/ai-agent-evals@v1
         with:
+          # Replace placeholders with values for your Azure AI Project
           azure-aiproject-connection-string: "<your-ai-project-conn-str>"
           deployment-name: "<your-deployment-name>"
-          data-path: "path/to/your/file"
           agent-ids: "<your-ai-agent-id>"
+          data-path: ${{ github.workspace }}/path/to/your/data-file
 ```
 
 ## Evaluation Outputs
