@@ -7,6 +7,10 @@ pool:
   vmImage: "ubuntu-latest"
 
 steps:
+  - task: npmAuthenticate@0
+    inputs:
+      workingFile: .azure-devops/.npmrc
+
   - task: UsePythonVersion@0
     inputs:
       versionSpec: "3.12"
