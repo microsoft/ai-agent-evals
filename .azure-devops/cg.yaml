@@ -1,0 +1,28 @@
+# Run Component Governance to detect open source components
+
+trigger:
+  - main
+
+pool:
+  vmImage: "ubuntu-latest"
+
+steps:
+  - task: npmAuthenticate@0
+    inputs:
+      workingFile: .azure-devops/.npmrc
+
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: "3.12"
+      addToPath: true
+
+  - task: PipAuthenticate@1
+    inputs:
+      artifactFeeds: "Analysis and Experimentation/Analysis_and_Experimentation_PublicPackages"
+
+  - script: |
+      python -m pip install --upgrade pip
+      pip install -r requirements.txt
+    displayName: "Install dependencies"
+  - task: ms.vss-governance-buildtask.governance-build-task-component-detection.ComponentGovernanceComponentDetection@0
+    displayName: "CG Component Detection"
