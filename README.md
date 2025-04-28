@@ -11,45 +11,47 @@ To use this action, all you need to provide is a data set with test queries and 
 - **Statistical Analysis:** Evaluation results include confidence intervals and test for statistical significance to determine if changes are meaningful and not due to random variation.
 
 ## Supported AI Evaluators
-| Type | Evaluator |
-|-|-|
-| AI Quality (AI assisted) | IntentResolutionEvaluator |
-|| TaskAdherenceEvaluator |
-||RelevanceEvaluator |
-||CoherenceEvaluator |
-||FluencyEvaluator |
-| Risk and safety | ViolenceEvaluator |
-|| SexualEvaluator |
-|| SelfHarmEvaluator |
-|| HateUnfairnessEvaluator |
-|| IndirectAttackEvaluator |
-|| ProtectedMaterialEvaluator |
-|| CodeVulnerabilityEvaluator |
+
+| Type                     | Evaluator                  |
+| ------------------------ | -------------------------- |
+| AI Quality (AI assisted) | IntentResolutionEvaluator  |
+|                          | TaskAdherenceEvaluator     |
+|                          | RelevanceEvaluator         |
+|                          | CoherenceEvaluator         |
+|                          | FluencyEvaluator           |
+| Risk and safety          | ViolenceEvaluator          |
+|                          | SexualEvaluator            |
+|                          | SelfHarmEvaluator          |
+|                          | HateUnfairnessEvaluator    |
+|                          | IndirectAttackEvaluator    |
+|                          | ProtectedMaterialEvaluator |
+|                          | CodeVulnerabilityEvaluator |
 
 ## Inputs
 
 ### Parameters
-| Name | Required? | Description |
-| :--- | :---: | :--- |
-| azure-aiproject-connection-string | Yes | Connection string of your Azure AI Project |
-| deployment-name | Yes | The name of the Azure AI model deployment to use for evaluation |
-| data-path | Yes | Path to the data file that contains the evaluators and input queries for evaluations |
-| agent-ids | Yes | ID of the agent(s) to evaluate. If multiple are provided, all agents should be comma-separated and will be evaluated and compared against the baseline with statistical test results |
-| baseline-agent-id | No | ID of the baseline agent to compare against when evaluating multiple agents. If not provided, the first agent is used |
-| evaluation-result-view | No | Specifies the format of evaluation results. Defaults to "default" (boolean scores such as passing and defect rates) if omitted. Options are "default", "all-scores" (includes all evaluation scores), and "raw-scores-only" (non-boolean scores only)|
-| api-version | No | The API version to use when connecting to model deployment |
+
+| Name                              | Required? | Description                                                                                                                                                                                                                                           |
+| :-------------------------------- | :-------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| azure-aiproject-connection-string |    Yes    | Connection string of your Azure AI Project                                                                                                                                                                                                            |
+| deployment-name                   |    Yes    | The name of the Azure AI model deployment to use for evaluation                                                                                                                                                                                       |
+| data-path                         |    Yes    | Path to the data file that contains the evaluators and input queries for evaluations                                                                                                                                                                  |
+| agent-ids                         |    Yes    | ID of the agent(s) to evaluate. If multiple are provided, all agents should be comma-separated and will be evaluated and compared against the baseline with statistical test results                                                                  |
+| baseline-agent-id                 |    No     | ID of the baseline agent to compare against when evaluating multiple agents. If not provided, the first agent is used                                                                                                                                 |
+| evaluation-result-view            |    No     | Specifies the format of evaluation results. Defaults to "default" (boolean scores such as passing and defect rates) if omitted. Options are "default", "all-scores" (includes all evaluation scores), and "raw-scores-only" (non-boolean scores only) |
+| api-version                       |    No     | The API version to use when connecting to model deployment                                                                                                                                                                                            |
 
 ### Data File
 
 The input data file should be a JSON file with the following structure:
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| name | string | Yes | Name of the test dataset |
-| evaluators | string[] | Yes | List of evaluator names to use |
-| data | object[] | Yes | Array of input objects |
-| data[].query | string | Yes | The query text to evaluate |
-| data[].id | string | No | Optional ID for the query |
+| Field        | Type     | Required | Description                    |
+| ------------ | -------- | -------- | ------------------------------ |
+| name         | string   | Yes      | Name of the test dataset       |
+| evaluators   | string[] | Yes      | List of evaluator names to use |
+| data         | object[] | Yes      | Array of input objects         |
+| data[].query | string   | Yes      | The query text to evaluate     |
+| data[].id    | string   | No       | Optional ID for the query      |
 
 Here is a minimal data file
 
@@ -70,11 +72,11 @@ Here is a minimal data file
 
 #### Additional Sample Data Files
 
-| File Name | Description |
-|-----------|-------------|
-| [samples/data/dataset-tiny.json](samples/data/dataset-tiny.json) | Small dataset with minimal test queries and evaluators |
-| [samples/data/dataset-small.json](samples/data/dataset-small.json) | Small dataset with a small number of test queries and all supported evaluators |
-| [samples/data/dataset.json](samples/data/dataset.json) | Dataset with all supported evaluators and enough queries for confidence interval calcualtion and statiscal test.  |
+| File Name                                                          | Description                                                                                                      |
+| ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| [samples/data/dataset-tiny.json](samples/data/dataset-tiny.json)   | Small dataset with minimal test queries and evaluators                                                           |
+| [samples/data/dataset-small.json](samples/data/dataset-small.json) | Small dataset with a small number of test queries and all supported evaluators                                   |
+| [samples/data/dataset.json](samples/data/dataset.json)             | Dataset with all supported evaluators and enough queries for confidence interval calcualtion and statiscal test. |
 
 ## Sample workflow
 
@@ -108,7 +110,7 @@ jobs:
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
       - name: Run Evaluation
-        uses: microsoft/ai-agent-eval@v1
+        uses: microsoft/ai-agent-evals@v1
         with:
           azure-aiproject-connection-string: "<your-ai-project-conn-str>"
           deployment-name: "<your-deployment-name>"
@@ -119,6 +121,8 @@ jobs:
 ## Evaluation Outputs
 
 Evaluation results will be output to the summary section for each AI Evaluation GitHub Action run under Actions in GitHub.com.
+
+![Sample output to compare multiple agent evaluations](sample-output.png)
 
 ## Contributing
 
