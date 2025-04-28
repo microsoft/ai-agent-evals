@@ -121,3 +121,32 @@ def test_unknown_evaluator_validation():
     with pytest.raises(ValueError) as excinfo:
         validate_input_data(invalid_data)
     assert "Unknown evaluators specified" in str(excinfo.value)
+
+
+def test_duplicate_id_validation():
+    """Test that validation fails when duplicate IDs are found in the data."""
+    # Data with duplicate IDs
+    invalid_data = {
+        "name": "Test Dataset",
+        "evaluators": ["IntentResolutionEvaluator"],
+        "data": [
+            {"id": "duplicate_id", "query": "First query with duplicate ID"},
+            {"id": "unique_id", "query": "Query with unique ID"},
+            {"id": "duplicate_id", "query": "Second query with duplicate ID"},
+        ],
+    }
+
+    with pytest.raises(ValueError) as excinfo:
+        validate_input_data(invalid_data)
+    assert "Duplicate ID 'duplicate_id' found in 'data'" in str(excinfo.value)
+
+    # Test empty data list
+    invalid_empty_data = {
+        "name": "Test Dataset",
+        "evaluators": ["IntentResolutionEvaluator"],
+        "data": [],
+    }
+
+    with pytest.raises(ValueError) as excinfo:
+        validate_input_data(invalid_empty_data)
+    assert "cannot be empty" in str(excinfo.value)

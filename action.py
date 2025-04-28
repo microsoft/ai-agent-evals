@@ -216,7 +216,8 @@ def validate_input_data(data: dict) -> None:
     if not data["data"]:
         raise ValueError("Input data 'data' list cannot be empty")
 
-    # Validate that each item in data has a 'query' field
+    # Validate that each item in data has a 'query' field and check for unique IDs
+    ids = set()
     for i, item in enumerate(data["data"]):
         if not isinstance(item, dict):
             raise ValueError(f"Item at index {i} in 'data' must be a dictionary")
@@ -224,6 +225,11 @@ def validate_input_data(data: dict) -> None:
             raise ValueError(
                 f"Item at index {i} in 'data' is missing required field 'query'"
             )
+        # Check if ID is provided, and ensure it's unique
+        if "id" in item:
+            if item["id"] in ids:
+                raise ValueError(f"Duplicate ID '{item['id']}' found in 'data'")
+            ids.add(item["id"])
 
     # Validate that all evaluator names exist in the available evaluators
     available_evaluators = []
@@ -261,7 +267,7 @@ def main(
     Args:
         credential: The credential object for authentication.
         conn_str (str): The connection string for the AI project.
-        input (dict): The input data containing evaluation details, including
+        input_data_set (dict): The input data containing evaluation details, including
             the dataset and evaluator configurations.
         agent_ids (list[str]): A list of agent IDs to be evaluated.
         baseline_agent_id (Optional[str], optional): The ID of the baseline agent for
