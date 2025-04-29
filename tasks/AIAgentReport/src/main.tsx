@@ -27,19 +27,24 @@ const run = async () => {
         build.project.name
       );
 
-      createRoot(document.getElementById("root")!).render(
-        <StrictMode>
-          <GithubFlavoredMarkdown markdownContent={markdownContent} />
-        </StrictMode>
-      );
-    } catch (e) {
-      if (e instanceof Error) {
-        const err = e as Error;
-        createRoot(document.getElementById("root")!).render(
+      const rootElement = document.getElementById("root");
+      if (rootElement) {
+        createRoot(rootElement).render(
           <StrictMode>
-            <ErrorMessage message={err.message} />
+            <GithubFlavoredMarkdown markdownContent={markdownContent} />
           </StrictMode>
         );
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        const rootElement = document.getElementById("root");
+        if (rootElement) {
+          createRoot(rootElement).render(
+            <StrictMode>
+              <ErrorMessage message={error.message} />
+            </StrictMode>
+          );
+        }
         return;
       }
     }

@@ -18,9 +18,9 @@ export const fetchArtifactContent = async (
 
     const response = await fetch(apiUrl, {
       headers: {
-        Authorization: `Bearer ${accessToken}`,
+        Authorization: `Bearer ${accessToken}`
       },
-      redirect: "follow",
+      redirect: "follow"
     });
 
     if (!response.ok) {
