@@ -39,15 +39,15 @@ and token counts, run the evaluations, and generate a summary report.
 
 ### Task Parameters
 
-| Name                              | Required | Description                                             |
-| --------------------------------- | :------: | ------------------------------------------------------- |
-| azure-aiproject-connection-string |   Yes    | Connection string of your Azure AI Project              |
-| deployment-name                   |   Yes    | The name of the Azure AI model deployment to use for evaluation |
-| data-path                         |   Yes    | Path to the data file that contains the evaluators and input queries for evaluations |
-| agent-ids                         |   Yes    | ID of the agent(s) to evaluate. If multiple are provided, all agents will be evaluated and compared against the baseline with statistical test results |
-| baseline-agent-id                 |    No    | ID of the baseline agent to compare against when evaluating multiple agents. If not provided, the first agent is used |
+| Name                              | Required | Description                                                                                                                                                                                                                                           |
+| --------------------------------- | :------: | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| azure-aiproject-connection-string |   Yes    | Connection string of your Azure AI Project                                                                                                                                                                                                            |
+| deployment-name                   |   Yes    | The name of the Azure AI model deployment to use for evaluation                                                                                                                                                                                       |
+| data-path                         |   Yes    | Path to the data file that contains the evaluators and input queries for evaluations                                                                                                                                                                  |
+| agent-ids                         |   Yes    | ID of the agent(s) to evaluate. If multiple are provided, all agents will be evaluated and compared against the baseline with statistical test results                                                                                                |
+| baseline-agent-id                 |    No    | ID of the baseline agent to compare against when evaluating multiple agents. If not provided, the first agent is used                                                                                                                                 |
 | evaluation-result-view            |    No    | Specifies the format of evaluation results. Defaults to "default" (boolean scores such as passing and defect rates) if omitted. Options are "default", "all-scores" (includes all evaluation scores), and "raw-scores-only" (non-boolean scores only) |
-| api-version                       |    No    | The API version to use when connecting to model deployment |
+| api-version                       |    No    | The API version to use when connecting to model deployment                                                                                                                                                                                            |
 
 ### Data File Format
 
@@ -72,15 +72,15 @@ The input data file should be a JSON file with the following structure:
 
 ```yaml
 steps:
-- task: AIAgentEvaluation@0
-  displayName: 'Evaluate AI Agents'
-  inputs:
-    azure-aiproject-connection-string: '$(AzureAIProjectConnectionString)'
-    deployment-name: '$(DeploymentName)'
-    data-path: '$(System.DefaultWorkingDirectory)/data/dataset.json'
-    agent-ids: '$(AgentIds)'
-    baseline-agent-id: '$(BaselineAgentId)'
-    evaluation-result-view: 'default'
+  - task: AIAgentEvaluation@0
+    displayName: "Evaluate AI Agents"
+    inputs:
+      azure-aiproject-connection-string: "$(AzureAIProjectConnectionString)"
+      deployment-name: "$(DeploymentName)"
+      data-path: "$(System.DefaultWorkingDirectory)/data/dataset.json"
+      agent-ids: "$(AgentIds)"
+      baseline-agent-id: "$(BaselineAgentId)"
+      evaluation-result-view: "default"
 ```
 
 ## Evaluation Results
