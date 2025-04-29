@@ -1,21 +1,21 @@
 # Azure AI Evaluation
 
-This extension enables offline evaluation of [Azure AI Agents](https://learn.microsoft.com/en-us/azure/ai-services/agents/) 
-within your Azure DevOps pipelines. It streamlines the evaluation process, allowing you to 
+This extension enables offline evaluation of [Azure AI Agents](https://learn.microsoft.com/en-us/azure/ai-services/agents/)
+within your Azure DevOps pipelines. It streamlines the evaluation process, allowing you to
 identify potential issues and make improvements before releasing updates to production.
 
-To use this extension, provide a data set with test queries and a list of evaluators. 
-It will invoke your agent(s) with the queries, collect performance data including latency 
+To use this extension, provide a data set with test queries and a list of evaluators.
+It will invoke your agent(s) with the queries, collect performance data including latency
 and token counts, run the evaluations, and generate a summary report.
 
 ## Features
 
 - **Agent Evaluation:** Automate pre-production assessment of Azure AI agents in your CI/CD workflow
-- **Built-in Evaluators:** Leverage existing evaluators provided by the 
+- **Built-in Evaluators:** Leverage existing evaluators provided by the
   [Azure AI Evaluation SDK](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/develop/evaluate-sdk)
-- **Statistical Analysis:** Results include confidence intervals and tests for statistical 
+- **Statistical Analysis:** Results include confidence intervals and tests for statistical
   significance to determine if changes are meaningful and not due to random variation
-- **Multiple Agent Comparison:** Compare performance across different agent versions with 
+- **Multiple Agent Comparison:** Compare performance across different agent versions with
   detailed metrics
 
 ## Supported AI Evaluators
@@ -85,7 +85,7 @@ steps:
 
 ## Evaluation Results
 
-Evaluation results will appear in the Azure DevOps pipeline summary with detailed metrics 
+Evaluation results will appear in the Azure DevOps pipeline summary with detailed metrics
 and comparisons between agents when multiple are evaluated.
 
 ![Sample evaluation results showing agent comparisons](sample-output.png)
