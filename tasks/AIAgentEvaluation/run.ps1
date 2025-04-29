@@ -10,40 +10,33 @@ try {
         exit 1
     }
     
-     # Check if requirements.txt exists and install dependencies
-     $requirementsFile = Join-Path $scriptDir "requirements.txt"
-     if (Test-Path $requirementsFile) {
-         Write-Host "Installing Python dependencies from requirements.txt"
-         python -m pip install --upgrade pip
-         python -m pip install -r $requirementsFile
-         
-         if ($LASTEXITCODE -ne 0) {
-             Write-Error "Failed to install Python dependencies"
-             exit 1
-         }
-         Write-Host "Dependencies installed successfully"
-     } else {
-         Write-Host "No requirements.txt file found."
-         exit 1
-     }
+    Write-Host "Installing Python dependencies..."
+    python -m pip install --upgrade pip
+    python -m pip install
+    
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "Failed to install Python dependencies"
+        exit 1
+    }
+    Write-Host "Dependencies installed successfully"
 
-     Write-Host "Reading task inputs..."
-     $connectionString = Get-VstsInput -Name "azure-aiproject-connection-string" -Require
-     $deploymentName = Get-VstsInput -Name "deployment-name" -Require
-     $apiVersion = Get-VstsInput -Name "api-version"
-     $dataPath = Get-VstsInput -Name "data-path" -Require
-     $agentIds = Get-VstsInput -Name "agent-ids" -Require
-     $baselineAgentId = Get-VstsInput -Name "baseline-agent-id"
-     $evaluationResultView = Get-VstsInput -Name "evaluation-result-view"
-     
-     # Set as environment variables for Python script
-     $env:AZURE_AIPROJECT_CONNECTION_STRING = $connectionString
-     $env:DEPLOYMENT_NAME = $deploymentName
-     $env:API_VERSION = $apiVersion
-     $env:DATA_PATH = $dataPath
-     $env:AGENT_IDS = $agentIds
-     $env:BASELINE_AGENT_ID = $baselineAgentId
-     $env:EVALUATION_RESULT_VIEW = $evaluationResultView
+    Write-Host "Reading task inputs..."
+    $connectionString = Get-VstsInput -Name "azure-aiproject-connection-string" -Require
+    $deploymentName = Get-VstsInput -Name "deployment-name" -Require
+    $apiVersion = Get-VstsInput -Name "api-version"
+    $dataPath = Get-VstsInput -Name "data-path" -Require
+    $agentIds = Get-VstsInput -Name "agent-ids" -Require
+    $baselineAgentId = Get-VstsInput -Name "baseline-agent-id"
+    $evaluationResultView = Get-VstsInput -Name "evaluation-result-view"
+    
+    # Set as environment variables for Python script
+    $env:AZURE_AIPROJECT_CONNECTION_STRING = $connectionString
+    $env:DEPLOYMENT_NAME = $deploymentName
+    $env:API_VERSION = $apiVersion
+    $env:DATA_PATH = $dataPath
+    $env:AGENT_IDS = $agentIds
+    $env:BASELINE_AGENT_ID = $baselineAgentId
+    $env:EVALUATION_RESULT_VIEW = $evaluationResultView
 
        # Log inputs (mask sensitive information)
     Write-Host "Connection string: $connectionString"

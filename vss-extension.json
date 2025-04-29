@@ -95,10 +95,6 @@
             "packagePath": "tasks/AIAgentEvaluation/action.py"
         },
         {
-            "path": "requirements.txt",
-            "packagePath": "tasks/AIAgentEvaluation/requirements.txt"
-        },
-        {
             "path": "analysis",
             "packagePath": "tasks/AIAgentEvaluation/analysis"
         }
