@@ -28,3 +28,4 @@ jobs:
         env:
           MULTI_STATUS: false
           FILTER_REGEX_EXCLUDE: (.*tests/snapshots/.*\.md|SECURITY\.md|SUPPORT\.md)
+          DISABLE_LINTERS: JAVASCRIPT_ES, TYPESCRIPT_ES
