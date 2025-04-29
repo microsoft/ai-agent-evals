@@ -1,12 +1,12 @@
 <#
 .SYNOPSIS
-    Checks if Python 3.10 or higher is installed and available in PATH.
+    Checks if Python 3.12 or higher is installed and available in PATH.
 .DESCRIPTION
     Verifies the installed Python version and provides guidance if an appropriate version isn't found.
 #>
 
 $minimumPythonMajor = 3
-$minimumPythonMinor = 10
+$minimumPythonMinor = 12
 
 try {
     # Check if Python is available in the PATH
@@ -41,7 +41,7 @@ try {
     Write-Host "   ````yaml" -ForegroundColor Gray
     Write-Host "   - task: UsePythonVersion@0" -ForegroundColor Gray
     Write-Host "     inputs:" -ForegroundColor Gray
-    Write-Host "       versionSpec: '3.11'" -ForegroundColor Gray
+    Write-Host "       versionSpec: '3.12'" -ForegroundColor Gray
     Write-Host "   ````" -ForegroundColor Gray
     Write-Host ""
     Write-Host "After installation, ensure Python is in your PATH and try again."
