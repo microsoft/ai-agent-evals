@@ -12,7 +12,7 @@ try {
     
     Write-Host "Installing Python dependencies..."
     python -m pip install --upgrade pip
-    python -m pip install
+    python -m pip install .
     
     if ($LASTEXITCODE -ne 0) {
         Write-Error "Failed to install Python dependencies"
