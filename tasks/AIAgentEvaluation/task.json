@@ -30,14 +30,6 @@
         "helpMarkDown": "The name of the Azure AI model deployment to use for evaluation."
       },
       {
-        "name": "api-version",
-        "type": "string",
-        "label": "API Version",
-        "required": true,
-        "defaultValue": "",
-        "helpMarkDown": "The API version to use when connecting to model deployment."
-      },
-      {
         "name": "data-path",
         "type": "string",
         "label": "Input Data Path",
@@ -68,6 +60,14 @@
         "defaultValue": "default",
         "required": false,
         "helpMarkDown": "The evaluation result view. Options are \"default\" (boolean scores only such as passing and defect rates), \"all-scores\" (all scores), \"raw-scores-only\" (all non-boolean scores)"
+      },
+      {
+        "name": "api-version",
+        "type": "string",
+        "label": "API Version",
+        "required": false,
+        "defaultValue": "",
+        "helpMarkDown": "The API version to use when connecting to model deployment."
       }
     ],
     "execution": {

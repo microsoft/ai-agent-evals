@@ -30,7 +30,7 @@ try {
      Write-Host "Reading task inputs..."
      $connectionString = Get-VstsInput -Name "azure-aiproject-connection-string" -Require
      $deploymentName = Get-VstsInput -Name "deployment-name" -Require
-     $apiVersion = Get-VstsInput -Name "api-version" -Require
+     $apiVersion = Get-VstsInput -Name "api-version"
      $dataPath = Get-VstsInput -Name "data-path" -Require
      $agentIds = Get-VstsInput -Name "agent-ids" -Require
      $baselineAgentId = Get-VstsInput -Name "baseline-agent-id"
