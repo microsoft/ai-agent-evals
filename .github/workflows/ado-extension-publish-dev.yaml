@@ -1,4 +1,5 @@
 ---
+# File with LF line endings
 name: Publishing to Azure DevOps Marketplace (Dev)
 
 on:
