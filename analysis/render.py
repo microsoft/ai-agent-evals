@@ -39,6 +39,7 @@ COLOR_MAP = {
     "Warning": PALE_YELLOW,
     "Pass": DARK_GREEN,
     "Fail": DARK_RED,
+    "Information": PALE_GREY,
 }
 
 
@@ -102,7 +103,9 @@ def fmt_badge(label: str, message: str, color: str, tooltip: str = "") -> str:
         elif color == "Inconclusive":
             tooltip = "Not statistically significant."
 
-    color = COLOR_MAP.get(color, color)  # If color isn't in map, keep the original value
+    color = COLOR_MAP.get(
+        color, color
+    )  # If color isn't in map, keep the original value
 
     def escape(s: str) -> str:
         return quote(s, safe="").replace("-", "--").replace("_", "__")
@@ -159,16 +162,20 @@ def fmt_control_badge(x: EvaluationScoreComparison) -> str:
 
 
 def fmt_ci(x: EvaluationScoreCI) -> str:
-    """Format a confidence interval"""
+    """Format a confidence interval as a badge"""
     if x.ci_lower is None or x.ci_upper is None:
-        md_ci = "n/a"
-    elif x.count < 10:
-        md_ci = "Too few samples"
-    else:
-        md_lower = fmt_metric_value(x.ci_lower, x.score.data_type)
-        md_upper = fmt_metric_value(x.ci_upper, x.score.data_type)
-        md_ci = f"({md_lower}, {md_upper})"
+        color = "Information"
+        tooltip_stat = "Confidence interval not applicable for this score type"
+        return fmt_badge("", "N/A", color, tooltip_stat)
 
+    if x.count < 10:
+        color = "Information"
+        tooltip_stat = "Too few samples to determine confidence interval"
+        return fmt_badge("", "Too few samples", color, tooltip_stat)
+
+    md_lower = fmt_metric_value(x.ci_lower, x.score.data_type)
+    md_upper = fmt_metric_value(x.ci_upper, x.score.data_type)
+    md_ci = f"({md_lower}, {md_upper})"
     return md_ci
 
 
@@ -227,11 +234,17 @@ def fmt_table_ci(scores: list[EvaluationScore], result: EvaluationResult) -> str
                     result.variant: fmt_metric_value(
                         result_ci.mean, result_ci.score.data_type
                     ),
-                    "95% CI": fmt_ci(result_ci),
+                    "95% Confidence Interval": fmt_ci(result_ci),
                 }
             )
         except ValueError as e:
             print(f"Error comparing score {score.name}: {e}")
 
     df_summary = pd.DataFrame.from_records(records)
-    return df_summary.to_markdown(index=False)
+
+    if not df_summary.empty:
+        # First column (Evaluation score) left-aligned, all other columns right-aligned
+        alignments = ["left"] + ["right"] * (len(df_summary.columns) - 1)
+        return df_summary.to_markdown(index=False, colalign=alignments)
+
+    return ""

@@ -1,8 +1,7 @@
 {
-  "name": "golden-dataset",
+  "name": "test-dataset",
   "evaluators": [
     "IntentResolutionEvaluator",
-    "ToolCallAccuracyEvaluator",
     "TaskAdherenceEvaluator",
     "CoherenceEvaluator",
     "RelevanceEvaluator",
@@ -48,7 +47,7 @@
       "query": "Compare different martial arts styles and their effectiveness"
     },
     {
-      "id": "test_action_movie_scenes_09", 
+      "id": "test_action_movie_scenes_09",
       "query": "What are some of the most famous action movie fight scenes?"
     },
     {

@@ -10,13 +10,10 @@ inputs:
   deployment-name:
     description: The name of the Azure AI model deployment to use for evaluation.
     required: true
-  api-version:
-    description: The API version to use when connecting to model deployment.
-    required: true
   data-path:
     description: >
       Path to the input data file containing the conversation starters. Each conversation starter
-      will be sent to each agent for a pairwise comparison of evaluation results. If using the GitHub Action workflow, 
+      will be sent to each agent for a pairwise comparison of evaluation results. If using the GitHub Action workflow,
       you can override this with a custom data file through the workflow_dispatch input parameter.
     required: true
   agent-ids:
@@ -29,10 +26,14 @@ inputs:
     required: false
   evaluation-result-view:
     description: >
-      The evaluation result view. Options are "default" (boolean scores only such as passing and defect rates), 
+      The evaluation result view. Options are "default" (boolean scores only such as passing and defect rates),
       "all-scores" (all scores), "raw-scores-only" (all non-boolean scores).
     required: false
     default: "default"
+  api-version:
+    description: The API version to use when connecting to model deployment.
+    required: false
+    default: ""
 
 runs:
   using: composite
@@ -46,13 +47,13 @@ runs:
       shell: bash
       run: |
         python -m pip install --upgrade pip
-        pip install -r ${{ github.action_path }}/requirements.txt
+        pip install .
 
     - name: Evaluate agents
       shell: bash
       run: python ${{ github.action_path }}/action.py
       env:
-        AZURE_AIPROJECT_CONNECTION_STRING : ${{ inputs.azure-aiproject-connection-string }}
+        AZURE_AIPROJECT_CONNECTION_STRING: ${{ inputs.azure-aiproject-connection-string }}
         DEPLOYMENT_NAME: ${{ inputs.deployment-name }}
         API_VERSION: ${{ inputs.api-version }}
         DATA_PATH: ${{ inputs.data-path }}

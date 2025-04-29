@@ -3,28 +3,6 @@ name: Continuous Integration
 
 on:
   workflow_dispatch:
-    inputs:
-      data_file:
-        description: 'Data file'
-        required: false
-        default: 'golden-dataset-small.json'
-        type: choice
-        options:
-          - 'golden-dataset-small.json'
-          - 'golden-dataset.json'
-      evaluation_result_view:
-        description: 'Result view'
-        required: false
-        type: choice
-        options:
-          - 'default'
-          - 'all-scores'
-          - 'raw-scores-only'
-      compare_view:
-        description: 'Compare 2 AI Agents?'
-        required: false
-        default: 'true'
-        type: boolean
   pull_request:
     branches:
       - main
@@ -52,7 +30,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements-dev.txt
+          pip install ".[dev]"
 
       - name: Run tests
         run: python -m pytest
@@ -77,7 +55,5 @@ jobs:
         with:
           azure-aiproject-connection-string: "eastus2.api.azureml.ms;040c3674-68d4-431e-b456-a8542c77b8d1;rg-aprilk-ai-agent-test-01b;ai-project-56uji2dklqysk"
           deployment-name: "gpt-4o-mini"
-          api-version: "2024-08-01-preview"
-          data-path: ${{ github.workspace }}/tests/data/${{ github.event.inputs.data_file || 'golden-dataset-small.json' }}
-          agent-ids: ${{ github.event.inputs.compare_view == 'true' && 'asst_qLmkrF8NEhh3HDhky8nWRVDk,asst_MSuB3GboqgJNw74ogzHDD2cQ' || 'asst_qLmkrF8NEhh3HDhky8nWRVDk' }}
-          evaluation-result-view: ${{ github.event.inputs.evaluation_result_view || 'default' }}
+          data-path: ${{ github.workspace }}/samples/data/dataset-tiny.json
+          agent-ids: "asst_qLmkrF8NEhh3HDhky8nWRVDk,asst_MSuB3GboqgJNw74ogzHDD2cQ"

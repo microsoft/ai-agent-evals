@@ -1,8 +1,7 @@
 {
-  "name": "golden-dataset-small",
+  "name": "test-dataset-small",
   "evaluators": [
     "IntentResolutionEvaluator",
-    "ToolCallAccuracyEvaluator",
     "TaskAdherenceEvaluator",
     "CoherenceEvaluator",
     "RelevanceEvaluator",
@@ -16,12 +15,10 @@
   ],
   "data": [
     {
-      "id": "test_smart_eyewear_info_01",
       "query": "Tell me about Smart eyeware"
     },
     {
-      "id": "test_smart_eyewear_warranty_02",
-      "query": "How long is the warranty for Smart eyeware"
+      "query": "How do I rebase my branch in git?"
     }
   ]
 }

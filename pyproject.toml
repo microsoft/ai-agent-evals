@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ai-agents-evals"
+version = "0.1.0"
+description = "AI Agents Evaluation Tools"
+readme = "README.md"
+requires-python = ">=3.12"
+
+dependencies = [
+    "pandas",
+    "numpy",
+    "pyyaml",
+    "scipy",
+    "azure-ai-evaluation>=1.5.0",
+    "azure-ai-projects>=1.0.0b9",
+    "azure-identity",
+]
+
+[project.optional-dependencies]
+dev = [
+    "python-dotenv",
+    "pytest",
+    "pytest-snapshot",
+    "pre-commit"
+]
+
+[tool.setuptools.packages.find]
+where = ["analysis"]

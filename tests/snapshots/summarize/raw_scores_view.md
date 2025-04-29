@@ -1,4 +1,4 @@
-## Azure AI Evaluation
+## Azure AI Evaluation (raw-scores-only)
 
 ### Agent variants
 
@@ -10,7 +10,7 @@
 
 #### AI quality (AI assisted)
 
-| Evaluation score   |   agent.v1 | 95% CI   |
-|:-------------------|-----------:|:---------|
-| Relevance          |        4   | n/a      |
-| Fluency            |        0.8 | n/a      |
+| Evaluation score   |   agent.v1 |                                                                                       95% Confidence Interval |
+|:-------------------|-----------:|--------------------------------------------------------------------------------------------------------------:|
+| Relevance          |          4 | ![: N/A](https://img.shields.io/badge/-N%2FA-e6e6e3 "Confidence interval not applicable for this score type") |
+| Fluency            |        0.8 | ![: N/A](https://img.shields.io/badge/-N%2FA-e6e6e3 "Confidence interval not applicable for this score type") |

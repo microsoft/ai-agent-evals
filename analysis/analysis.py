@@ -6,7 +6,7 @@
 from dataclasses import dataclass
 from enum import Enum
 from math import isnan
-from typing import Literal, Optional
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -15,6 +15,7 @@ from scipy.stats.contingency import crosstab
 
 SAMPLE_SIZE_THRESHOLD = 10
 TEST_ID = "inputs.id"
+
 
 def mcnemar(contingency_table: np.ndarray) -> float:
     """McNemar's test for paired boolean data.
@@ -40,7 +41,7 @@ class EvaluationResult:
 
     variant: str
     df_result: pd.DataFrame
-    ai_foundry_url: Optional[str] = None
+    ai_foundry_url: str | None = None
 
     def __post_init__(self):
         if self.variant is None or self.variant == "":
@@ -52,16 +53,17 @@ class EvaluationResult:
         if self.df_result[TEST_ID].duplicated().any():
             raise ValueError(f"{TEST_ID} column must be unique")
 
+
 class EvaluationResultView(Enum):
-    """ Different views for displaying evaluation results
-    
+    """Different views for displaying evaluation results
+
     Controls how evaluation results are presented to users,
     with options for different levels of detail.
     """
 
-    DEFAULT = "default" # Default view, showing only passing/defect rate
-    ALL = "all-scores" # All scores view, showing all evaluation scores
-    RAW_SCORES = "raw-scores-only" # Raw scores view, showing only raw metrics
+    DEFAULT = "default"  # Default view, showing only passing/defect rate
+    ALL = "all-scores"  # All scores view, showing all evaluation scores
+    RAW_SCORES = "raw-scores-only"  # Raw scores view, showing only raw metrics
 
 
 class EvaluationScoreDataType(Enum):
@@ -206,7 +208,7 @@ class EvaluationScoreComparison:
             # For continuous and ordinal data types, use the regular mean
             self.control_mean = float(df_paired["score_c"].mean())
             self.treatment_mean = float(df_paired["score_t"].mean())
-    
+
         self.delta_estimate = self.treatment_mean - self.control_mean
         self.p_value = float(self._stat_test(df_paired))
 

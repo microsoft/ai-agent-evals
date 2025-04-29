@@ -1,59 +1,95 @@
 # Azure AI Evaluation GitHub Action
 
-This GitHub Action enables offline evaluation of Azure AI agents within your CI/CD pipelines. It is designed to streamline the evaluation process, allowing you to assess agent performance and make informed decisions before deploying to production.
+This GitHub Action enables offline evaluation of [Azure AI Agents](https://learn.microsoft.com/en-us/azure/ai-services/agents/) within your CI/CD pipelines. It is designed to streamline the offline evaluation process, allowing you to identify potential issues and make improvements before releasing an update to production.
 
-Offline evaluation involves testing AI agents using test datasets to measure their performance on various quality and safety metrics such as fluency, coherence and content safety. After setting up an [Azure AI Agent Service](hhttps://learn.microsoft.com/en-us/azure/ai-services/agents/), offline pre-production evaluation is crucial for AI application validation during integration testing, allowing developers to identify potential issues and make improvements before releasing an update to your Azure AI agent.
+To use this action, all you need to provide is a data set with test queries and a list of evaluators. This action will invoke your agent(s) with the queries, collect the performance data including latency and token counts, run the evaluations, and generate a summary report.
 
 ## Features
 
-- **Automated Evaluation:** Integrate offline evaluation into your CI/CD workflows to automate the pre-production assessment of Azure AI agents.
-- **Built-in Evaluators:** Leverage existing evaluators provided by the [Azure AI Evaluation SDK](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/develop/evaluate-sdk). The following evaluators are supported: TODO
-- **Seamless Integration:** Easily integrate with existing GitHub workflows to run evaluation based on rules that you specify in your workflows (e.g., when changes are committed to feature flag configuration or system prompt files).
+- **Agent Evaluation:** Automate pre-production assessment of Azure AI agents in your CI/CD workflow.
+- **Built-in Evaluators:** Leverage existing evaluators provided by the [Azure AI Evaluation SDK](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/develop/evaluate-sdk).
+- **Statistical Analysis:** Evaluation results include confidence intervals and test for statistical significance to determine if changes are meaningful and not due to random variation.
+
+## Supported AI Evaluators
+
+| Type                     | Evaluator                  |
+| ------------------------ | -------------------------- |
+| AI Quality (AI assisted) | IntentResolutionEvaluator  |
+|                          | TaskAdherenceEvaluator     |
+|                          | RelevanceEvaluator         |
+|                          | CoherenceEvaluator         |
+|                          | FluencyEvaluator           |
+| Risk and safety          | ViolenceEvaluator          |
+|                          | SexualEvaluator            |
+|                          | SelfHarmEvaluator          |
+|                          | HateUnfairnessEvaluator    |
+|                          | IndirectAttackEvaluator    |
+|                          | ProtectedMaterialEvaluator |
+|                          | CodeVulnerabilityEvaluator |
+
+For the full list of evaluator scores and their types, see [analysis/evaluator-scores.yaml](analysis/evaluator-scores.yaml).
 
 ## Inputs
 
-| Name                               | Description                                                                                                                                             |
-| :--------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| azure-ai-project-connection-string | Connection string of your Azure AI Project                                                                                                              |
-| agent-ids                          | Id of the agent(s) to evaluate. If multiple are provided, all agents will be evaluated and compared against the baseline with statistical test results. |
-| data-path                          | Path to the data file that contains the evaluators and input for evaluations                                                                            |
+### Parameters
 
-Here is a sample data file.
+| Name                              | Required? | Description                                                                                                                                                                                                                                           |
+| :-------------------------------- | :-------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| azure-aiproject-connection-string |    Yes    | Connection string of your Azure AI Project                                                                                                                                                                                                            |
+| deployment-name                   |    Yes    | The name of the Azure AI model deployment to use for evaluation                                                                                                                                                                                       |
+| data-path                         |    Yes    | Path to the data file that contains the evaluators and input queries for evaluations                                                                                                                                                                  |
+| agent-ids                         |    Yes    | ID of the agent(s) to evaluate. If multiple are provided, all agents should be comma-separated and will be evaluated and compared against the baseline with statistical test results                                                                  |
+| baseline-agent-id                 |    No     | ID of the baseline agent to compare against when evaluating multiple agents. If not provided, the first agent is used                                                                                                                                 |
+| evaluation-result-view            |    No     | Specifies the format of evaluation results. Defaults to "default" (boolean scores such as passing and defect rates) if omitted. Options are "default", "all-scores" (includes all evaluation scores), and "raw-scores-only" (non-boolean scores only) |
+| api-version                       |    No     | The API version to use when connecting to model deployment                                                                                                                                                                                            |
+
+### Data File
+
+The input data file should be a JSON file with the following structure:
+
+| Field        | Type     | Required | Description                    |
+| ------------ | -------- | -------- | ------------------------------ |
+| name         | string   | Yes      | Name of the test dataset       |
+| evaluators   | string[] | Yes      | List of evaluator names to use |
+| data         | object[] | Yes      | Array of input objects         |
+| data[].query | string   | Yes      | The query text to evaluate     |
+| data[].id    | string   | No       | Optional ID for the query      |
+
+Below is a sample data file.
 
 ```JSON
 {
-  "name": "my-test-data",
-  "evaluators": ["FluencyEvaluator", "ViolenceEvaluator"],
+  "name": "test-data",
+  "evaluators": ["IntentResolutionEvaluator", "FluencyEvaluator"],
   "data": [
     {
-      "query": "Tell me about Tokyo?",
-      "ground_truth": "Tokyo is the capital of Japan and the largest city in the country. It is located on the eastern coast of Honshu, the largest of Japan's four main islands."
+      "query": "Tell me about Smart eyeware"
     },
     {
-      "query": "Where is Italy?",
-      "ground_truth": "Italy is a country in southern Europe, located on the Italian Peninsula and the two largest islands in the Mediterranean Sea, Sicily and Sardinia."
+      "query": "How do I rebase my branch in git?"
     }
   ]
 }
 ```
 
-## Outputs
+#### Additional Sample Data Files
 
-TODO - add some explanation, screenshots
+| Filename                                                           | Description                                                                                                        |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| [samples/data/dataset-tiny.json](samples/data/dataset-tiny.json)   | Small dataset with minimal test queries and evaluators                                                             |
+| [samples/data/dataset-small.json](samples/data/dataset-small.json) | Small dataset with a small number of test queries and all supported evaluators                                     |
+| [samples/data/dataset.json](samples/data/dataset.json)             | Dataset with all supported evaluators and enough queries for confidence interval calcualtion and statistical test. |
 
 ## Sample workflow
 
 To use this GitHub Action, add this GitHub Action to your CI/CD workflows and specify the trigger criteria (e.g., on commit).
 
-```
-name: 'AI Agent Evaluation'
+```yaml
+name: "AI Agent Evaluation"
 
 on:
   workflow_dispatch:
   push:
-    branches:
-      - main
-  pull_request:
     branches:
       - main
 
@@ -62,14 +98,9 @@ permissions:
   contents: read
 
 jobs:
-  evaluate:
+  run-action:
     runs-on: ubuntu-latest
-    env:
-      DATA-PATH:
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: Azure login using Federated Credentials
         uses: azure/login@v2
         with:
@@ -77,23 +108,29 @@ jobs:
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Evaluate AI Agents
-        uses: microsoft/ai-agent-eval@v1
+      - name: Run Evaluation
+        uses: microsoft/ai-agent-evals@v1
         with:
-          azure-ai-project-connection-string: ${{ vars.AZURE_AIPROJECT_CONNECTION_STRING }}
-          data-path: ${{ github.workspace }}/data/golden-dataset.json
-          agent-ids: 'agent-id-1, agent-id-2'
+          # Replace placeholders with values for your Azure AI Project
+          azure-aiproject-connection-string: "<your-ai-project-conn-str>"
+          deployment-name: "<your-deployment-name>"
+          agent-ids: "<your-ai-agent-ids>"
+          data-path: ${{ github.workspace }}/path/to/your/data-file
 ```
 
-## Outputs
+## Evaluation Outputs
 
 Evaluation results will be output to the summary section for each AI Evaluation GitHub Action run under Actions in GitHub.com.
+
+Below is a sample report for comparing two agents.
+
+![Sample output to compare multiple agent evaluations](sample-output.png)
 
 ## Contributing
 
 This project welcomes contributions and suggestions. Most contributions require you to agree to a
 Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
-the rights to use your contribution. For details, visit https://cla.opensource.microsoft.com.
+the rights to use your contribution. For details, visit [here](https://cla.opensource.microsoft.com).
 
 When you submit a pull request, a CLA bot will automatically determine whether you need to provide
 a CLA and decorate the PR appropriately (e.g., status check, comment). Simply follow the instructions

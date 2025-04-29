@@ -1,5 +1,8 @@
+"""Tests for the analysis module functionality"""
+
 import pandas as pd
 import pytest
+from action import convert_pass_fail_to_boolean
 
 from analysis.analysis import (
     DesiredDirection,
@@ -22,25 +25,34 @@ data_result_2 = {
     "outputs.accuracy.score": [3, 4, 5],
 }
 
+test_score_1 = EvaluationScore(
+    name="fluency",
+    evaluator="fluency",
+    field="score",
+    data_type=EvaluationScoreDataType.CONTINUOUS,
+    desired_direction=DesiredDirection.INCREASE,
+)
+
+test_score_2 = EvaluationScore(
+    name="accuracy",
+    evaluator="accuracy",
+    field="score",
+    data_type=EvaluationScoreDataType.ORDINAL,
+    desired_direction=DesiredDirection.DECREASE,
+)
+
 
 def test_create_score():
-    # Test creating a basic evaluation score
-    score = EvaluationScore(
-        name="fluency",
-        evaluator="fluency",
-        field="score",
-        data_type=EvaluationScoreDataType.CONTINUOUS,
-        desired_direction=DesiredDirection.INCREASE,
-    )
-    assert score.name == "fluency"
-    assert score.evaluator == "fluency"
-    assert score.field == "score"
-    assert score.data_type == EvaluationScoreDataType.CONTINUOUS
-    assert score.desired_direction == DesiredDirection.INCREASE
+    """Test creating an evaluation score."""
+    assert test_score_1.name == "fluency"
+    assert test_score_1.evaluator == "fluency"
+    assert test_score_1.field == "score"
+    assert test_score_1.data_type == EvaluationScoreDataType.CONTINUOUS
+    assert test_score_1.desired_direction == DesiredDirection.INCREASE
 
 
 def test_create_evaluation_result():
-    # Test creating an evaluation result with multiple scores
+    """Test creating an evaluation result with multiple scores"""
     result = EvaluationResult(
         variant="test_variant",
         df_result=pd.DataFrame(data_result_1),
@@ -52,7 +64,7 @@ def test_create_evaluation_result():
 
 
 def test_evaluation_confidence_interval():
-    # Test creating a confidence interval for an evaluation result
+    """Test creating a confidence interval for an evaluation result"""
     result = EvaluationResult(
         variant="test_variant",
         df_result=pd.DataFrame(data_result_1),
@@ -72,7 +84,7 @@ def test_evaluation_confidence_interval():
 
 
 def test_evaluation_score_comparison():
-    # Test comparing two evaluation results
+    """Test comparing two evaluation results"""
     control_result = EvaluationResult(
         variant="test_variant_1",
         df_result=pd.DataFrame(data_result_1),
@@ -112,27 +124,20 @@ def test_boolean_conversion():
         "outputs.fluency.result": ["pass", "fail", "PASS"],  # Case variations
         "outputs.safety.result": ["FAIL", "pass", "fail"],
     }
-    
+
     # Create a mock eval_result_data dictionary as it appears in action.py
     eval_result_data = {"rows": []}
     for i, test_id in enumerate(test_data["inputs.id"]):
         row = {
             "inputs.id": test_id,
             "outputs.fluency.result": test_data["outputs.fluency.result"][i],
-            "outputs.safety.result": test_data["outputs.safety.result"][i]
+            "outputs.safety.result": test_data["outputs.safety.result"][i],
         }
         eval_result_data["rows"].append(row)
-    
+
     # Test the conversion logic from action.py
-    for row in eval_result_data["rows"]:
-        for key in row:
-            if key.startswith("outputs."):
-                if isinstance(row[key], str):
-                    if row[key].lower() == "pass":
-                        row[key] = True
-                    elif row[key].lower() == "fail":
-                        row[key] = False
-    
+    convert_pass_fail_to_boolean(eval_result_data)
+
     # Verify conversion worked correctly
     assert eval_result_data["rows"][0]["outputs.fluency.result"] is True
     assert eval_result_data["rows"][0]["outputs.safety.result"] is False

@@ -2,8 +2,7 @@ name: Lint
 
 on: # yamllint disable-line rule:truthy
   workflow_dispatch:
-  #push: null
-  #pull_request: null
+  pull_request: null
 
 permissions: {}
 
@@ -25,7 +24,7 @@ jobs:
           fetch-depth: 0
 
       - name: Super-linter
-        uses: super-linter/super-linter/slim@v7.1.0 # x-release-please-version
+        uses: super-linter/super-linter/slim@v7.3.0 # x-release-please-version
         env:
           MULTI_STATUS: false
           FILTER_REGEX_EXCLUDE: (.*tests/snapshots/.*\.md|SECURITY\.md|SUPPORT\.md)

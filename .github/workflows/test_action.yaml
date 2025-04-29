@@ -1,0 +1,56 @@
+---
+name: Test Local Action
+on:
+  workflow_dispatch:
+    inputs:
+      data_file:
+        description: "Data file"
+        required: false
+        default: "dataset-tiny.json"
+        type: choice
+        options:
+          - "dataset-tiny.json"
+          - "dataset-small.json"
+          - "dataset.json"
+      evaluation_result_view:
+        description: "Result view"
+        required: false
+        type: choice
+        options:
+          - "default"
+          - "all-scores"
+          - "raw-scores-only"
+      compare_view:
+        description: "Compare 2 AI Agents?"
+        required: false
+        default: "true"
+        type: boolean
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  run-action:
+    runs-on: ubuntu-latest
+
+    steps:
+      # required because action is unpublished
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure login using Federated Credentials
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Test local action
+        uses: ./
+        with:
+          azure-aiproject-connection-string: "eastus2.api.azureml.ms;040c3674-68d4-431e-b456-a8542c77b8d1;rg-aprilk-ai-agent-test-01b;ai-project-56uji2dklqysk"
+          deployment-name: "gpt-4o-mini"
+          data-path: ${{ github.workspace }}/samples/data/${{ github.event.inputs.data_file || 'dataset-tiny.json' }}
+          agent-ids: ${{ github.event.inputs.compare_view == 'true' && 'asst_qLmkrF8NEhh3HDhky8nWRVDk,asst_MSuB3GboqgJNw74ogzHDD2cQ' || 'asst_qLmkrF8NEhh3HDhky8nWRVDk' }}
+          evaluation-result-view: ${{ github.event.inputs.evaluation_result_view || 'default' }}

@@ -24,6 +24,5 @@ steps:
       python -m pip install --upgrade pip
       pip install -r requirements.txt
     displayName: "Install dependencies"
-
   - task: ms.vss-governance-buildtask.governance-build-task-component-detection.ComponentGovernanceComponentDetection@0
     displayName: "CG Component Detection"
