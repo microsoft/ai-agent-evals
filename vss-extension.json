@@ -95,6 +95,10 @@
             "packagePath": "tasks/AIAgentEvaluation/action.py"
         },
         {
+            "path": "pyproject.toml",
+            "packagePath": "tasks/AIAgentEvaluation/pyproject.toml"
+        },
+        {
             "path": "analysis",
             "packagePath": "tasks/AIAgentEvaluation/analysis"
         }
