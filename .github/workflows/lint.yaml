@@ -32,3 +32,7 @@ jobs:
           VALIDATE_TYPESCRIPT_ES: false
           VALIDATE_TYPESCRIPT_PRETTIER: false
           VALIDATE_TYPESCRIPT_STANDARD: false
+          IGNORE_GITIGNORED_FILES: true
+          FILE_CONVENTIONS_SIMPLE: true
+          LINTER_RULES_PATH: .github/linters
+          IGNORE_GENERATED_FILES: true
