@@ -161,7 +161,7 @@ def fmt_control_badge(x: EvaluationScoreComparison) -> str:
     return fmt_badge("Baseline", value, WHITE)
 
 
-def fmt_ci(x: EvaluationScoreCI) -> str:
+def fmt_ci_low(x: EvaluationScoreCI) -> str:
     """Format a confidence interval as a badge"""
     if x.ci_lower is None or x.ci_upper is None:
         color = "Information"
@@ -174,8 +174,26 @@ def fmt_ci(x: EvaluationScoreCI) -> str:
         return fmt_badge("", "Too few samples", color, tooltip_stat)
 
     md_lower = fmt_metric_value(x.ci_lower, x.score.data_type)
+    # md_ci = f"({md_lower}, {md_upper})"
+    md_ci = f"{md_lower}"
+    return md_ci
+
+
+def fmt_ci_high(x: EvaluationScoreCI) -> str:
+    """Format a confidence interval as a badge"""
+    if x.ci_lower is None or x.ci_upper is None:
+        color = "Information"
+        tooltip_stat = "Confidence interval not applicable for this score type"
+        return fmt_badge("", "N/A", color, tooltip_stat)
+
+    if x.count < 10:
+        color = "Information"
+        tooltip_stat = "Too few samples to determine confidence interval"
+        return fmt_badge("", "Too few samples", color, tooltip_stat)
+
     md_upper = fmt_metric_value(x.ci_upper, x.score.data_type)
-    md_ci = f"({md_lower}, {md_upper})"
+    # md_ci = f"({md_lower}, {md_upper})"
+    md_ci = f"{md_upper}"
     return md_ci
 
 
@@ -231,10 +249,12 @@ def fmt_table_ci(scores: list[EvaluationScore], result: EvaluationResult) -> str
             records.append(
                 {
                     "Evaluation score": score.name,
-                    result.variant: fmt_metric_value(
+                    ""
+                    + result.variant: fmt_metric_value(
                         result_ci.mean, result_ci.score.data_type
                     ),
-                    "95% Confidence Interval": fmt_ci(result_ci),
+                    "95% Confidence Interval: Low": fmt_ci_low(result_ci),
+                    "High": fmt_ci_high(result_ci),
                 }
             )
         except ValueError as e:
