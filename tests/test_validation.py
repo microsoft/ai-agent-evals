@@ -3,6 +3,17 @@
 import pytest
 from action import validate_input_data
 
+eval_metadata = {
+    "sections": [
+        {
+            "evaluators": [
+                {"class": "IntentResolutionEvaluator"},
+                {"class": "RelevanceEvaluator"},
+            ]
+        }
+    ]
+}
+
 
 def test_valid_input_data():
     """Test that valid input data passes validation."""
@@ -16,7 +27,7 @@ def test_valid_input_data():
     }
 
     # This should not raise any exceptions
-    validate_input_data(valid_data)
+    validate_input_data(valid_data, eval_metadata)
 
 
 def test_missing_required_fields():
@@ -28,14 +39,14 @@ def test_missing_required_fields():
     }
 
     with pytest.raises(ValueError) as excinfo:
-        validate_input_data(invalid_data_1)
+        validate_input_data(invalid_data_1, eval_metadata)
     assert "missing required fields" in str(excinfo.value)
 
     # Missing evaluators field
     invalid_data_2 = {"name": "Test Dataset", "data": [{"query": "test query"}]}
 
     with pytest.raises(ValueError) as excinfo:
-        validate_input_data(invalid_data_2)
+        validate_input_data(invalid_data_2, eval_metadata)
     assert "missing required fields" in str(excinfo.value)
 
     # Missing data field
@@ -45,7 +56,7 @@ def test_missing_required_fields():
     }
 
     with pytest.raises(ValueError) as excinfo:
-        validate_input_data(invalid_data_3)
+        validate_input_data(invalid_data_3, eval_metadata)
     assert "missing required fields" in str(excinfo.value)
 
 
@@ -59,7 +70,7 @@ def test_invalid_field_types():
     }
 
     with pytest.raises(ValueError) as excinfo:
-        validate_input_data(invalid_data_1)
+        validate_input_data(invalid_data_1, eval_metadata)
     assert "must be a string" in str(excinfo.value)
 
     # Invalid evaluators type
@@ -70,7 +81,7 @@ def test_invalid_field_types():
     }
 
     with pytest.raises(ValueError) as excinfo:
-        validate_input_data(invalid_data_2)
+        validate_input_data(invalid_data_2, eval_metadata)
     assert "must be a list" in str(excinfo.value)
 
     # Invalid data type
@@ -81,7 +92,7 @@ def test_invalid_field_types():
     }
 
     with pytest.raises(ValueError) as excinfo:
-        validate_input_data(invalid_data_3)
+        validate_input_data(invalid_data_3, eval_metadata)
     assert "must be a list" in str(excinfo.value)
 
 
@@ -95,7 +106,7 @@ def test_data_item_validation():
     }
 
     with pytest.raises(ValueError) as excinfo:
-        validate_input_data(invalid_data)
+        validate_input_data(invalid_data, eval_metadata)
     assert "missing required field 'query'" in str(excinfo.value)
 
     # Data item is not a dictionary
@@ -106,7 +117,7 @@ def test_data_item_validation():
     }
 
     with pytest.raises(ValueError) as excinfo:
-        validate_input_data(invalid_data_2)
+        validate_input_data(invalid_data_2, eval_metadata)
     assert "must be a dictionary" in str(excinfo.value)
 
 
@@ -119,7 +130,7 @@ def test_unknown_evaluator_validation():
     }
 
     with pytest.raises(ValueError) as excinfo:
-        validate_input_data(invalid_data)
+        validate_input_data(invalid_data, eval_metadata)
     assert "Unknown evaluators specified" in str(excinfo.value)
 
 
@@ -137,7 +148,7 @@ def test_duplicate_id_validation():
     }
 
     with pytest.raises(ValueError) as excinfo:
-        validate_input_data(invalid_data)
+        validate_input_data(invalid_data, eval_metadata)
     assert "Duplicate ID 'duplicate_id' found in 'data'" in str(excinfo.value)
 
     # Test empty data list
@@ -148,5 +159,5 @@ def test_duplicate_id_validation():
     }
 
     with pytest.raises(ValueError) as excinfo:
-        validate_input_data(invalid_empty_data)
+        validate_input_data(invalid_empty_data, eval_metadata)
     assert "cannot be empty" in str(excinfo.value)

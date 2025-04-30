@@ -194,20 +194,8 @@ class EvaluationScoreComparison:
         self.treatment_variant = treatment.variant
         self.count = df_paired.shape[0]
 
-        if score.data_type == EvaluationScoreDataType.BOOLEAN:
-            # For boolean scores, compute pass/fail rates based on direction
-            pass_rate_control = df_paired["score_c"].mean()
-            pass_rate_treatment = df_paired["score_t"].mean()
-            if score.desired_direction == DesiredDirection.DECREASE:
-                self.control_mean = float(1.0 - pass_rate_control)
-                self.treatment_mean = float(1.0 - pass_rate_treatment)
-            else:
-                self.control_mean = float(pass_rate_control)
-                self.treatment_mean = float(pass_rate_treatment)
-        else:
-            # For continuous and ordinal data types, use the regular mean
-            self.control_mean = float(df_paired["score_c"].mean())
-            self.treatment_mean = float(df_paired["score_t"].mean())
+        self.control_mean = float(df_paired["score_c"].mean())
+        self.treatment_mean = float(df_paired["score_t"].mean())
 
         self.delta_estimate = self.treatment_mean - self.control_mean
         self.p_value = float(self._stat_test(df_paired))
