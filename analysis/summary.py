@@ -112,6 +112,19 @@ def summarize(
                 eval_results, baseline, evaluators, result_view, md, section
             )
 
+    md.append("### References\n")
+    md.append(
+        "- See [evaluator-scores.yaml](https://github.com/microsoft/ai-agent-evals/blob/main/"
+        "analysis/evaluator-scores.yaml) for the full list of evaluators supported "
+        "and the definitions of the scores"
+    )
+    md.append(
+        "- For in-depth details on evaluators, please see the "
+        "[Agent Evaluation SDK section in the Azure AI documentation]"
+        "(https://learn.microsoft.com/en-us/azure/ai-foundry/how-to/develop/agent-evaluate-sdk)"
+    )
+    md.append("")
+
     return "\n".join(md)
 
 
