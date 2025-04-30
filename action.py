@@ -259,6 +259,7 @@ def get_evaluator_metadata() -> dict:
         return metadata
 
 
+# pylint: disable=too-many-nested-blocks
 def convert_pass_fail_to_boolean(
     eval_result_data: dict, eval_metadata: dict
 ) -> list[dict]:
