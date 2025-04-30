@@ -1,10 +1,6 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import {
-  init,
-  ready,
-  getConfiguration,
-} from "azure-devops-extension-sdk";
+import { init, ready, getConfiguration } from "azure-devops-extension-sdk";
 import { Build } from "azure-devops-extension-api/Build";
 import { fetchArtifactContent } from "./artifact-client";
 import { GithubFlavoredMarkdown } from "./github-flavored-markdown";
@@ -24,7 +20,7 @@ const run = async () => {
       console.log("Project:", build.project.name);
       const markdownContent = await fetchArtifactContent(
         build.id,
-        build.project.name
+        build.project.name,
       );
 
       const rootElement = document.getElementById("root");
@@ -32,7 +28,7 @@ const run = async () => {
         createRoot(rootElement).render(
           <StrictMode>
             <GithubFlavoredMarkdown markdownContent={markdownContent} />
-          </StrictMode>
+          </StrictMode>,
         );
       }
     } catch (error) {
@@ -42,7 +38,7 @@ const run = async () => {
           createRoot(rootElement).render(
             <StrictMode>
               <ErrorMessage message={error.message} />
-            </StrictMode>
+            </StrictMode>,
           );
         }
         return;

@@ -7,7 +7,7 @@ const FILE_PATH = `ai-agent-eval/${ARTIFACT_FILE}`;
 
 export const fetchArtifactContent = async (
   buildId: number,
-  projectName: string
+  projectName: string,
 ): Promise<string> => {
   try {
     const accessToken = await getAccessToken();
@@ -18,9 +18,9 @@ export const fetchArtifactContent = async (
 
     const response = await fetch(apiUrl, {
       headers: {
-        Authorization: `Bearer ${accessToken}`
+        Authorization: `Bearer ${accessToken}`,
       },
-      redirect: "follow"
+      redirect: "follow",
     });
 
     if (!response.ok) {
