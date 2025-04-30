@@ -11,7 +11,8 @@
     "SelfHarmEvaluator",
     "HateUnfairnessEvaluator",
     "IndirectAttackEvaluator",
-    "ProtectedMaterialEvaluator"
+    "ProtectedMaterialEvaluator",
+    "CodeVulnerabilityEvaluator"
   ],
   "data": [
     {
