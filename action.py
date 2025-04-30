@@ -185,7 +185,7 @@ def create_evaluators(class_names: list[str], args_default: dict) -> dict:
 
 
 # pylint: disable=too-many-branches
-def validate_input_data(data: dict) -> None:
+def validate_input_data(data: dict, eval_metadata: dict) -> None:
     """
     Validates that the input data has the required structure and fields.
 
@@ -234,12 +234,9 @@ def validate_input_data(data: dict) -> None:
 
     # Validate that all evaluator names exist in the available evaluators
     available_evaluators = []
-    evaluator_path = Path(__file__).parent / "analysis" / "evaluator-scores.yaml"
-    with open(evaluator_path, encoding="utf-8") as f:
-        metadata = yaml.safe_load(f)
-        for section in metadata["sections"]:
-            for evaluator in section["evaluators"]:
-                available_evaluators.append(evaluator["class"])
+    for section in eval_metadata["sections"]:
+        for evaluator in section["evaluators"]:
+            available_evaluators.append(evaluator["class"])
 
     unknown_evaluators = [
         e
@@ -252,12 +249,58 @@ def validate_input_data(data: dict) -> None:
         )
 
 
+def get_evaluator_metadata() -> dict:
+    """
+    Get evaluator metadata from the evaluator-scores.yaml file.
+    """
+    evaluator_path = Path(__file__).parent / "analysis" / "evaluator-scores.yaml"
+    with open(evaluator_path, encoding="utf-8") as f:
+        metadata = yaml.safe_load(f)
+        return metadata
+
+
+# pylint: disable=too-many-nested-blocks
+def convert_pass_fail_to_boolean(
+    eval_result_data: dict, eval_metadata: dict
+) -> list[dict]:
+    """
+    Convert "pass" and "fail" strings in evaluation results to booleans.
+    """
+    # Create a mapping of available scores
+    available_scores = {}
+    for section in eval_metadata["sections"]:
+        for evaluator in section["evaluators"]:
+            for score in evaluator["scores"]:
+                field = f"outputs.{evaluator['key']}.{score['key']}"
+                available_scores[field] = score
+
+    # Convert "pass" and "fail" strings to booleans based on the desired direction
+    #   Pass rate: pass = True, fail = False (count # passes)
+    #   Defect rate: pass = False, fail = True (count # fails)
+    eval_rows = eval_result_data["rows"]
+    for row in eval_rows:
+        for key in row:
+            if key.startswith("outputs."):
+                matching_score = available_scores.get(key, None)
+                if matching_score:
+                    is_up_good = (
+                        matching_score.get("desired_direction").lower() == "increase"
+                    )
+                    if isinstance(row[key], str):
+                        if row[key].lower() == "pass":
+                            row[key] = is_up_good
+                        elif row[key].lower() == "fail":
+                            row[key] = not is_up_good
+    return eval_rows
+
+
 # pylint: disable=too-many-locals, too-many-arguments, too-many-positional-arguments
 def main(
     credential,
     conn_str: str,
     input_data_set: dict,
     agent_ids: list[str],
+    eval_metadata: dict,
     baseline_agent_id: str | None = None,
     working_dir: Path | None = None,
     eval_result_view: analysis.EvaluationResultView = analysis.EvaluationResultView.DEFAULT,
@@ -363,7 +406,7 @@ def main(
         with open(eval_output_paths[agent_id], encoding="utf-8") as f:
             eval_result_data = json.load(f)
 
-        eval_rows = convert_pass_fail_to_boolean(eval_result_data)
+        eval_rows = convert_pass_fail_to_boolean(eval_result_data, eval_metadata)
 
         eval_results[agent_id] = analysis.EvaluationResult(
             variant=agent.name,
@@ -389,22 +432,6 @@ def main(
         agent_base_url,
         eval_result_view,
     )
-
-
-def convert_pass_fail_to_boolean(eval_result_data):
-    """Convert "pass" and "fail" strings in evaluation results to booleans."""
-    eval_rows = eval_result_data["rows"]
-    for row in eval_rows:
-        for key in row:
-            # Check if the field is an outputs field
-            if key.startswith("outputs."):
-                # If the value is a string, check for "pass" or "fail"
-                if isinstance(row[key], str):
-                    if row[key].lower() == "pass":
-                        row[key] = True
-                    elif row[key].lower() == "fail":
-                        row[key] = False
-    return eval_rows
 
 
 if __name__ == "__main__":
@@ -436,11 +463,13 @@ if __name__ == "__main__":
                 f"EVALUATION_RESULT_VIEW must be one of {valid_options}"
             ) from exc
 
+    evaluator_score_metadata = get_evaluator_metadata()
+
     # Load and validate input data
     try:
         input_data_path = Path(DATA_PATH)
         input_data = json.loads(input_data_path.read_text(encoding="utf-8"))
-        validate_input_data(input_data)
+        validate_input_data(input_data, evaluator_score_metadata)
     except json.JSONDecodeError as exc:
         raise ValueError(f"Input data at {DATA_PATH} is not valid JSON") from exc
 
@@ -450,6 +479,7 @@ if __name__ == "__main__":
         conn_str=AZURE_AIPROJECT_CONNECTION_STRING,
         input_data_set=input_data,
         agent_ids=AGENT_IDS,
+        eval_metadata=evaluator_score_metadata,
         baseline_agent_id=BASELINE_AGENT_ID,
         working_dir=input_data_path.parent,
         eval_result_view=result_view,
@@ -459,7 +489,6 @@ if __name__ == "__main__":
         with open(STEP_SUMMARY, "a", encoding="utf-8") as fp:
             fp.write(SUMMARY_MD)
 
-    # REMOVE ME
     if env_path.exists():
         with open(Path(".") / "evaluation.md", "a", encoding="utf-8") as fp:
             fp.write(SUMMARY_MD)

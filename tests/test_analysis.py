@@ -117,12 +117,48 @@ def test_evaluation_score_comparison():
 
 
 def test_boolean_conversion():
-    """Test that string pass/fail values are converted to boolean values correctly."""
-    # Create test data with string pass/fail values
+    """
+    Test that string pass/fail values are converted to boolean values correctly,
+    considering the desired direction of evaluation metrics.
+    """
+    # Create test data with string pass/fail values and mock evaluator metadata
     test_data = {
         "inputs.id": ["test1", "test2", "test3"],
         "outputs.fluency.result": ["pass", "fail", "PASS"],  # Case variations
-        "outputs.safety.result": ["FAIL", "pass", "fail"],
+        "outputs.safety.result": [
+            "FAIL",
+            "pass",
+            "fail",
+        ],  # Safety metrics are typically reversed
+        "outputs.accuracy.result": ["pass", "FAIL", "Pass"],  # Mixed case
+    }
+
+    # Mock evaluator metadata that defines desired direction
+    eval_metadata = {
+        "sections": [
+            {
+                "evaluators": [
+                    {
+                        "key": "fluency",
+                        "scores": [
+                            {"key": "result", "desired_direction": "Increase"}
+                        ],  # Higher is better
+                    },
+                    {
+                        "key": "safety",
+                        "scores": [
+                            {"key": "result", "desired_direction": "Decrease"}
+                        ],  # Lower is better (for risk scores)
+                    },
+                    {
+                        "key": "accuracy",
+                        "scores": [
+                            {"key": "result", "desired_direction": "Increase"}
+                        ],  # Higher is better
+                    },
+                ]
+            }
+        ]
     }
 
     # Create a mock eval_result_data dictionary as it appears in action.py
@@ -132,16 +168,26 @@ def test_boolean_conversion():
             "inputs.id": test_id,
             "outputs.fluency.result": test_data["outputs.fluency.result"][i],
             "outputs.safety.result": test_data["outputs.safety.result"][i],
+            "outputs.accuracy.result": test_data["outputs.accuracy.result"][i],
         }
         eval_result_data["rows"].append(row)
 
-    # Test the conversion logic from action.py
-    convert_pass_fail_to_boolean(eval_result_data)
+    # Test the conversion logic from action.py with metadata
+    convert_pass_fail_to_boolean(eval_result_data, eval_metadata)
 
     # Verify conversion worked correctly
+    # For fluency (higher is better): pass → True, fail → False
     assert eval_result_data["rows"][0]["outputs.fluency.result"] is True
-    assert eval_result_data["rows"][0]["outputs.safety.result"] is False
     assert eval_result_data["rows"][1]["outputs.fluency.result"] is False
-    assert eval_result_data["rows"][1]["outputs.safety.result"] is True
     assert eval_result_data["rows"][2]["outputs.fluency.result"] is True
-    assert eval_result_data["rows"][2]["outputs.safety.result"] is False
+
+    # For safety (lower is better): pass → False, fail → True (inverted logic)
+    # Safety metrics often work in reverse - "pass" means safe (low risk)
+    assert eval_result_data["rows"][0]["outputs.safety.result"] is True
+    assert eval_result_data["rows"][1]["outputs.safety.result"] is False
+    assert eval_result_data["rows"][2]["outputs.safety.result"] is True
+
+    # For accuracy (higher is better): pass → True, fail → False
+    assert eval_result_data["rows"][0]["outputs.accuracy.result"] is True
+    assert eval_result_data["rows"][1]["outputs.accuracy.result"] is False
+    assert eval_result_data["rows"][2]["outputs.accuracy.result"] is True
