@@ -1,0 +1,7 @@
+pandas
+numpy
+pyyaml
+scipy
+azure-ai-evaluation>=1.5.0
+azure-ai-projects>=1.0.0b9
+azure-identity
