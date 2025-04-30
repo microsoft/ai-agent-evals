@@ -38,7 +38,7 @@ try {
     $env:BASELINE_AGENT_ID = $baselineAgentId
     $env:EVALUATION_RESULT_VIEW = $evaluationResultView
 
-       # Log inputs (mask sensitive information)
+    # Log inputs (mask sensitive information)
     Write-Host "Connection string: $connectionString"
     Write-Host "Data path: $dataPath"
     Write-Host "Agent IDs: $agentIds"

@@ -46,7 +46,7 @@ $taskJson = Get-Content -Path $taskJsonPath -Raw | ConvertFrom-Json
 # Modify the task.json for the dev version
 $taskJson.id = "6c8d5e8b-16f2-4f7b-b991-99e3dfa9f359"  # New GUID for dev version
 $taskJson.name = "AIAgentEvaluationDev"
-$taskJson.friendlyName = "AI Agent Evaluation (Dev)"
+$taskJson.friendlyName = "Azure AI Agent Evaluation (Dev)"
 $taskJson.description = "Evaluate AI Agents (Development Version)"
 $taskJson.instanceNameFormat = "AI Agent Evaluation (Dev)"
 
@@ -66,7 +66,7 @@ $vssExtension = Get-Content -Path $vssExtensionPath -Raw | ConvertFrom-Json
 # Modify the vss-extension.json for the dev version
 $vssExtension.id = "microsoft-extension-ai-agent-evaluation-dev"
 $vssExtension.publisher = "ms-azure-exp-dev"
-$vssExtension.name = "Azure AI Evaluations Dev"
+$vssExtension.name = "Azure AI Agent Evaluation Dev"
 
 # Update the version using the shared function
 $vssExtension.version = Update-VersionNumber -CurrentVersion $vssExtension.version

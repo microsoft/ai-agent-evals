@@ -3,7 +3,7 @@
   "id": "microsoft-extension-ai-agent-evaluation",
   "publisher": "ms-azure-exp-external",
   "version": "0.0.x",
-  "name": "Azure AI Evaluations",
+  "name": "Azure AI Agent Evaluation",
   "public": false,
   "categories": ["Azure Pipelines"],
   "tags": ["Preview"],
