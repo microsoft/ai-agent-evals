@@ -1,5 +1,10 @@
 steps:
 - task: UseNode@1
+  displayName: Install Node for 1ES
+  inputs:
+    versionSpec: "20.x"
+
+- task: NodeTool@0
   displayName: Install Node
   inputs:
     versionSpec: "20.x"
@@ -9,8 +14,8 @@ steps:
     workingFile: .azure-devops/.npmrc
 
 - script: |
-    npm install -g tfx-cli tsc vite
-  displayName: Install
+    npm install -g tfx-cli
+  displayName: Install TFX CLI
 
 - task: PowerShell@2
   inputs:
