@@ -1,5 +1,8 @@
 name: "Azure AI Agent Evaluation"
 description: "Evaluate the performance, quality and safety of AI agents using the Azure AI Evaluation SDK"
+branding:
+  icon: sliders
+  color: blue
 
 inputs:
   azure-aiproject-connection-string:
