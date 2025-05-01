@@ -42,7 +42,8 @@ steps:
     AppRegistrationTenantId: '33e01921-4d64-4f8c-a055-5bdaffd5e33d'
     EsrpClientId: '05ac92aa-1bc7-4799-b019-5716dd107c21'
     AuthAKVName: 'az-exp-common-certs'
-    AuthSignCertName: 'esrp-authentication-certificate'
+    AuthCertName: 'esrp-authentication-certificate'
+    AuthSignCertName: 'esrp-request-signing-certificate'
     FolderPath: '$(Build.SourcesDirectory)\dist'
     Pattern: 'extension.signature.p7s'
     signConfigType: inlineSignParams
