@@ -18,7 +18,7 @@ steps:
     artifactFeeds: "Analysis and Experimentation/Analysis_and_Experimentation_PublicPackages"
 
 - script: |
-    npm install -g @vscode/vsce,tfx-cli
+    npm install -g @vscode/vsce tfx-cli
   displayName: Install VSCE amd TFX CLI
 
 - script: |
