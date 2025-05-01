@@ -1,5 +1,8 @@
 name: "Azure AI Agent Evaluation"
 description: "Evaluate the performance, quality and safety of AI agents using the Azure AI Evaluation SDK"
+branding:
+  icon: sliders
+  color: blue
 
 inputs:
   azure-aiproject-connection-string:
@@ -47,7 +50,7 @@ runs:
       shell: bash
       run: |
         python -m pip install --upgrade pip
-        pip install .
+        pip install ${{ github.action_path }}
 
     - name: Evaluate agents
       shell: bash

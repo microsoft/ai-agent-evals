@@ -12,7 +12,8 @@
     "HateUnfairnessEvaluator",
     "IndirectAttackEvaluator",
     "ProtectedMaterialEvaluator",
-    "CodeVulnerabilityEvaluator"
+    "CodeVulnerabilityEvaluator",
+    "ContentSafetyEvaluator"
   ],
   "data": [
     {
