@@ -12,7 +12,7 @@ steps:
   displayName: 'Get AzDO User ID'
   inputs:
     azureSubscription: 'esrp-codesign-service-connection'
-    scriptType: pscore
+    scriptType: ps
     scriptLocation: inlineScript
     inlineScript: |
       az rest -u https://app.vssps.visualstudio.com/_apis/profile/profiles/me --resource 499b84ac-1321-427f-aa17-267ca6975798
@@ -73,7 +73,10 @@ steps:
   displayName: Sign Extension
   #condition: and(succeeded(), ne(variables['build.reason'], 'PullRequest'))
 
-- pwsh: | 
-    $vsixPath = (Get-ChildItem -Path $(Build.SourcesDirectory)/dist -Filter *.vsix -File | Select-Object -First 1).FullName
-    npx @vscode/vsce@latest publish -i $vsixPath --manifestPath $(Build.SourcesDirectory)/dist/extension.manifest --signaturePath $(Build.SourcesDirectory)/dist/extension.signature.p7s
+- task: PowerShell@2
   displayName: 'Publish extension'
+  inputs:
+    targetType: 'inline'
+    script: |
+      $vsixPath = (Get-ChildItem -Path $(Build.SourcesDirectory)/dist -Filter *.vsix -File | Select-Object -First 1).FullName
+      npx @vscode/vsce@latest publish -i $vsixPath --manifestPath $(Build.SourcesDirectory)/dist/extension.manifest --signaturePath $(Build.SourcesDirectory)/dist/extension.signature.p7s
