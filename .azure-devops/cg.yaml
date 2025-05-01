@@ -26,16 +26,6 @@ extends:
       baseline:
         baselineSet: default
         baselineFile: $(Build.SourcesDirectory)/.gdn/.gdnbaselines
-      sourceAnalysisPool:
-        name: 1ES-ABTT-Shared-Pool
-        image: abtt-windows-2022
-        os: windows
-    pool:
-      name: 1ES-ABTT-Shared-Pool
-      image: abtt-ubuntu-2204
-      os: linux
-    customBuildTags:
-    - ES365AIMigrationTooling
 
     stages:
     - stage: stage
