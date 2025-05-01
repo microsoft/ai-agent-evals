@@ -1,28 +1,45 @@
-# Run Component Governance to detect open source components
+# Release build script
+#
+# Uses the common build logic, but also gains capabilities related to releasing the product.
 
-trigger:
-  - main
+# Only trigger manually
 
-pool:
-  vmImage: "ubuntu-latest"
+trigger: none
 
-steps:
-  - task: npmAuthenticate@0
-    inputs:
-      workingFile: .azure-devops/.npmrc
+pr: none
 
-  - task: UsePythonVersion@0
-    inputs:
-      versionSpec: "3.10"
-      addToPath: true
+resources:
+  repositories:
+  - repository: 1ESPipelineTemplates
+    type: git
+    name: 1ESPipelineTemplates/1ESPipelineTemplates
+    ref: refs/tags/release
 
-  - task: PipAuthenticate@1
-    inputs:
-      artifactFeeds: "Analysis and Experimentation/Analysis_and_Experimentation_PublicPackages"
+extends:
+  template: v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates
+  parameters:
+    settings:
+      skipBuildTagsForGitHubPullRequests: true
+    # featureFlags:
+      # autoBaseline: false
+    sdl:
+      baseline:
+        baselineSet: default
+        baselineFile: $(Build.SourcesDirectory)/.gdn/.gdnbaselines
+      sourceAnalysisPool:
+        name: 1ES-ABTT-Shared-Pool
+        image: abtt-windows-2022
+        os: windows
+    pool:
+      name: 1ES-ABTT-Shared-Pool
+      image: abtt-ubuntu-2204
+      os: linux
+    customBuildTags:
+    - ES365AIMigrationTooling
 
-  - script: |
-      python -m pip install --upgrade pip
-      pip install .
-    displayName: "Install dependencies"
-  - task: ms.vss-governance-buildtask.governance-build-task-component-detection.ComponentGovernanceComponentDetection@0
-    displayName: "CG Component Detection"
+    stages:
+    - stage: stage
+      jobs:
+      - job: job
+        steps:
+        - template: /.azure-pipelines/common-steps.yml@self

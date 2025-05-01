@@ -1,0 +1,68 @@
+steps:
+- task: NodeTool@0
+  displayName: Install Node 16 LTS or greater
+  inputs:
+    versionSpec: "20.x"
+
+- task: npmAuthenticate@0
+  inputs:
+    workingFile: .azure-devops/.npmrc
+
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: "3.10"
+    addToPath: true
+
+- task: PipAuthenticate@1
+  inputs:
+    artifactFeeds: "Analysis and Experimentation/Analysis_and_Experimentation_PublicPackages"
+
+- script: |
+    npm install -g @vscode/vsce,tfx-cli
+  displayName: Install VSCE amd TFX CLI
+
+- script: |
+    ./scripts/setup.ps1
+  displayName: Run setup scripts
+
+- script: |
+    tfx extension create --manifest-globs vss-extension-prod.json --output-path ./dist
+  displayName: Create VSIX
+
+- script: |
+    $vsixPath = (Get-ChildItem -Path ./dist -Filter *.vsix -File | Select-Object -First 1).FullName
+    npx @vscode/vsce generate-manifest -i $vsixPath -o ./dist/extension.manifest
+  displayName: Create VSIX Manifest
+
+- script: |
+    cp extension.manifest extension.signature.p7s
+  displayName: Prepare Manifest Signature
+
+- task: SFP.build-tasks.custom-build-task-1.EsrpCodeSigning@5
+  inputs:
+    ConnectedServiceName: 'esrp-codesign-service-connection'
+    UseMSIAuthentication: true
+    AppRegistrationClientId: '05ac92aa-1bc7-4799-b019-5716dd107c21'
+    AppRegistrationTenantId: '33e01921-4d64-4f8c-a055-5bdaffd5e33d'
+    EsrpClientId: '05ac92aa-1bc7-4799-b019-5716dd107c21'
+    AuthAKVName: 'az-exp-common-certs'
+    AuthSignCertName: 'esrp-authentication-certificate'
+    FolderPath: '$(Build.SourcesDirectory)\dist'
+    Pattern: 'extension.signature.p7s'
+    signConfigType: inlineSignParams
+    inlineOperation: |
+      [
+        {
+          "keyCode": "CP-230072",
+          "operationSetCode": "VSCodePublisherSign",
+          "parameters" : [],
+          "toolName": "sign",
+          "toolVersion": "1.0"
+        }
+      ]
+    SessionTimeout: 90
+    MaxConcurrency: 25
+    MaxRetryAttempts: 5
+    PendingAnalysisWaitTimeoutMinutes: 5
+  displayName: Sign Extension
+  #condition: and(succeeded(), ne(variables['build.reason'], 'PullRequest'))
