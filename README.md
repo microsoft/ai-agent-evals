@@ -50,11 +50,11 @@ The input data file should be a JSON file with the following structure:
 
 | Field        | Type     | Required? | Description                    |
 | :----------- | :------- | :-------: | :----------------------------- |
-| name         | string   | Yes       | Name of the test dataset       |
-| evaluators   | string[] | Yes       | List of evaluator names to use |
-| data         | object[] | Yes       | Array of input objects         |
-| data[].query | string   | Yes       | The query text to evaluate     |
-| data[].id    | string   | No        | Optional ID for the query      |
+| name         | string   |    Yes    | Name of the test dataset       |
+| evaluators   | string[] |    Yes    | List of evaluator names to use |
+| data         | object[] |    Yes    | Array of input objects         |
+| data[].query | string   |    Yes    | The query text to evaluate     |
+| data[].id    | string   |    No     | Optional ID for the query      |
 
 Below is a sample data file.
 
