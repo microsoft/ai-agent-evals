@@ -29,13 +29,12 @@ steps:
   displayName: Create VSIX Manifest
   inputs:
     targetType: 'inline'
-    pwsh: true
     script: |
       $vsixPath = (Get-ChildItem -Path $(Build.SourcesDirectory)/dist -Filter *.vsix -File | Select-Object -First 1).FullName
       npx @vscode/vsce generate-manifest -i $vsixPath -o $(Build.SourcesDirectory)/dist/extension.manifest
 
 - script: |
-    cp extension.manifest extension.signature.p7s
+    cp $(Build.SourcesDirectory)/dist/extension.manifest $(Build.SourcesDirectory)/dist/extension.signature.p7s
   displayName: Prepare Manifest Signature
 
 - task: SFP.build-tasks.custom-build-task-1.EsrpCodeSigning@5
