@@ -10,12 +10,14 @@ $repoRoot = Split-Path -Path $scriptsFolder -Parent
 Push-Location -Path $repoRoot
 
 try {
+    Write-Host "Installing VstsTaskSdk module..."
     Install-Module -Name VstsTaskSdk -Force -AllowClobber
 
     $taskPaths = @(
         "tasks/AIAgentEvaluation/ps_modules/VstsTaskSdk"
     )
 
+    Write-Host "Getting VstsTaskSdk module source path..."
     $moduleSource = (Get-Module VstsTaskSdk -ListAvailable).ModuleBase
 
     foreach ($modulePath in $taskPaths) {

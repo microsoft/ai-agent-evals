@@ -1,6 +1,6 @@
 steps:
 - task: NodeTool@0
-  displayName: Install Node 16 LTS or greater
+  displayName: Install Node
   inputs:
     versionSpec: "20.x"
 
