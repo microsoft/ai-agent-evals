@@ -17,15 +17,6 @@ resources:
 
 extends:
   template: v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates
-  templateContext:
-    outputs:
-    - output: adoExtension
-      targetPath: $(Build.StagingDirectory)/publish
-      connectedServiceNameAzureRM: 'esrp-codesign-service-connection'
-      fileType: vsix
-      vsixFile: $(Build.SourcesDirectory)/dist/prod/*.vsix
-      useV5: true
-      validateExtension: true
   parameters:
     settings:
       skipBuildTagsForGitHubPullRequests: true
@@ -48,5 +39,14 @@ extends:
     - stage: stage
       jobs:
       - job: job
+        templateContext:
+          outputs:
+          - output: adoExtension
+            targetPath: $(Build.StagingDirectory)/publish
+            connectedServiceNameAzureRM: 'esrp-codesign-service-connection'
+            fileType: vsix
+            vsixFile: $(Build.SourcesDirectory)/dist/prod/*.vsix
+            useV5: true
+            validateExtension: true
         steps:
         - template: .azure-devops/common-steps.yml@self
