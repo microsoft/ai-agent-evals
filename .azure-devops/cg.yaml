@@ -42,4 +42,4 @@ extends:
       jobs:
       - job: job
         steps:
-        - template: /.azure-pipelines/common-steps.yml@self
+        - template: .azure-pipelines/common-steps.yml@self
