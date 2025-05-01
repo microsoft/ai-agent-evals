@@ -19,7 +19,15 @@ if (-not (Test-Path -Path $taskModulesPath)) {
 }
 
 # Create a temporary directory to clone the repo
-$tempDir = Join-Path -Path $env:TEMP -ChildPath "VstsTaskSdk_$(Get-Random)"
+$tempEnv = $env:TEMP
+if ([string]::IsNullOrWhiteSpace($tempEnv)) {
+    $tempEnv = $env:TMPDIR
+}
+if ([string]::IsNullOrWhiteSpace($tempEnv)) {
+    $tempEnv = "/tmp"  # fallback default for Linux
+}
+$tempDir = Join-Path -Path $tempEnv -ChildPath "VstsTaskSdk_$(Get-Random)"
+
 New-Item -Path $tempDir -ItemType Directory -Force | Out-Null
 Write-Host "Created temporary directory: $tempDir"
 
