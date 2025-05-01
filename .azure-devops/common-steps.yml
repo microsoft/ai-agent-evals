@@ -56,14 +56,3 @@ steps:
   displayName: Sign Extension
   #condition: and(succeeded(), ne(variables['build.reason'], 'PullRequest'))
 
-- task: PublishAzureDevOpsExtension@3
-  displayName: 'Publish Extension to Marketplace'
-  inputs:
-    connectTo: 'VsTeam'
-    connectedServiceName: 'esrp-codesign-service-connection'
-    fileType: 'vsix'
-    vsixFile: '$(Build.SourcesDirectory)/dist/prod/*.vsix'
-    extensionVisibility: 'private'
-    shareWith: 'experimentation' # Optional: organizations to share with
-    bypassLocalValidation: false
-
