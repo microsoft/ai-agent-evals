@@ -32,10 +32,7 @@ steps:
     script: |
       $vsixPath = (Get-ChildItem -Path $(Build.SourcesDirectory)/dist -Filter *.vsix -File | Select-Object -First 1).FullName
       npx @vscode/vsce generate-manifest -i $vsixPath -o $(Build.SourcesDirectory)/dist/extension.manifest
-
-- script: |
-    cp $(Build.SourcesDirectory)/dist/extension.manifest $(Build.SourcesDirectory)/dist/extension.signature.p7s
-  displayName: Prepare Manifest Signature
+      Copy-Item -Path "$(Build.SourcesDirectory)/dist/extension.manifest" -Destination "$(Build.SourcesDirectory)/dist/extension.signature.p7s"
 
 - task: SFP.build-tasks.custom-build-task-1.EsrpCodeSigning@5
   inputs:
