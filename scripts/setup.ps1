@@ -10,35 +10,23 @@ $repoRoot = Split-Path -Path $scriptsFolder -Parent
 Push-Location -Path $repoRoot
 
 try {
-    Write-Host "Installing VstsTaskSdk module..."
+    Write-Host "Setting up VstsTaskSdk module..."
 
-    # Set PSGallery as trusted to avoid prompts in non-interactive mode
-    if ((Get-PSRepository -Name "PSGallery").InstallationPolicy -ne "Trusted") {
-        Set-PSRepository -Name "PSGallery" -InstallationPolicy Trusted
-    }
+    # Use the download-vstsTaskSdk.ps1 
+    $downloadScriptPath = Join-Path -Path $scriptsFolder -ChildPath "download-vstsTaskSdk.ps1"
     
-    $null = Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
-    Install-Module -Name VstsTaskSdk -Repository PSGallery -Force -AllowClobber -SkipPublisherCheck -Scope CurrentUser
-
-    $taskPaths = @(
-        "tasks/AIAgentEvaluation/ps_modules/VstsTaskSdk"
-    )
-
-    Write-Host "Getting VstsTaskSdk module source path..."
-    $moduleSource = (Get-Module VstsTaskSdk -ListAvailable).ModuleBase
-
-    foreach ($modulePath in $taskPaths) {
-        $fullModulePath = Join-Path -Path $repoRoot -ChildPath $modulePath
+    if (Test-Path -Path $downloadScriptPath) {
+        Write-Host "Downloading VstsTaskSdk module from GitHub repository..."
+        & $downloadScriptPath
         
-        if (-not (Test-Path -Path $fullModulePath)) {
-            New-Item -Path $fullModulePath -ItemType Directory -Force | Out-Null
+        if ($LASTEXITCODE -ne 0) {
+            Write-Error "Failed to download VstsTaskSdk module from GitHub. Exit code: $LASTEXITCODE"
+            exit 1
         }
-        
-        Copy-Item -Path "$moduleSource/*" -Destination $fullModulePath -Recurse -Force
-        
-        Write-Host "VstsTaskSdk module copied to $modulePath"
+    } else {
+        Write-Error "download-vstsTaskSdk.ps1 script not found at path: $downloadScriptPath"
+        exit 1
     }
-
 
     Write-Host "Building AIAgentReport web UI..."
     $reportPath = Join-Path -Path $repoRoot -ChildPath "tasks/AIAgentReport"

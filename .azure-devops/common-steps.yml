@@ -8,15 +8,6 @@ steps:
   inputs:
     workingFile: .azure-devops/.npmrc
 
-- task: UsePythonVersion@0
-  inputs:
-    versionSpec: "3.10"
-    addToPath: true
-
-- task: PipAuthenticate@1
-  inputs:
-    artifactFeeds: "Analysis and Experimentation/Analysis_and_Experimentation_PublicPackages"
-
 - script: |
     npm install -g @vscode/vsce tfx-cli
   displayName: Install VSCE amd TFX CLI
