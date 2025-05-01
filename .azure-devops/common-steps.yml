@@ -9,8 +9,8 @@ steps:
     workingFile: .azure-devops/.npmrc
 
 - script: |
-    npm install -g tfx-cli
-  displayName: Install TFX CLI
+    npm install -g tfx-cli tsc vite
+  displayName: Install
 
 - task: PowerShell@2
   inputs:
