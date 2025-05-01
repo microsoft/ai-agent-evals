@@ -42,19 +42,17 @@ try {
         throw "VstsTaskSdk directory not found in cloned repository"
     }
     
-    # Copy all files from the source to the target
-    Write-Host "Copying VstsTaskSdk files to $taskModulesPath"
-    Get-ChildItem -Path $sourceDir -Recurse | ForEach-Object {
-        $targetPath = $_.FullName.Replace($sourceDir, $taskModulesPath)
+    Write-Host "Copying VstsTaskSdk files from '$sourceDir' to '$taskModulesPath'..."
+    Get-ChildItem -Path $sourceDir -Recurse -File | ForEach-Object {
+        $relativePath = $_.FullName.Substring($sourceDir.Length).TrimStart('\','/')
+        $targetPath = Join-Path $taskModulesPath $relativePath
         $targetDir = Split-Path -Path $targetPath -Parent
-        
+
         if (-not (Test-Path -Path $targetDir)) {
             New-Item -Path $targetDir -ItemType Directory -Force | Out-Null
         }
-        
-        if (-not $_.PSIsContainer) {
-            Copy-Item -Path $_.FullName -Destination $targetPath -Force
-        }
+
+        Copy-Item -Path $_.FullName -Destination $targetPath -Force
     }
     
     Write-Host "Successfully copied VstsTaskSdk to the task module directory"
