@@ -21,18 +21,27 @@ steps:
     npm install -g @vscode/vsce tfx-cli
   displayName: Install VSCE amd TFX CLI
 
-- script: |
-    ./scripts/setup.ps1
-  displayName: Run setup scripts
+- task: PowerShell@2
+  inputs:
+    filePath: '$(Build.SourcesDirectory)/scripts/setup.ps1'
+    pwsh: false
+  displayName: 'Run setup script'
 
-- script: |
-    tfx extension create --manifest-globs vss-extension-prod.json --output-path ./dist
+- task: PowerShell@2
   displayName: Create VSIX
+  inputs:
+    targetType: 'inline'
+    script: |
+      tfx extension create --manifest-globs vss-extension-prod.json --output-path $(Build.SourcesDirectory)/dist
 
-- script: |
-    $vsixPath = (Get-ChildItem -Path ./dist -Filter *.vsix -File | Select-Object -First 1).FullName
-    npx @vscode/vsce generate-manifest -i $vsixPath -o ./dist/extension.manifest
+- task: PowerShell@2
   displayName: Create VSIX Manifest
+  inputs:
+    targetType: 'inline'
+    pwsh: true
+    script: |
+      $vsixPath = (Get-ChildItem -Path $(Build.SourcesDirectory)/dist -Filter *.vsix -File | Select-Object -First 1).FullName
+      npx @vscode/vsce generate-manifest -i $vsixPath -o $(Build.SourcesDirectory)/dist/extension.manifest
 
 - script: |
     cp extension.manifest extension.signature.p7s
