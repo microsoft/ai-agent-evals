@@ -28,11 +28,11 @@ extends:
         baselineFile: $(Build.SourcesDirectory)/.gdn/.gdnbaselines
       sourceAnalysisPool:
         name: 1es-pool001
-        image: onlineexptestimage
+        image: 1es-managed-image-001
         os: windows
     pool:
       name: 1es-pool001
-      image: onlineexptestimage
+      image: 1es-managed-image-001
       os: windows
 
     stages:
