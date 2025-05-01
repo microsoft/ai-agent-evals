@@ -12,7 +12,13 @@ Push-Location -Path $repoRoot
 try {
     Write-Host "Installing VstsTaskSdk module..."
 
-    Install-Module -Name VstsTaskSdk -Repository PSGallery -Verbose -Force -AllowClobber -AcceptLicense -Confirm:$false -SkipPublisherCheck -Scope CurrentUser
+    # Set PSGallery as trusted to avoid prompts in non-interactive mode
+    if ((Get-PSRepository -Name "PSGallery").InstallationPolicy -ne "Trusted") {
+        Set-PSRepository -Name "PSGallery" -InstallationPolicy Trusted
+    }
+    
+    $null = Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
+    Install-Module -Name VstsTaskSdk -Repository PSGallery -Force -AllowClobber -SkipPublisherCheck -Scope CurrentUser
 
     $taskPaths = @(
         "tasks/AIAgentEvaluation/ps_modules/VstsTaskSdk"
