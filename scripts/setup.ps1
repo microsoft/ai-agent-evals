@@ -12,13 +12,7 @@ Push-Location -Path $repoRoot
 try {
     Write-Host "Installing VstsTaskSdk module..."
 
-    # Ensure PSGallery is trusted to avoid interactive prompts
-    $repo = Get-PSRepository -Name 'PSGallery'
-    if ($repo.InstallationPolicy -ne 'Trusted') {
-        Set-PSRepository -Name 'PSGallery' -InstallationPolicy Trusted
-    }
-    
-    Install-Module -Name VstsTaskSdk -Force -AllowClobber -Confirm:$false
+    Install-Module -Name VstsTaskSdk -Repository PSGallery -Verbose -Force -AllowClobber -AcceptLicense -Confirm:$false -SkipPublisherCheck -Scope CurrentUser
 
     $taskPaths = @(
         "tasks/AIAgentEvaluation/ps_modules/VstsTaskSdk"
