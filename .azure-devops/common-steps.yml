@@ -8,15 +8,6 @@ steps:
   inputs:
     workingFile: .azure-devops/.npmrc
 
-- task: AzureCLI@2
-  displayName: 'Get AzDO User ID'
-  inputs:
-    azureSubscription: 'esrp-codesign-service-connection'
-    scriptType: ps
-    scriptLocation: inlineScript
-    inlineScript: |
-      az rest -u https://app.vssps.visualstudio.com/_apis/profile/profiles/me --resource 499b84ac-1321-427f-aa17-267ca6975798
-
 - script: |
     npm install -g @vscode/vsce tfx-cli
   displayName: Install VSCE amd TFX CLI
