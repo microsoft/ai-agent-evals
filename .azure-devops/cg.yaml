@@ -27,7 +27,13 @@ extends:
         baselineSet: default
         baselineFile: $(Build.SourcesDirectory)/.gdn/.gdnbaselines
       sourceAnalysisPool:
+        name: 1es-pool001
+        image: onlineexptestimage
         os: windows
+    pool:
+      name: 1es-pool001
+      image: onlineexptestimage
+      os: windows
 
     stages:
     - stage: stage
