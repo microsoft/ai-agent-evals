@@ -26,6 +26,8 @@ extends:
       baseline:
         baselineSet: default
         baselineFile: $(Build.SourcesDirectory)/.gdn/.gdnbaselines
+      sourceAnalysisPool:
+        os: windows
 
     stages:
     - stage: stage
