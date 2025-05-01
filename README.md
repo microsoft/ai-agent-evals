@@ -26,6 +26,7 @@ To use this action, all you need to provide is a data set with test queries and 
 |                          | IndirectAttackEvaluator    |
 |                          | ProtectedMaterialEvaluator |
 |                          | CodeVulnerabilityEvaluator |
+| Composite                | ContentSafetyEvaluator     |
 
 For the full list of evaluator scores and their types, see [analysis/evaluator-scores.yaml](analysis/evaluator-scores.yaml).
 
