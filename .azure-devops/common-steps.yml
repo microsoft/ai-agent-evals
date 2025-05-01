@@ -22,17 +22,18 @@ steps:
   displayName: Create VSIX
   inputs:
     targetType: 'inline'
+    workingDirectory: '$(Build.SourcesDirectory)/dist/prod'
     script: |
-      tfx extension create --manifest-globs vss-extension-prod.json --output-path $(Build.SourcesDirectory)/dist
+      npx @vscode/vsce package -o $(Build.ArtifactStagingDirectory)/extension.vsix
 
 - task: PowerShell@2
   displayName: Create VSIX Manifest
   inputs:
     targetType: 'inline'
+    workingDirectory: '$(Build.SourcesDirectory)/dist/prod'
     script: |
-      $vsixPath = (Get-ChildItem -Path $(Build.SourcesDirectory)/dist -Filter *.vsix -File | Select-Object -First 1).FullName
-      npx @vscode/vsce generate-manifest -i $vsixPath -o $(Build.SourcesDirectory)/dist/extension.manifest
-      Copy-Item -Path "$(Build.SourcesDirectory)/dist/extension.manifest" -Destination "$(Build.SourcesDirectory)/dist/extension.signature.p7s"
+      npx @vscode/vsce generate-manifest -i extension.vsix -o extension.manifest
+      Copy-Item -Path "extension.manifest" -Destination "extension.signature.p7s"
 
 - task: SFP.build-tasks.custom-build-task-1.EsrpCodeSigning@5
   inputs:
@@ -44,7 +45,7 @@ steps:
     AuthAKVName: 'az-exp-common-certs'
     AuthCertName: 'esrp-authentication-certificate'
     AuthSignCertName: 'esrp-request-signing-certificate'
-    FolderPath: '$(Build.SourcesDirectory)\dist'
+    FolderPath: '$(Build.SourcesDirectory)/dist/prod'
     Pattern: 'extension.signature.p7s'
     signConfigType: inlineSignParams
     inlineOperation: |
@@ -68,6 +69,6 @@ steps:
   displayName: 'Publish extension'
   inputs:
     targetType: 'inline'
+    workingDirectory: '$(Build.SourcesDirectory)/dist/prod'
     script: |
-      $vsixPath = (Get-ChildItem -Path $(Build.SourcesDirectory)/dist -Filter *.vsix -File | Select-Object -First 1).FullName
-      npx @vscode/vsce@latest publish -i $vsixPath --manifestPath $(Build.SourcesDirectory)/dist/extension.manifest --signaturePath $(Build.SourcesDirectory)/dist/extension.signature.p7s
+      npx @vscode/vsce publish -i extension.vsix --manifestPath extension.manifest --signaturePath extension.signature.p7s

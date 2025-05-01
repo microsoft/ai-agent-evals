@@ -7,6 +7,9 @@ $scriptPath = $MyInvocation.MyCommand.Path
 $scriptsFolder = Split-Path -Path $scriptPath -Parent
 $repoRoot = Split-Path -Path $scriptsFolder -Parent
 
+$prodExtensionDir = Join-Path -Path $repoRoot -ChildPath "dist/prod"
+New-Item -Path $prodExtensionDir -ItemType Directory -Force | Out-Null
+
 Push-Location -Path $repoRoot
 
 try {
@@ -52,21 +55,25 @@ try {
     # Update version in vss-extension.json
     Write-Host "Updating version in vss-extension.json..."
     $vssExtensionPath = Join-Path -Path $repoRoot -ChildPath "vss-extension.json"
-    $vssExtensionProdPath = Join-Path -Path $repoRoot -ChildPath "vss-extension-prod.json"
+    $vssExtensionProdPath = Join-Path -Path $prodExtensionDir -ChildPath "vss-extension.json"
 
-    # Read the vss-extension.json file
     $vssExtension = Get-Content -Path $vssExtensionPath -Raw | ConvertFrom-Json
-
-    # Get the current version
     $currentVersion = $vssExtension.version
-
-    # Update the version using the shared function
     $vssExtension.version = Update-VersionNumber -CurrentVersion $currentVersion
 
-    # Write the updated content back to the file
     $vssExtension | ConvertTo-Json -Depth 10 | Set-Content -Path $vssExtensionProdPath
+    Write-Host "Version updated successfully in vss-extension.json for prod" -ForegroundColor Green
 
-    Write-Host "Version updated successfully in vss-extension.json" -ForegroundColor Green
+    Copy-Item -Path "$repoRoot/tasks/AIAgentReport/dist" -Destination "$prodExtensionDir/tasks/AIAgentReport/dist" -Recurse -Force
+    Copy-Item -Path "$repoRoot/tasks/AIAgentEvaluation" -Destination "$prodExtensionDir/tasks/AIAgentEvaluation" -Recurse -Force
+    Copy-Item -Path "$repoRoot/logo.png" -Destination "$prodExtensionDir/logo.png" -Force
+    Copy-Item -Path "$repoRoot/overview.md" -Destination "$prodExtensionDir/overview.md" -Force
+    Copy-Item -Path "$repoRoot/LICENSE" -Destination "$prodExtensionDir/LICENSE" -Force
+    Copy-Item -Path "$repoRoot/action.py" -Destination "$prodExtensionDir/action.py" -Force
+    Copy-Item -Path "$repoRoot/pyproject.toml" -Destination "$prodExtensionDir/pyproject.toml" -Force
+    Copy-Item -Path "$repoRoot/analysis" -Destination "$prodExtensionDir/analysis" -Recurse -Force
+
+    Write-Host "Copied supporting files for extension" -ForegroundColor Green
 } finally {
     # Return to the original directory
     Pop-Location

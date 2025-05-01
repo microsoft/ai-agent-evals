@@ -7,6 +7,9 @@ $scriptPath = $MyInvocation.MyCommand.Path
 $scriptsFolder = Split-Path -Path $scriptPath -Parent
 $repoRoot = Split-Path -Path $scriptsFolder -Parent
 
+$devExtensionDir = Join-Path -Path $repoRoot -ChildPath "dist/dev"
+New-Item -Path $devExtensionDir -ItemType Directory -Force | Out-Null
+
 # Import the utilities module with shared functions
 $utilsPath = Join-Path -Path $scriptsFolder -ChildPath "utilities.ps1"
 . $utilsPath
@@ -58,7 +61,6 @@ Write-Host "Created modified task.json at: $destTaskJsonPath"
 
 # Now handle the vss-extension.json to vss-extension-dev.json conversion
 $vssExtensionPath = Join-Path $repoRoot "vss-extension.json"
-$vssExtensionDevPath = Join-Path $repoRoot "vss-extension-dev.json"
 
 # Read the original vss-extension.json
 $vssExtension = Get-Content -Path $vssExtensionPath -Raw | ConvertFrom-Json
@@ -105,8 +107,18 @@ foreach ($file in $vssExtension.files | Where-Object {
     $file.packagePath = $file.packagePath -replace "tasks/AIAgentEvaluation", "tasks/AIAgentEvaluationDev"
 }
 
-# Write the modified vss-extension.json to vss-extension-dev.json
-$vssExtension | ConvertTo-Json -Depth 10 | Set-Content -Path $vssExtensionDevPath -Encoding UTF8
 
-Write-Host "Created modified vss-extension-dev.json at: $vssExtensionDevPath"
-Write-Host "Successfully created AIAgentEvaluationDev from AIAgentEvaluation and updated vss-extension-dev.json"
+# Write the modified vss-extension.json to vss-extension-dev.json
+$vssExtension | ConvertTo-Json -Depth 10 | Set-Content -Path "$devExtensionDir/vss-extension.json" -Encoding UTF8
+Write-Host "Successfully created AIAgentEvaluationDev from AIAgentEvaluation and updated vss-extension.json"
+
+Copy-Item -Path "$repoRoot/tasks/AIAgentReport/dist" -Destination "$devExtensionDir/tasks/AIAgentReport/dist" -Recurse -Force
+Copy-Item -Path "$repoRoot/tasks/AIAgentEvaluationDev" -Destination "$devExtensionDir/tasks/AIAgentEvaluationDev" -Recurse -Force
+Copy-Item -Path "$repoRoot/logo.png" -Destination "$devExtensionDir/logo.png" -Force
+Copy-Item -Path "$repoRoot/overview.md" -Destination "$devExtensionDir/overview.md" -Force
+Copy-Item -Path "$repoRoot/LICENSE" -Destination "$devExtensionDir/LICENSE" -Force
+Copy-Item -Path "$repoRoot/action.py" -Destination "$devExtensionDir/action.py" -Force
+Copy-Item -Path "$repoRoot/pyproject.toml" -Destination "$devExtensionDir/pyproject.toml" -Force
+Copy-Item -Path "$repoRoot/analysis" -Destination "$devExtensionDir/analysis" -Recurse -Force
+
+Write-Host "Copied supporting files for extension" -ForegroundColor Green
