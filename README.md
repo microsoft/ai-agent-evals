@@ -48,13 +48,13 @@ For the full list of evaluator scores and their types, see [analysis/evaluator-s
 
 The input data file should be a JSON file with the following structure:
 
-| Field        | Type     | Required | Description                    |
-| ------------ | -------- | -------- | ------------------------------ |
-| name         | string   | Yes      | Name of the test dataset       |
-| evaluators   | string[] | Yes      | List of evaluator names to use |
-| data         | object[] | Yes      | Array of input objects         |
-| data[].query | string   | Yes      | The query text to evaluate     |
-| data[].id    | string   | No       | Optional ID for the query      |
+| Field        | Type     | Required? | Description                    |
+| :----------- | :------- | :-------: | :----------------------------- |
+| name         | string   | Yes       | Name of the test dataset       |
+| evaluators   | string[] | Yes       | List of evaluator names to use |
+| data         | object[] | Yes       | Array of input objects         |
+| data[].query | string   | Yes       | The query text to evaluate     |
+| data[].id    | string   | No        | Optional ID for the query      |
 
 Below is a sample data file.
 
@@ -76,7 +76,7 @@ Below is a sample data file.
 #### Additional Sample Data Files
 
 | Filename                                                           | Description                                                                                                        |
-| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| :----------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------- |
 | [samples/data/dataset-tiny.json](samples/data/dataset-tiny.json)   | Small dataset with minimal test queries and evaluators                                                             |
 | [samples/data/dataset-small.json](samples/data/dataset-small.json) | Small dataset with a small number of test queries and all supported evaluators                                     |
 | [samples/data/dataset.json](samples/data/dataset.json)             | Dataset with all supported evaluators and enough queries for confidence interval calcualtion and statistical test. |
@@ -110,7 +110,7 @@ jobs:
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
       - name: Run Evaluation
-        uses: microsoft/ai-agent-evals@v1
+        uses: microsoft/ai-agent-evals@v1-beta
         with:
           # Replace placeholders with values for your Azure AI Project
           azure-aiproject-connection-string: "<your-ai-project-conn-str>"
