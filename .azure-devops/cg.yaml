@@ -42,7 +42,7 @@ extends:
         templateContext:
           outputs:
           - output: adoExtension
-            targetPath: $(Build.StagingDirectory)/publish
+            targetPath: $(Build.SourcesDirectory)/dist/prod
             connectedServiceNameAzureRM: 'esrp-codesign-service-connection'
             fileType: vsix
             vsixFile: $(Build.SourcesDirectory)/dist/prod/*.vsix
