@@ -102,6 +102,9 @@ jobs:
   run-action:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Azure login using Federated Credentials
         uses: azure/login@v2
         with:
