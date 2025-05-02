@@ -12,6 +12,12 @@ steps:
     npm install -g tfx-cli
   displayName: Install TFX CLI
 
+# Below task is needed for publishing task (Auto injected by 1ES pipeline template)
+- task: ms-devlabs.vsts-developer-tools-build-tasks.tfx-installer-build-task.TfxInstaller@5
+  displayName: 'Use Node CLI for Azure DevOps (tfx-cli): v0.x'
+  inputs:
+    version: 'v0.x'
+
 - task: PowerShell@2
   inputs:
     filePath: '$(Build.SourcesDirectory)/scripts/setup.ps1'
