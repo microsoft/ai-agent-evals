@@ -50,8 +50,8 @@ $taskJson = Get-Content -Path $taskJsonPath -Raw | ConvertFrom-Json
 $taskJson.id = "6c8d5e8b-16f2-4f7b-b991-99e3dfa9f359"  # New GUID for dev version
 $taskJson.name = "AIAgentEvaluationDev"
 $taskJson.friendlyName = "$($taskJson.friendlyName) (Dev)"
-$taskJson.description = "Evaluate AI Agents (Development Version)"
-$taskJson.instanceNameFormat = "AI Agent Evaluation (Dev)"
+$taskJson.description = "$($taskJson.description) (Dev)"
+$taskJson.instanceNameFormat = "$($taskJson.instanceNameFormat) (Dev)"
 
 # Write the modified task.json to the destination
 $destTaskJsonPath = Join-Path $destFolder "task.json"
@@ -68,7 +68,7 @@ $vssExtension = Get-Content -Path $vssExtensionPath -Raw | ConvertFrom-Json
 # Modify the vss-extension.json for the dev version
 $vssExtension.id = "microsoft-extension-ai-agent-evaluation-dev"
 $vssExtension.publisher = "ms-azure-exp-dev"
-$vssExtension.name = "Azure AI Agent Evaluation Dev"
+$vssExtension.name = "$($vssExtension.name) (Dev)"
 
 # Update the version using the shared function
 $vssExtension.version = Update-VersionNumber -CurrentVersion $vssExtension.version
@@ -77,8 +77,8 @@ $vssExtension.version = Update-VersionNumber -CurrentVersion $vssExtension.versi
 $buildResultsContribution = $vssExtension.contributions | Where-Object { $_.id -eq "build-results" }
 if ($buildResultsContribution) {
     $buildResultsContribution.id = "build-results-dev"
-    $buildResultsContribution.description = "Add AI Evaluation summary tab to the build results view (Dev)"
-    $buildResultsContribution.properties.name = "Azure AI Evaluation (Dev)"
+    $buildResultsContribution.description = "$($buildResultsContribution.description) (Dev)"
+    $buildResultsContribution.properties.name = "$($buildResultsContribution.properties.name) (Dev)"
     $buildResultsContribution.properties.supportsTasks = @("6c8d5e8b-16f2-4f7b-b991-99e3dfa9f359")
 }
 
