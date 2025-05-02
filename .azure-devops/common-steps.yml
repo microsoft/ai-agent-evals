@@ -34,14 +34,14 @@ steps:
 
 - task: SFP.build-tasks.custom-build-task-1.EsrpCodeSigning@5
   inputs:
-    ConnectedServiceName: 'esrp-codesign-service-connection'
+    ConnectedServiceName: $(ConnectedServiceName)
     UseMSIAuthentication: true
-    AppRegistrationClientId: '05ac92aa-1bc7-4799-b019-5716dd107c21'
-    AppRegistrationTenantId: '33e01921-4d64-4f8c-a055-5bdaffd5e33d'
-    EsrpClientId: '05ac92aa-1bc7-4799-b019-5716dd107c21'
-    AuthAKVName: 'az-exp-common-certs'
-    AuthCertName: 'esrp-authentication-certificate'
-    AuthSignCertName: 'esrp-request-signing-certificate'
+    AppRegistrationClientId: $(AppRegistrationClientId)
+    AppRegistrationTenantId: $(AppRegistrationTenantId)
+    EsrpClientId: $(EsrpClientId)
+    AuthAKVName: $(AuthAKVName)
+    AuthCertName: $(AuthCertName)
+    AuthSignCertName: $(AuthSignCertName)
     FolderPath: '$(Build.SourcesDirectory)/dist/prod'
     Pattern: '*.vsix'
     signConfigType: inlineSignParams
