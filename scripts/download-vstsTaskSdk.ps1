@@ -59,16 +59,10 @@ try {
     }
     
     Write-Host "Copying VstsTaskSdk files from '$sourceDir' to '$taskModulesPath'..."
-    Get-ChildItem -Path $sourceDir -Recurse -File | ForEach-Object {
-        $relativePath = $_.FullName.Substring($sourceDir.Length).TrimStart('\','/')
-        $targetPath = Join-Path $taskModulesPath $relativePath
-        $targetDir = Split-Path -Path $targetPath -Parent
 
-        if (-not (Test-Path -Path $targetDir)) {
-            New-Item -Path $targetDir -ItemType Directory -Force | Out-Null
-        }
-
-        Copy-Item -Path $_.FullName -Destination $targetPath -Force
+    Copy-Item -Path $sourceDir -Destination $taskModulesPath -Recurse -Force
+    Get-ChildContent -Path $taskModulesPath -Recurse | ForEach-Object {
+        Write-Host "Copied: $($_.FullName)"
     }
     
     Write-Host "Successfully copied VstsTaskSdk to the task module directory"
