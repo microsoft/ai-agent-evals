@@ -61,10 +61,8 @@ try {
     Write-Host "Copying VstsTaskSdk files from '$sourceDir' to '$taskModulesPath'..."
 
     Copy-Item -Path $sourceDir -Destination $taskModulesPath -Recurse -Force
-    Get-ChildContent -Path $taskModulesPath -Recurse | ForEach-Object {
-        Write-Host "Copied: $($_.FullName)"
-    }
-    
+    Write-Host "Copied following files:"
+    Get-ChildItem -Path $taskModulesPath -File
     Write-Host "Successfully copied VstsTaskSdk to the task module directory"
 }
 catch {
