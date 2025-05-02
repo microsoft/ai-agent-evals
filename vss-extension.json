@@ -3,7 +3,7 @@
   "id": "microsoft-extension-ai-agent-evaluation",
   "publisher": "ms-azure-exp-external",
   "version": "0.0.x",
-  "name": "Azure AI Agent Evaluation",
+  "name": "AI Agent Evaluation",
   "public": false,
   "categories": ["Azure Pipelines"],
   "tags": ["Preview"],
@@ -41,7 +41,7 @@
       "description": "Add AI Evaluation summary tab to the build results view",
       "targets": ["ms.vss-build-web.build-results-view"],
       "properties": {
-        "name": "Azure AI Evaluation",
+        "name": "AI Evaluation",
         "uri": "dist/index.html",
         "supportsTasks": ["5b7b4d7a-05e1-4f6a-b880-88e2dfa9f248"]
       }

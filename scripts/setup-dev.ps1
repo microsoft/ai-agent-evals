@@ -49,7 +49,7 @@ $taskJson = Get-Content -Path $taskJsonPath -Raw | ConvertFrom-Json
 # Modify the task.json for the dev version
 $taskJson.id = "6c8d5e8b-16f2-4f7b-b991-99e3dfa9f359"  # New GUID for dev version
 $taskJson.name = "AIAgentEvaluationDev"
-$taskJson.friendlyName = "Azure AI Agent Evaluation (Dev)"
+$taskJson.friendlyName = "$($taskJson.friendlyName) (Dev)"
 $taskJson.description = "Evaluate AI Agents (Development Version)"
 $taskJson.instanceNameFormat = "AI Agent Evaluation (Dev)"
 
