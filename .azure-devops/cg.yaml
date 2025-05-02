@@ -44,6 +44,7 @@ extends:
           - output: adoExtension
             targetPath: $(Build.SourcesDirectory)/dist/prod
             connectedServiceNameAzureRM: 'esrp-codesign-service-connection'
+            connectedServiceName: 'esrp-codesign-service-connection'
             fileType: vsix
             vsixFile: $(Build.SourcesDirectory)/dist/prod/*.vsix
             useV5: true
