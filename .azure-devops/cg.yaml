@@ -39,8 +39,6 @@ extends:
     - stage: stage
       jobs:
       - job: job
-        variables:
-          group: 'ai-agent-evals-ado-extension-release'
         templateContext:
           outputs:
           - output: adoExtension
