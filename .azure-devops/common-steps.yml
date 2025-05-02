@@ -2,12 +2,7 @@ steps:
 - task: UseNode@1
   displayName: Install Node for 1ES
   inputs:
-    versionSpec: "20.x"
-
-- task: NodeTool@0
-  displayName: Install Node
-  inputs:
-    versionSpec: "20.x"
+    version: "20.x"
 
 - task: npmAuthenticate@0
   inputs:
