@@ -1,4 +1,4 @@
-# Azure AI Evaluation
+# AI Agent Evaluation
 
 This extension enables offline evaluation of [Azure AI Agents](https://learn.microsoft.com/en-us/azure/ai-services/agents/)
 within your Azure DevOps pipelines. It streamlines the evaluation process, allowing you to
@@ -10,13 +10,12 @@ and token counts, run the evaluations, and generate a summary report.
 
 ## Features
 
-- **Agent Evaluation:** Automate pre-production assessment of Azure AI agents in your CI/CD workflow
+- **Automated Agent Evaluation:** Integrate offline evaluation into your CI/CD workflows to automate the pre-production assessment of Azure AI Agents.
 - **Built-in Evaluators:** Leverage existing evaluators provided by the
   [Azure AI Evaluation SDK](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/develop/evaluate-sdk)
-- **Statistical Analysis:** Results include confidence intervals and tests for statistical
-  significance to determine if changes are meaningful and not due to random variation
-- **Multiple Agent Comparison:** Compare performance across different agent versions with
-  detailed metrics
+- **Seamless Integration:** Easily integrate with existing GitHub workflows to run evaluation based on rules that you specify in your workflows (e.g., when changes are committed to agent versions, prompt templates, or feature flag configuration).
+- **Statistical Analysis:** Evaluation results include confidence intervals and test for statistical significance to determine if changes are meaningful and not due to random variation.
+- **Out-of-box operation metrics:** Automatically generates operational metrics for each Evaluation run (Client run duration, server run duration, completion tokens and prompt tokens).
 
 ## Supported AI Evaluators
 

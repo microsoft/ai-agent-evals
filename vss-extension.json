@@ -26,12 +26,6 @@
     }
   },
   "links": {
-    "getstarted": {
-      "uri": "https://learn.microsoft.com/en-us/dotnet/ai/quickstarts/evaluate-ai-response"
-    },
-    "learn": {
-      "uri": "https://learn.microsoft.com/en-us/dotnet/ai/conceptual/evaluation-libraries"
-    },
     "privacypolicy": {
       "uri": "https://privacy.microsoft.com/en-us/privacystatement"
     }
@@ -79,6 +73,10 @@
     {
       "path": "overview.md",
       "addressable": true
+    },
+    {
+        "path": "sample-output.png",
+        "addressable": true
     },
     {
       "path": "LICENSE",
