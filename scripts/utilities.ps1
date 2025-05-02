@@ -36,6 +36,29 @@ function Update-VersionNumber {
     return $newVersion
 }
 
+function Copy-Directory {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$SourceDir,
+
+        [Parameter(Mandatory = $true)]
+        [string]$DestinationDir
+    )
+
+    if (-not (Test-Path -Path $SourceDir)) {
+        Write-Host "❌ Source directory does not exist: $SourceDir" -ForegroundColor Red
+        return $false
+    }
+
+    if (-not (Test-Path -Path $DestinationDir)) {
+        New-Item -Path $DestinationDir -ItemType Directory -Force | Out-Null
+    }
+
+    Copy-Item -Path "$SourceDir/*" -Destination $DestinationDir -Recurse -Force
+    Write-Host "✅ Copied files from '$SourceDir' to '$DestinationDir'" -ForegroundColor Green
+    return $true
+}
+
 function Copy-FilesFromVssExtension {
     [CmdletBinding()]
     param(
@@ -59,7 +82,8 @@ function Copy-FilesFromVssExtension {
             
             Write-Host "Copying $($file.path) to destination directory..."
             if (Test-Path -Path $sourcePath -PathType Container) {
-                Copy-Item -Path "$sourcePath/*" -Destination $destinationPath -Recurse -Force
+                # Create the destination directory if it doesn't exist
+                Copy-Directory -SourceDir $sourcePath -DestinationDir $destinationPath
             }
             else {
                 Copy-Item -Path $sourcePath -Destination $destinationPath -Force

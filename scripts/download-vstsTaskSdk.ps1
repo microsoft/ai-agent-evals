@@ -7,6 +7,10 @@ $scriptPath = $MyInvocation.MyCommand.Path
 $scriptsFolder = Split-Path -Path $scriptPath -Parent
 $repoRoot = Split-Path -Path $scriptsFolder -Parent
 
+# load utils
+$utilsPath = Join-Path -Path $repoRoot -ChildPath "scripts/utilities.ps1"
+. $utilsPath
+
 Write-Host "Repository root: $repoRoot"
 
 # Define the target task directory
@@ -65,7 +69,7 @@ try {
         throw "VstsTaskSdk.psm1 not found in source directory"
     }
 
-    Copy-Item -Path "$sourceDir/*" -Destination $taskModulesPath -Recurse -Force
+    Copy-Directory -SourceDir $sourceDir -DestinationDir $taskModulesPath
     Write-Host "Copied following files:"
     Get-ChildItem -Path $taskModulesPath -File | ForEach-Object { Write-Host $_.FullName }
     Write-Host "Successfully copied VstsTaskSdk to the task module directory"
