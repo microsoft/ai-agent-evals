@@ -1,5 +1,3 @@
-variables:
-- group: 'ai-agent-evals-ado-extension-release'
 steps:
 - task: UseNode@1
   displayName: Install Node for 1ES

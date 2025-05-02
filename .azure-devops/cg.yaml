@@ -8,6 +8,9 @@ trigger: none
 
 pr: none
 
+variables:
+- group: ai-agent-evals-ado-extension-release
+
 resources:
   repositories:
   - repository: 1ESPipelineTemplates
