@@ -48,7 +48,7 @@ steps:
     inlineOperation: |
       [
         {
-          "KeyCode" : "CP-401405",
+          "KeyCode" : "CP-233016",
           "OperationCode" : "OpcSign",
           "Parameters" : {
               "FileDigest" : "/fd SHA256"
@@ -57,7 +57,7 @@ steps:
           "ToolVersion" : "1.0"
         },
         {
-          "KeyCode" : "CP-401405",
+          "KeyCode" : "CP-233016",
           "OperationCode" : "OpcVerify",
           "Parameters" : {},
           "ToolName" : "sign",
