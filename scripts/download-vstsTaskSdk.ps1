@@ -60,7 +60,12 @@ try {
     
     Write-Host "Copying VstsTaskSdk files from '$sourceDir' to '$taskModulesPath'..."
 
-    Copy-Item -Path $sourceDir -Destination $taskModulesPath -Recurse -Force
+    # check if sourceDir contains "VstsTaskSdk.psm1"
+    if (-not (Test-Path -Path "$sourceDir/VstsTaskSdk.psm1")) {
+        throw "VstsTaskSdk.psm1 not found in source directory"
+    }
+
+    Copy-Item -Path "$sourceDir/*" -Destination $taskModulesPath -Recurse -Force
     Write-Host "Copied following files:"
     Get-ChildItem -Path $taskModulesPath -File | ForEach-Object { Write-Host $_.FullName }
     Write-Host "Successfully copied VstsTaskSdk to the task module directory"

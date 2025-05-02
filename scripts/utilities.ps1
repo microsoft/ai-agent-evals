@@ -59,7 +59,7 @@ function Copy-FilesFromVssExtension {
             
             Write-Host "Copying $($file.path) to destination directory..."
             if (Test-Path -Path $sourcePath -PathType Container) {
-                Copy-Item -Path $sourcePath -Destination $destinationPath -Recurse -Force
+                Copy-Item -Path "$sourcePath/*" -Destination $destinationPath -Recurse -Force
             }
             else {
                 Copy-Item -Path $sourcePath -Destination $destinationPath -Force
