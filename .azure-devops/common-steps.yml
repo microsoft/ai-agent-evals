@@ -48,11 +48,20 @@ steps:
     inlineOperation: |
       [
         {
-          "keyCode": "CP-230072",
-          "operationSetCode": "VSCodePublisherSign",
-          "parameters" : [],
-          "toolName": "sign",
-          "toolVersion": "1.0"
+          "KeyCode" : "CP-401405",
+          "OperationCode" : "OpcSign",
+          "Parameters" : {
+              "FileDigest" : "/fd SHA256"
+          },
+          "ToolName" : "sign",
+          "ToolVersion" : "1.0"
+        },
+        {
+          "KeyCode" : "CP-401405",
+          "OperationCode" : "OpcVerify",
+          "Parameters" : {},
+          "ToolName" : "sign",
+          "ToolVersion" : "1.0"
         }
       ]
     SessionTimeout: 90
