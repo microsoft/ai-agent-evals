@@ -74,6 +74,13 @@ try {
         exit 1
     }
     Write-Host "Copied supporting files for extension" -ForegroundColor Green
+
+    $validate = Check-CriticalFiles -OutputDir $prodExtensionDir -IsDevExtension $false
+    if (-not $validate) {
+        Write-Error "Critical files check failed for production extension"
+        exit 1
+    }
+    Write-Host "Critical files check passed for production extension" -ForegroundColor Green
 }
 finally {
     # Return to the original directory

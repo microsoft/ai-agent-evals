@@ -73,3 +73,40 @@ function Copy-FilesFromVssExtension {
         return $false
     }
 }
+
+# Function to check if critical files are present in output directory
+function Check-CriticalFiles {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$OutputDir,
+
+        [Parameter(Mandatory = $true)]
+        [bool]$IsDevExtension
+    )
+
+    $AgentFolderName = if ($IsDevExtension) { "AIAgentEvaluationDev" } else { "AIAgentEvaluation" }
+
+    $criticalFiles = @(
+        "vss-extension.json",
+        "analysis/analysis.py",
+        "action.py",
+        "logo.png",
+        "overview.md",
+        "pyproject.toml",
+        "tasks/$AgentFolderName/task.json",
+        "tasks/$AgentFolderName/run.ps1",
+        "tasks/$AgentFolderName/ps_modules/VstsTaskSdk/VstsTaskSdk.psm1"
+        "tasks/AIAgentReport/dist/index.html"
+    )
+
+    foreach ($file in $criticalFiles) {
+        $fullPath = Join-Path -Path $OutputDir -ChildPath $file
+        if (-not (Test-Path -Path $fullPath)) {
+            Write-Host "❌ Critical file not found: $fullPath" -ForegroundColor Red
+            return $false
+        }
+    }
+
+    Write-Host "✅ All critical files are present in the output directory." -ForegroundColor Green
+    return $true
+}
