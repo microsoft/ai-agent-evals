@@ -33,6 +33,7 @@ and token counts, run the evaluations, and generate a summary report.
 |                          | IndirectAttackEvaluator    |
 |                          | ProtectedMaterialEvaluator |
 |                          | CodeVulnerabilityEvaluator |
+| Composite                | ContentSafetyEvaluator     |
 
 ## Getting Started
 
