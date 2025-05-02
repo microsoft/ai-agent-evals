@@ -70,6 +70,7 @@ try {
     Copy-Item -Path "$repoRoot/overview.md" -Destination "$prodExtensionDir/overview.md" -Force
     Copy-Item -Path "$repoRoot/LICENSE" -Destination "$prodExtensionDir/LICENSE" -Force
     Copy-Item -Path "$repoRoot/action.py" -Destination "$prodExtensionDir/action.py" -Force
+    Copy-Item -Path "$repoRoot/sample-output.png" -Destination "$prodExtensionDir/sample-output.png" -Force
     Copy-Item -Path "$repoRoot/pyproject.toml" -Destination "$prodExtensionDir/pyproject.toml" -Force
     Copy-Item -Path "$repoRoot/analysis" -Destination "$prodExtensionDir/analysis" -Recurse -Force
 

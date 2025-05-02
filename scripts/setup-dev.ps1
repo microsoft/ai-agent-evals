@@ -118,6 +118,7 @@ Copy-Item -Path "$repoRoot/logo.png" -Destination "$devExtensionDir/logo.png" -F
 Copy-Item -Path "$repoRoot/overview.md" -Destination "$devExtensionDir/overview.md" -Force
 Copy-Item -Path "$repoRoot/LICENSE" -Destination "$devExtensionDir/LICENSE" -Force
 Copy-Item -Path "$repoRoot/action.py" -Destination "$devExtensionDir/action.py" -Force
+Copy-Item -Path "$repoRoot/sample-output.png" -Destination "$devExtensionDir/sample-output.png" -Force
 Copy-Item -Path "$repoRoot/pyproject.toml" -Destination "$devExtensionDir/pyproject.toml" -Force
 Copy-Item -Path "$repoRoot/analysis" -Destination "$devExtensionDir/analysis" -Recurse -Force
 
