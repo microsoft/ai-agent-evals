@@ -26,7 +26,8 @@ try {
             Write-Error "Failed to download VstsTaskSdk module from GitHub. Exit code: $LASTEXITCODE"
             exit 1
         }
-    } else {
+    }
+    else {
         Write-Error "download-vstsTaskSdk.ps1 script not found at path: $downloadScriptPath"
         exit 1
     }
@@ -40,10 +41,12 @@ try {
         npm run build
         
         Write-Host "AIAgentReport build completed successfully" -ForegroundColor Green
-    } catch {
+    }
+    catch {
         Write-Error "Error building AIAgentReport: $_"
         exit 1
-    } finally {
+    }
+    finally {
         # Always return to the previous directory even if there are errors
         Pop-Location
     }
@@ -64,18 +67,15 @@ try {
     $vssExtension | ConvertTo-Json -Depth 10 | Set-Content -Path $vssExtensionProdPath
     Write-Host "Version updated successfully in vss-extension.json for prod" -ForegroundColor Green
 
-    Copy-Item -Path "$repoRoot/tasks/AIAgentReport/dist" -Destination "$prodExtensionDir/tasks/AIAgentReport/dist" -Recurse -Force
-    Copy-Item -Path "$repoRoot/tasks/AIAgentEvaluation" -Destination "$prodExtensionDir/tasks/AIAgentEvaluation" -Recurse -Force
-    Copy-Item -Path "$repoRoot/logo.png" -Destination "$prodExtensionDir/logo.png" -Force
-    Copy-Item -Path "$repoRoot/overview.md" -Destination "$prodExtensionDir/overview.md" -Force
-    Copy-Item -Path "$repoRoot/LICENSE" -Destination "$prodExtensionDir/LICENSE" -Force
-    Copy-Item -Path "$repoRoot/action.py" -Destination "$prodExtensionDir/action.py" -Force
-    Copy-Item -Path "$repoRoot/sample-output.png" -Destination "$prodExtensionDir/sample-output.png" -Force
-    Copy-Item -Path "$repoRoot/pyproject.toml" -Destination "$prodExtensionDir/pyproject.toml" -Force
-    Copy-Item -Path "$repoRoot/analysis" -Destination "$prodExtensionDir/analysis" -Recurse -Force
-
+    # Copy files defined in vss-extension.json using the utility function
+    $copySuccess = Copy-FilesFromVssExtension -SourceRootPath $repoRoot -DestinationRootPath $prodExtensionDir -VssExtensionObject $vssExtension
+    if (-not $copySuccess) {
+        Write-Error "Failed to copy files defined in vss-extension.json 'files' section or section not found"
+        exit 1
+    }
     Write-Host "Copied supporting files for extension" -ForegroundColor Green
-} finally {
+}
+finally {
     # Return to the original directory
     Pop-Location
 }

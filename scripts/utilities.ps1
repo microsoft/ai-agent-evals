@@ -17,7 +17,8 @@ function Update-VersionNumber {
         Write-Host "Version format unexpected. Using defaults 0.0"
         $majorVersion = 0
         $minorVersion = 0
-    } else {
+    }
+    else {
         $majorVersion = [int]$versionParts[0]
         $minorVersion = [int]$versionParts[1]
     }
@@ -33,4 +34,42 @@ function Update-VersionNumber {
     
     Write-Host "New version: $newVersion"
     return $newVersion
+}
+
+function Copy-FilesFromVssExtension {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$SourceRootPath,
+        
+        [Parameter(Mandatory = $true)]
+        [string]$DestinationRootPath,
+        
+        [Parameter(Mandatory = $true)]
+        [PSCustomObject]$VssExtensionObject
+    )
+    
+    # Read the files section from vss-extension.json
+    $files = $VssExtensionObject.files
+    
+    if ($files -and $files.Count -gt 0) {
+        foreach ($file in $files) {
+            $sourcePath = Join-Path -Path $SourceRootPath -ChildPath $file.path
+            $destinationPath = Join-Path -Path $DestinationRootPath -ChildPath $file.path
+            
+            Write-Host "Copying $($file.path) to destination directory..."
+            if (Test-Path -Path $sourcePath -PathType Container) {
+                Copy-Item -Path $sourcePath -Destination $destinationPath -Recurse -Force
+            }
+            else {
+                Copy-Item -Path $sourcePath -Destination $destinationPath -Force
+            }
+        }
+        Write-Host "Copied all files defined in 'files' section" -ForegroundColor Green
+        return $true
+    }
+    else {
+        Write-Warning "No files defined in vss-extension.json 'files' section or section not found"
+        return $false
+    }
 }

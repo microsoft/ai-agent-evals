@@ -1,6 +1,6 @@
 #!/usr/bin/env pwsh
 # Script to create the AIAgentEvaluationDev task from AIAgentEvaluation
-# and generate vss-extension-dev.json from vss-extension.json
+# and generate dist/dev/extension files for the dev version.
 
 # Get the repository root directory regardless of where the script is invoked from
 $scriptPath = $MyInvocation.MyCommand.Path
@@ -15,7 +15,7 @@ $utilsPath = Join-Path -Path $scriptsFolder -ChildPath "utilities.ps1"
 . $utilsPath
 
 $setupPath = Join-Path -Path $scriptsFolder -ChildPath "setup.ps1"
-. $setupPath
+& $setupPath
 
 # Define the source and destination paths
 $sourceFolder = Join-Path -Path $repoRoot -ChildPath "tasks\AIAgentEvaluation"
@@ -79,7 +79,7 @@ if ($buildResultsContribution) {
     $buildResultsContribution.id = "build-results-dev"
     $buildResultsContribution.description = "$($buildResultsContribution.description) (Dev)"
     $buildResultsContribution.properties.name = "$($buildResultsContribution.properties.name) (Dev)"
-    $buildResultsContribution.properties.supportsTasks = @("6c8d5e8b-16f2-4f7b-b991-99e3dfa9f359")
+    $buildResultsContribution.properties.supportsTasks = @($taskJson.id)
 }
 
 # Update AIAgentEvaluation contribution
@@ -102,8 +102,8 @@ if ($agentEvalFile) {
 
 # Update other file paths
 foreach ($file in $vssExtension.files | Where-Object { 
-    $_.packagePath -like "tasks/AIAgentEvaluation/*" 
-}) {
+        $_.packagePath -like "tasks/AIAgentEvaluation/*" 
+    }) {
     $file.packagePath = $file.packagePath -replace "tasks/AIAgentEvaluation", "tasks/AIAgentEvaluationDev"
 }
 
@@ -112,14 +112,10 @@ foreach ($file in $vssExtension.files | Where-Object {
 $vssExtension | ConvertTo-Json -Depth 10 | Set-Content -Path "$devExtensionDir/vss-extension.json" -Encoding UTF8
 Write-Host "Successfully created AIAgentEvaluationDev from AIAgentEvaluation and updated vss-extension.json"
 
-Copy-Item -Path "$repoRoot/tasks/AIAgentReport/dist" -Destination "$devExtensionDir/tasks/AIAgentReport/dist" -Recurse -Force
-Copy-Item -Path "$repoRoot/tasks/AIAgentEvaluationDev" -Destination "$devExtensionDir/tasks/AIAgentEvaluationDev" -Recurse -Force
-Copy-Item -Path "$repoRoot/logo.png" -Destination "$devExtensionDir/logo.png" -Force
-Copy-Item -Path "$repoRoot/overview.md" -Destination "$devExtensionDir/overview.md" -Force
-Copy-Item -Path "$repoRoot/LICENSE" -Destination "$devExtensionDir/LICENSE" -Force
-Copy-Item -Path "$repoRoot/action.py" -Destination "$devExtensionDir/action.py" -Force
-Copy-Item -Path "$repoRoot/sample-output.png" -Destination "$devExtensionDir/sample-output.png" -Force
-Copy-Item -Path "$repoRoot/pyproject.toml" -Destination "$devExtensionDir/pyproject.toml" -Force
-Copy-Item -Path "$repoRoot/analysis" -Destination "$devExtensionDir/analysis" -Recurse -Force
-
+# Copy files defined in vss-extension.json using the utility function
+$copySuccess = Copy-FilesFromVssExtension -SourceRootPath $repoRoot -DestinationRootPath $devExtensionDir -VssExtensionObject $vssExtension
+if (-not $copySuccess) {
+    Write-Error "Failed to copy files defined in vss-extension.json 'files' section or section not found"
+    exit 1
+}
 Write-Host "Copied supporting files for extension" -ForegroundColor Green
