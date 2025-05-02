@@ -1,73 +1,72 @@
 steps:
-- task: UseNode@1
-  displayName: Install Node for 1ES
-  inputs:
-    version: "20.x"
+  - task: UseNode@1
+    displayName: Install Node for 1ES
+    inputs:
+      version: "20.x"
 
-- task: npmAuthenticate@0
-  inputs:
-    workingFile: .azure-devops/.npmrc
+  - task: npmAuthenticate@0
+    inputs:
+      workingFile: .azure-devops/.npmrc
 
-- script: |
-    npm install -g tfx-cli
-  displayName: Install TFX CLI
+  - script: |
+      npm install -g tfx-cli
+    displayName: Install TFX CLI
 
-# Below task is needed for publishing task (Auto injected by 1ES pipeline template)
-- task: ms-devlabs.vsts-developer-tools-build-tasks.tfx-installer-build-task.TfxInstaller@5
-  displayName: 'Use Node CLI for Azure DevOps (tfx-cli): v0.x'
-  inputs:
-    version: 'v0.x'
+  # Below task is needed for publishing task (Auto injected by 1ES pipeline template)
+  - task: ms-devlabs.vsts-developer-tools-build-tasks.tfx-installer-build-task.TfxInstaller@5
+    displayName: "Use Node CLI for Azure DevOps (tfx-cli): v0.x"
+    inputs:
+      version: "v0.x"
 
-- task: PowerShell@2
-  inputs:
-    filePath: '$(Build.SourcesDirectory)/scripts/setup.ps1'
-    pwsh: false
-  displayName: 'Run setup script'
+  - task: PowerShell@2
+    inputs:
+      filePath: "$(Build.SourcesDirectory)/scripts/setup.ps1"
+      pwsh: false
+    displayName: "Run setup script"
 
-- task: PowerShell@2
-  displayName: Create VSIX
-  inputs:
-    targetType: 'inline'
-    workingDirectory: '$(Build.SourcesDirectory)/dist/prod'
-    script: |
-      tfx extension create --manifest-globs vss-extension.json
+  - task: PowerShell@2
+    displayName: Create VSIX
+    inputs:
+      targetType: "inline"
+      workingDirectory: "$(Build.SourcesDirectory)/dist/prod"
+      script: |
+        tfx extension create --manifest-globs vss-extension.json
 
-- task: SFP.build-tasks.custom-build-task-1.EsrpCodeSigning@5
-  inputs:
-    ConnectedServiceName: $(ConnectedServiceName)
-    UseMSIAuthentication: true
-    AppRegistrationClientId: $(AppRegistrationClientId)
-    AppRegistrationTenantId: $(AppRegistrationTenantId)
-    EsrpClientId: $(EsrpClientId)
-    AuthAKVName: $(AuthAKVName)
-    AuthCertName: $(AuthCertName)
-    AuthSignCertName: $(AuthSignCertName)
-    FolderPath: '$(Build.SourcesDirectory)/dist/prod'
-    Pattern: '*.vsix'
-    signConfigType: inlineSignParams
-    inlineOperation: |
-      [
-        {
-          "KeyCode" : "CP-233016",
-          "OperationCode" : "OpcSign",
-          "Parameters" : {
-              "FileDigest" : "/fd SHA256"
+  - task: SFP.build-tasks.custom-build-task-1.EsrpCodeSigning@5
+    inputs:
+      ConnectedServiceName: $(ConnectedServiceName)
+      UseMSIAuthentication: true
+      AppRegistrationClientId: $(AppRegistrationClientId)
+      AppRegistrationTenantId: $(AppRegistrationTenantId)
+      EsrpClientId: $(EsrpClientId)
+      AuthAKVName: $(AuthAKVName)
+      AuthCertName: $(AuthCertName)
+      AuthSignCertName: $(AuthSignCertName)
+      FolderPath: "$(Build.SourcesDirectory)/dist/prod"
+      Pattern: "*.vsix"
+      signConfigType: inlineSignParams
+      inlineOperation: |
+        [
+          {
+            "KeyCode" : "CP-233016",
+            "OperationCode" : "OpcSign",
+            "Parameters" : {
+                "FileDigest" : "/fd SHA256"
+            },
+            "ToolName" : "sign",
+            "ToolVersion" : "1.0"
           },
-          "ToolName" : "sign",
-          "ToolVersion" : "1.0"
-        },
-        {
-          "KeyCode" : "CP-233016",
-          "OperationCode" : "OpcVerify",
-          "Parameters" : {},
-          "ToolName" : "sign",
-          "ToolVersion" : "1.0"
-        }
-      ]
-    SessionTimeout: 90
-    MaxConcurrency: 25
-    MaxRetryAttempts: 5
-    PendingAnalysisWaitTimeoutMinutes: 5
-  displayName: Sign Extension
-  #condition: and(succeeded(), ne(variables['build.reason'], 'PullRequest'))
-
+          {
+            "KeyCode" : "CP-233016",
+            "OperationCode" : "OpcVerify",
+            "Parameters" : {},
+            "ToolName" : "sign",
+            "ToolVersion" : "1.0"
+          }
+        ]
+      SessionTimeout: 90
+      MaxConcurrency: 25
+      MaxRetryAttempts: 5
+      PendingAnalysisWaitTimeoutMinutes: 5
+    displayName: Sign Extension
+    #condition: and(succeeded(), ne(variables['build.reason'], 'PullRequest'))

@@ -9,14 +9,14 @@ trigger: none
 pr: none
 
 variables:
-- group: ai-agent-evals-ado-extension-release
+  - group: ai-agent-evals-ado-extension-release
 
 resources:
   repositories:
-  - repository: 1ESPipelineTemplates
-    type: git
-    name: 1ESPipelineTemplates/1ESPipelineTemplates
-    ref: refs/tags/release
+    - repository: 1ESPipelineTemplates
+      type: git
+      name: 1ESPipelineTemplates/1ESPipelineTemplates
+      ref: refs/tags/release
 
 extends:
   template: v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates
@@ -24,7 +24,7 @@ extends:
     settings:
       skipBuildTagsForGitHubPullRequests: true
     # featureFlags:
-      # autoBaseline: false
+    # autoBaseline: false
     sdl:
       baseline:
         baselineSet: default
@@ -39,16 +39,16 @@ extends:
       os: windows
 
     stages:
-    - stage: stage
-      jobs:
-      - job: job
-        templateContext:
-          outputs:
-          - output: adoExtension
-            targetPath: $(Build.SourcesDirectory)/dist/prod
-            connectedServiceNameAzureRM: 'esrp-codesign-service-connection'
-            fileType: vsix
-            vsixFile: $(Build.SourcesDirectory)/dist/prod/*.vsix
-            useV5: true
-        steps:
-        - template: .azure-devops/common-steps.yml@self
+      - stage: stage
+        jobs:
+          - job: job
+            templateContext:
+              outputs:
+                - output: adoExtension
+                  targetPath: $(Build.SourcesDirectory)/dist/prod
+                  connectedServiceNameAzureRM: "esrp-codesign-service-connection"
+                  fileType: vsix
+                  vsixFile: $(Build.SourcesDirectory)/dist/prod/*.vsix
+                  useV5: true
+            steps:
+              - template: .azure-devops/common-steps.yml@self
