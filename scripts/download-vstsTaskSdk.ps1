@@ -43,8 +43,16 @@ try {
         throw "Failed to clone the repository"
     }
     
+    # build powershell folder
+    Write-Host "Building the powershell folder..."
+    $buildScriptPath = Join-Path -Path $tempDir -ChildPath "azure-pipelines-task-lib/powershell"
+
+    Set-Location -Path $buildScriptPath
+    npm ci --force
+    npm run build
+
     # Navigate to the VstsTaskSdk directory in the cloned repo
-    $sourceDir = Join-Path -Path $tempDir -ChildPath "azure-pipelines-task-lib/powershell/VstsTaskSdk"
+    $sourceDir = Join-Path -Path $tempDir -ChildPath "azure-pipelines-task-lib/powershell/_build/VstsTaskSdk"
     
     if (-not (Test-Path -Path $sourceDir)) {
         throw "VstsTaskSdk directory not found in cloned repository"
