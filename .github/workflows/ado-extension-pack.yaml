@@ -1,0 +1,46 @@
+---
+# File with LF line endings
+name: Packaging ADO Extension (Dev)
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  publish-dev:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Install tfx-cli
+        run: npm install -g tfx-cli
+
+
+      - name: Run setup-dev scripts
+        shell: pwsh
+        run: |
+          ./scripts/setup-dev.ps1
+
+      - name: Package Extension
+        run: |
+          cd dist/dev
+          tfx extension create --manifest-globs vss-extension.json
+          cd ../..
+          
+      - name: Upload VSIX as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ado-extension-dev
+          path: ./dist/dev/*.vsix
+
