@@ -77,10 +77,8 @@ steps:
     inputs:
       azure-aiproject-connection-string: "$(AzureAIProjectConnectionString)"
       deployment-name: "$(DeploymentName)"
-      data-path: "$(System.DefaultWorkingDirectory)/data/dataset.json"
+      data-path: "$(System.DefaultWorkingDirectory)/path/to/your/dataset.json"
       agent-ids: "$(AgentIds)"
-      baseline-agent-id: "$(BaselineAgentId)"
-      evaluation-result-view: "default"
 ```
 
 ## Evaluation Results

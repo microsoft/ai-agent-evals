@@ -42,7 +42,10 @@ try {
     Write-Host "Connection string: $connectionString"
     Write-Host "Data path: $dataPath"
     Write-Host "Agent IDs: $agentIds"
-    Write-Host "Baseline agent ID: $baselineAgentId"    
+    Write-Host "Baseline agent ID: $baselineAgentId"
+    Write-Host "deployment name: $deploymentName"
+    Write-Host "API version: $apiVersion"
+    Write-Host "Evaluation result view: $evaluationResultView"
     Write-Host "Executing action.py"
 
     $artifactFolder = "ai-agent-eval"
