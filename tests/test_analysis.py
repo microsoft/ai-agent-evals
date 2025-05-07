@@ -116,6 +116,151 @@ def test_evaluation_score_comparison():
     assert comparison.treatment_effect == "Too few samples"
 
 
+def test_evaluation_score_comparison_ordinal():
+    """Test comparing two evaluation results"""
+
+    ordinal_data_1 = {"inputs.id": [1, 2, 3], "outputs.fluency.score": [1, 2, 1]}
+
+    ordinal_data_2 = {"inputs.id": [1, 2, 3], "outputs.fluency.score": [2, 4, 5]}
+
+    control_result = EvaluationResult(
+        variant="test_variant_1",
+        df_result=pd.DataFrame(ordinal_data_1),
+        ai_foundry_url="test_url_1",
+    )
+    treatment_result = EvaluationResult(
+        variant="test_variant_2",
+        df_result=pd.DataFrame(ordinal_data_2),
+        ai_foundry_url="test_url_2",
+    )
+    score = EvaluationScore(
+        name="fluency",
+        evaluator="fluency",
+        field="score",
+        data_type=EvaluationScoreDataType.ORDINAL,
+        desired_direction=DesiredDirection.INCREASE,
+    )
+
+    comparison = EvaluationScoreComparison(control_result, treatment_result, score)
+
+    assert comparison.score.name == "fluency"
+    assert comparison.control_variant == "test_variant_1"
+    assert comparison.treatment_variant == "test_variant_2"
+    assert comparison.count == 3
+    assert comparison.control_mean == pytest.approx(1.333, rel=1e-2)
+    assert comparison.treatment_mean == pytest.approx(3.667, rel=1e-2)
+    assert comparison.delta_estimate == pytest.approx(2.333, rel=1e-2)
+    assert comparison.p_value == pytest.approx(0.25, rel=1e-2)
+    assert comparison.treatment_effect == "Too few samples"
+
+
+def test_evaluation_score_comparison_boolean():
+    """Test comparing two evaluation results"""
+
+    bool_data_1 = {
+        "inputs.id": [1, 2, 3],
+        "outputs.fluency.score": [True, False, False],
+    }
+
+    bool_data_2 = {"inputs.id": [1, 2, 3], "outputs.fluency.score": [True, True, True]}
+
+    control_result = EvaluationResult(
+        variant="test_variant_1",
+        df_result=pd.DataFrame(bool_data_1),
+        ai_foundry_url="test_url_1",
+    )
+    treatment_result = EvaluationResult(
+        variant="test_variant_2",
+        df_result=pd.DataFrame(bool_data_2),
+        ai_foundry_url="test_url_2",
+    )
+    score = EvaluationScore(
+        name="fluency",
+        evaluator="fluency",
+        field="score",
+        data_type=EvaluationScoreDataType.BOOLEAN,
+        desired_direction=DesiredDirection.INCREASE,
+    )
+
+    comparison = EvaluationScoreComparison(control_result, treatment_result, score)
+
+    assert comparison.score.name == "fluency"
+    assert comparison.control_variant == "test_variant_1"
+    assert comparison.treatment_variant == "test_variant_2"
+    assert comparison.count == 3
+    assert comparison.control_mean == pytest.approx(0.333, rel=1e-2)
+    assert comparison.treatment_mean == pytest.approx(1.0, rel=1e-2)
+    assert comparison.delta_estimate == pytest.approx(0.667, rel=1e-2)
+    assert comparison.p_value == pytest.approx(0.25, rel=1e-2)
+    assert comparison.treatment_effect == "Too few samples"
+
+
+def test_evaluation_score_comparison_boolean_more_samples():
+    """Test comparing two evaluation results"""
+
+    bool_data_1 = {
+        "inputs.id": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+        "outputs.fluency.score": [
+            True,
+            False,
+            False,
+            True,
+            False,
+            False,
+            True,
+            False,
+            False,
+            False,
+        ],
+    }
+
+    bool_data_2 = {
+        "inputs.id": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+        "outputs.fluency.score": [
+            False,
+            True,
+            True,
+            True,
+            True,
+            True,
+            True,
+            True,
+            True,
+            True,
+        ],
+    }
+
+    control_result = EvaluationResult(
+        variant="test_variant_1",
+        df_result=pd.DataFrame(bool_data_1),
+        ai_foundry_url="test_url_1",
+    )
+    treatment_result = EvaluationResult(
+        variant="test_variant_2",
+        df_result=pd.DataFrame(bool_data_2),
+        ai_foundry_url="test_url_2",
+    )
+    score = EvaluationScore(
+        name="fluency",
+        evaluator="fluency",
+        field="score",
+        data_type=EvaluationScoreDataType.BOOLEAN,
+        desired_direction=DesiredDirection.INCREASE,
+    )
+
+    comparison = EvaluationScoreComparison(control_result, treatment_result, score)
+
+    assert comparison.score.name == "fluency"
+    assert comparison.control_variant == "test_variant_1"
+    assert comparison.treatment_variant == "test_variant_2"
+    assert comparison.count == 10
+    assert comparison.control_mean == pytest.approx(0.3, rel=1e-2)
+    assert comparison.treatment_mean == pytest.approx(0.9, rel=1e-2)
+    assert comparison.delta_estimate == pytest.approx(0.600, rel=1e-2)
+    assert comparison.p_value == pytest.approx(0.039, rel=1e-2)
+    assert comparison.treatment_effect == "Improved"
+
+
 def test_boolean_conversion():
     """
     Test that string pass/fail values are converted to boolean values correctly,

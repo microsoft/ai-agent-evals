@@ -29,7 +29,7 @@ def mcnemar(contingency_table: np.ndarray) -> float:
     n21 = contingency_table[1, 0]
     n = n12 + n21
 
-    pvalue_exact_conditional = 2 * binom.cdf(k=n12, n=n, p=0.5)
+    pvalue_exact_conditional = 2 * binom.cdf(k=min(n12, n21), n=n, p=0.5)
     pvalue_midp = pvalue_exact_conditional - binom.pmf(k=n12, n=n, p=0.5)
 
     return float(pvalue_midp)
