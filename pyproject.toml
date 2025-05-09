@@ -14,8 +14,8 @@ dependencies = [
     "numpy",
     "pyyaml",
     "scipy",
-    "azure-ai-evaluation>=1.5.0",
-    "azure-ai-projects>=1.0.0b9",
+    "azure-ai-evaluation==1.5.0",
+    "azure-ai-projects==1.0.0b10",
     "azure-identity",
     "aiohttp>=3.8.5",
 ]
