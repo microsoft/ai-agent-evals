@@ -44,6 +44,10 @@ extends:
           - job: job
             templateContext:
               outputs:
+                - output: pipelineArtifact
+                  path: $(Build.SourcesDirectory)/dist/prod
+                  artifact: drop
+
                 - output: adoExtension
                   targetPath: $(Build.SourcesDirectory)/dist/prod
                   connectedServiceNameAzureRM: "esrp-codesign-service-connection"
