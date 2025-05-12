@@ -11,7 +11,7 @@ name: AI Agent Evaluation
 
 # Update for your setup
 env:
-  data-path: "${{ github.workspace }}/sample/dataset.json"
+  data-path: "${{ github.workspace }}/samples/data/dataset.json"
   agent-ids: "<your-agent-id-1>,<your-agent-id-2>"
 
 on:
