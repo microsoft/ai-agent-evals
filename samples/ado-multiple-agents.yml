@@ -1,0 +1,30 @@
+# Trigger manually. Can be updated based on scenarios
+trigger: none
+
+variables:
+- group: ado-serviceconnection-variable
+
+pool:
+  vmImage: 'windows-latest' 
+
+steps:
+- task: AzureCLI@2
+  displayName: 'Verify Azure CLI login'
+  inputs:
+    azureSubscription: $(ADO_SERVICE_CONNECTION_NAME)
+    scriptType: bash
+    scriptLocation: inlineScript
+    inlineScript: |
+      echo "Logged in to Azure CLI"
+
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '3.10'
+
+- task: AIAgentEvaluation@0
+  inputs:
+    azure-aiproject-connection-string: $(AZURE_AIPROJECT_CONNECTION_STRING)
+    deployment-name: $(DEPLOYMENT_NAME)
+    data-path: $(Build.SourcesDirectory)\samples\data\dataset.json
+    agent-ids: $(AGENT_IDS)
+    evaluation-result-view: 'all-scores'
