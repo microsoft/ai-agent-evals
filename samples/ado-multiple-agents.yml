@@ -15,8 +15,7 @@ steps:
     scriptType: bash
     scriptLocation: inlineScript
     inlineScript: |
-      echo "Logged in as:"
-      az account show
+      echo "Logged in to Azure CLI"
 
 - task: UsePythonVersion@0
   inputs:
