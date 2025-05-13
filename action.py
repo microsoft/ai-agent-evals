@@ -15,7 +15,7 @@ from urllib.parse import parse_qs, urlparse
 import azure.ai.evaluation as evals
 import pandas as pd
 import yaml
-from azure.ai.agents.models import Agent, RunStatus, MessageRole
+from azure.ai.agents.models import Agent, MessageRole, RunStatus
 from azure.ai.evaluation import AIAgentConverter, evaluate
 from azure.ai.projects import AIProjectClient
 from azure.identity import DefaultAzureCredential
