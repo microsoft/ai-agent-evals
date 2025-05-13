@@ -21,15 +21,15 @@ steps:
         echo "##vso[task.setvariable variable=AZURE_FEDERATED_TOKEN]$idToken"
         echo "Logged in to Azure CLI"
 
+  - bash: |
+      az login --service-principal -u $(ARM_CLIENT_ID) --tenant $(ARM_TENANT_ID) --allow-no-subscriptions --federated-token $(AZURE_FEDERATED_TOKEN)
+    displayName: 'Az Login'
+
   - task: UsePythonVersion@0
     inputs:
       versionSpec: "3.10"
 
   - task: AIAgentEvaluation@0
-    env:
-      AZURE_CLIENT_ID: $(AZURE_CLIENT_ID)
-      AZURE_TENANT_ID: $(AZURE_TENANT_ID)
-      AZURE_FEDERATED_TOKEN: $(AZURE_FEDERATED_TOKEN)
     inputs:
       azure-aiproject-connection-string: $(AZURE_AIPROJECT_CONNECTION_STRING)
       deployment-name: $(DEPLOYMENT_NAME)
