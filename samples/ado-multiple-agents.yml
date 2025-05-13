@@ -23,7 +23,7 @@ steps:
 
   - bash: |
       az login --service-principal -u $(AZURE_CLIENT_ID) --tenant $(AZURE_TENANT_ID) --allow-no-subscriptions --federated-token $(AZURE_FEDERATED_TOKEN)
-    displayName: 'Az Login'
+    displayName: "Az Login"
 
   - task: UsePythonVersion@0
     inputs:
