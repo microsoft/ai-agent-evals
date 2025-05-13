@@ -16,6 +16,9 @@ steps:
       scriptType: bash
       scriptLocation: inlineScript
       inlineScript: |
+        echo "##vso[task.setvariable variable=AZURE_CLIENT_ID]$servicePrincipalId"
+        echo "##vso[task.setvariable variable=AZURE_TENANT_ID]$tenantId"
+        echo "##vso[task.setvariable variable=AZURE_FEDERATED_TOKEN]$idToken"
         echo "Logged in to Azure CLI"
 
   - task: UsePythonVersion@0
@@ -23,6 +26,10 @@ steps:
       versionSpec: "3.10"
 
   - task: AIAgentEvaluation@0
+    env:
+      AZURE_CLIENT_ID: $(AZURE_CLIENT_ID)
+      AZURE_TENANT_ID: $(AZURE_TENANT_ID)
+      AZURE_FEDERATED_TOKEN: $(AZURE_FEDERATED_TOKEN)
     inputs:
       azure-aiproject-connection-string: $(AZURE_AIPROJECT_CONNECTION_STRING)
       deployment-name: $(DEPLOYMENT_NAME)
