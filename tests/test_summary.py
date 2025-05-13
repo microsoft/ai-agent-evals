@@ -7,7 +7,7 @@ The tests use snapshot testing to verify the output matches expected results.
 from pathlib import Path
 
 import pandas as pd
-from azure.ai.projects.models import Agent
+from azure.ai.agents.models import Agent
 
 from analysis.analysis import EvaluationResult, EvaluationResultView
 from analysis.summary import summarize

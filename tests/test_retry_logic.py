@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from action import simulate_question_answer
-from azure.ai.projects.models import RunStatus  # pylint: disable=wrong-import-order
+from azure.ai.agents.models import RunStatus  # pylint: disable=wrong-import-order
 
 
 class MockError:
@@ -49,10 +49,9 @@ def test_exponential_backoff(mock_sleep):
     ]
 
     # Configure the mocks
-    mock_project_client.agents.create_thread.return_value = mock_thread
-    mock_project_client.agents.create_and_process_run.side_effect = mock_runs
+    mock_project_client.agents.threads.create.return_value = mock_thread
+    mock_project_client.agents.runs.create_and_process.side_effect = mock_runs
     mock_converter = MagicMock()
-    mock_project_client.agents.list_messages.return_value = MagicMock()
 
     # Patch AIAgentConverter to avoid actual file operations
     with patch("action.AIAgentConverter") as action_mock_converter:
@@ -99,8 +98,8 @@ def test_retry_fails_after_max_attempts(mock_sleep):
     mock_runs = [MockRun(RunStatus.FAILED, "rate_limit_exceeded") for _ in range(5)]
 
     # Configure the mocks
-    mock_project_client.agents.create_thread.return_value = mock_thread
-    mock_project_client.agents.create_and_process_run.side_effect = mock_runs
+    mock_project_client.agents.threads.create.return_value = mock_thread
+    mock_project_client.agents.runs.create_and_process.side_effect = mock_runs
 
     # Call the function, expecting it to raise an exception
     input_data = {"query": "test query", "id": "test_id_1"}
