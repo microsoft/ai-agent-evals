@@ -9,12 +9,13 @@ pool:
 
 steps:
   - task: AzureCLI@2
-    displayName: "Verify Azure CLI login"
+    displayName: "Azure CLI login"
     inputs:
       azureSubscription: $(ADO_SERVICE_CONNECTION_NAME)
       scriptType: bash
       scriptLocation: inlineScript
       inlineScript: |
+        az login --service-principal -u $servicePrincipalId --tenant $tenantId --allow-no-subscriptions --federated-token $idToken
         echo "Logged in to Azure CLI"
 
   - task: UsePythonVersion@0
