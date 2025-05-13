@@ -10,14 +10,14 @@ import random
 import time
 import uuid
 from pathlib import Path
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import parse_qs, urlparse
 
 import azure.ai.evaluation as evals
 import pandas as pd
 import yaml
+from azure.ai.agents.models import Agent, RunStatus, MessageRole
 from azure.ai.evaluation import AIAgentConverter, evaluate
 from azure.ai.projects import AIProjectClient
-from azure.ai.agents.models import Agent, RunStatus, MessageRole
 from azure.identity import DefaultAzureCredential
 
 import analysis
@@ -419,8 +419,11 @@ def main(
 
     if eval_results[agent_id].ai_foundry_url:
         parsed_foundry_url = urlparse(eval_results[agent_id].ai_foundry_url)
-        query_params = parse_qs(parsed_foundry_url.query)
-        agent_base_url = f"https://ai.azure.com/playground/agents?wsid={query_params["wsid"][0]}&assistantId="
+        query_params = parse_qs(str(parsed_foundry_url.query))
+        agent_base_url = (
+            f"https://ai.azure.com/playground/agents?wsid={query_params['wsid'][0]}"
+            + "&assistantId="
+        )
     else:
         agent_base_url = None
 
