@@ -22,7 +22,7 @@ steps:
         echo "Logged in to Azure CLI"
 
   - bash: |
-      az login --service-principal -u $(ARM_CLIENT_ID) --tenant $(ARM_TENANT_ID) --allow-no-subscriptions --federated-token $(AZURE_FEDERATED_TOKEN)
+      az login --service-principal -u $(AZURE_CLIENT_ID) --tenant $(AZURE_TENANT_ID) --allow-no-subscriptions --federated-token $(AZURE_FEDERATED_TOKEN)
     displayName: 'Az Login'
 
   - task: UsePythonVersion@0
