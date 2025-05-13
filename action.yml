@@ -5,9 +5,9 @@ branding:
   color: blue
 
 inputs:
-  azure-aiproject-connection-string:
+  azure-ai-project-endpoint:
     description: >
-      The connection string for the Azure AI Project. This is used to connect to Azure AI Foundry to simulate
+      The endpoint for the Azure AI Project. This is used to connect to Azure AI Foundry to simulate
       conversations with each agent, and to connect to the Azure AI Evaluation SDK to perform the evaluation.
     required: true
   deployment-name:
@@ -56,7 +56,7 @@ runs:
       shell: bash
       run: python ${{ github.action_path }}/action.py
       env:
-        AZURE_AIPROJECT_CONNECTION_STRING: ${{ inputs.azure-aiproject-connection-string }}
+        AZURE_AI_PROJECT_ENDPOINT: ${{ inputs.azure-ai-project-endpoint }}
         DEPLOYMENT_NAME: ${{ inputs.deployment-name }}
         API_VERSION: ${{ inputs.api-version }}
         DATA_PATH: ${{ inputs.data-path }}

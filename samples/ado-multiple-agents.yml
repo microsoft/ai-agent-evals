@@ -23,7 +23,7 @@ steps:
 
   - task: AIAgentEvaluation@0
     inputs:
-      azure-aiproject-connection-string: $(AZURE_AIPROJECT_CONNECTION_STRING)
+      azure-ai-project-endpoint: $(AZURE_AI_PROJECT_ENDPOINT)
       deployment-name: $(DEPLOYMENT_NAME)
       data-path: $(Build.SourcesDirectory)\samples\data\dataset.json
       agent-ids: $(AGENT_IDS)

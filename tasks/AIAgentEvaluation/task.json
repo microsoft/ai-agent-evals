@@ -14,12 +14,12 @@
   "instanceNameFormat": "AI Agent Evaluation",
   "inputs": [
     {
-      "name": "azure-aiproject-connection-string",
+      "name": "azure-ai-project-endpoint",
       "type": "string",
-      "label": "Azure AI Project Connection String",
+      "label": "Azure AI Project Endpoint",
       "defaultValue": "",
       "required": true,
-      "helpMarkDown": "The connection string for the Azure AI Project. This is used to connect to Azure AI Foundry to simulate conversations with each agent, and to connect to the Azure AI Evaluation SDK to perform the evaluation."
+      "helpMarkDown": "The endpoint for the Azure AI Project. This is used to connect to Azure AI Foundry to simulate conversations with each agent, and to connect to the Azure AI Evaluation SDK to perform the evaluation."
     },
     {
       "name": "deployment-name",

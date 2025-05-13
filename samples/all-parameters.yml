@@ -43,7 +43,7 @@ jobs:
       - name: Run evaluation
         uses: microsoft/ai-agent-eval@v1
         with:
-          azure-aiproject-connection-string: ${{ vars.AZURE_AIPROJECT_CONNECTION_STRING }}
+          azure-ai-project-endpoint: ${{ vars.AZURE_AI_PROJECT_ENDPOINT }}
           deployment-name: ${{ vars.DEPLOYMENT_NAME }}
           api-version: ${{ vars.API_VERSION }}
           data-path: ${{ env.data-path }}

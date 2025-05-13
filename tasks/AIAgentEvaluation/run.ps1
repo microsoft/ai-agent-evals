@@ -9,11 +9,11 @@ try {
         Write-Error "Python installation check failed. Cannot proceed."
         exit 1
     }
-    
+
     Write-Host "Installing Python dependencies..."
     python -m pip install --upgrade pip
     python -m pip install .
-    
+
     if ($LASTEXITCODE -ne 0) {
         Write-Error "Failed to install Python dependencies"
         exit 1
@@ -21,16 +21,16 @@ try {
     Write-Host "Dependencies installed successfully"
 
     Write-Host "Reading task inputs..."
-    $connectionString = Get-VstsInput -Name "azure-aiproject-connection-string" -Require
+    $endpoint = Get-VstsInput -Name "azure-ai-project-endpoint" -Require
     $deploymentName = Get-VstsInput -Name "deployment-name" -Require
     $apiVersion = Get-VstsInput -Name "api-version"
     $dataPath = Get-VstsInput -Name "data-path" -Require
     $agentIds = Get-VstsInput -Name "agent-ids" -Require
     $baselineAgentId = Get-VstsInput -Name "baseline-agent-id"
     $evaluationResultView = Get-VstsInput -Name "evaluation-result-view"
-    
+
     # Set as environment variables for Python script
-    $env:AZURE_AIPROJECT_CONNECTION_STRING = $connectionString
+    $env:AZURE_AI_PROJECT_ENDPOINT = $endpoint
     $env:DEPLOYMENT_NAME = $deploymentName
     $env:API_VERSION = $apiVersion
     $env:DATA_PATH = $dataPath
@@ -39,7 +39,7 @@ try {
     $env:EVALUATION_RESULT_VIEW = $evaluationResultView
 
     # Log inputs (mask sensitive information)
-    Write-Host "Connection string: $connectionString"
+    Write-Host "Endpoint: $endpoint"
     Write-Host "Data path: $dataPath"
     Write-Host "Agent IDs: $agentIds"
     Write-Host "Baseline agent ID: $baselineAgentId"

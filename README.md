@@ -36,7 +36,7 @@ For the full list of evaluator scores and their types, see [analysis/evaluator-s
 
 | Name                              | Required? | Description                                                                                                                                                                                                                                           |
 | :-------------------------------- | :-------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| azure-aiproject-connection-string |    Yes    | Connection string of your Azure AI Project                                                                                                                                                                                                            |
+| azure-ai-project-endpoint         |    Yes    | Endpoint of your Azure AI Project                                                                                                                                                                                                                     |
 | deployment-name                   |    Yes    | The name of the Azure AI model deployment to use for evaluation                                                                                                                                                                                       |
 | data-path                         |    Yes    | Path to the data file that contains the evaluators and input queries for evaluations                                                                                                                                                                  |
 | agent-ids                         |    Yes    | ID of the agent(s) to evaluate. If multiple are provided, all agents should be comma-separated and will be evaluated and compared against the baseline with statistical test results                                                                  |
@@ -116,7 +116,7 @@ jobs:
         uses: microsoft/ai-agent-evals@v1-beta
         with:
           # Replace placeholders with values for your Azure AI Project
-          azure-aiproject-connection-string: "<your-ai-project-conn-str>"
+          azure-ai-project-endpoint: "<your-ai-project-endpoint>"
           deployment-name: "<your-deployment-name>"
           agent-ids: "<your-ai-agent-ids>"
           data-path: ${{ github.workspace }}/path/to/your/data-file

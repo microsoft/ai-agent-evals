@@ -41,7 +41,7 @@ and token counts, run the evaluations, and generate a summary report.
 
 | Name                              | Required | Description                                                                                                                                                                                                                                           |
 | --------------------------------- | :------: | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| azure-aiproject-connection-string |   Yes    | Connection string of your Azure AI Project                                                                                                                                                                                                            |
+| azure-ai-project-endpoint         |   Yes    | Endpoint of your Azure AI Project                                                                                                                                                                                                                     |
 | deployment-name                   |   Yes    | The name of the Azure AI model deployment to use for evaluation                                                                                                                                                                                       |
 | data-path                         |   Yes    | Path to the data file that contains the evaluators and input queries for evaluations                                                                                                                                                                  |
 | agent-ids                         |   Yes    | ID of the agent(s) to evaluate. If multiple are provided, all agents will be evaluated and compared against the baseline with statistical test results                                                                                                |
@@ -75,7 +75,7 @@ steps:
   - task: AIAgentEvaluation@0
     displayName: "Evaluate AI Agents"
     inputs:
-      azure-aiproject-connection-string: "$(AzureAIProjectConnectionString)"
+      azure-ai-project-endpoint: "$(AzureAIProjectEndpoint)"
       deployment-name: "$(DeploymentName)"
       data-path: "$(System.DefaultWorkingDirectory)/path/to/your/dataset.json"
       agent-ids: "$(AgentIds)"
