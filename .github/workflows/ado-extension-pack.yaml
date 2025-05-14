@@ -33,7 +33,7 @@ jobs:
 
       - name: Package Extension
         run: |
-          cd dist/dev
+          cd out/dev
           tfx extension create --manifest-globs vss-extension.json
           cd ../..
 
@@ -41,4 +41,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ado-extension-dev
-          path: ./dist/dev/*.vsix
+          path: ./out/dev/*.vsix
