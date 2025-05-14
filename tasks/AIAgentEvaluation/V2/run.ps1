@@ -1,5 +1,6 @@
 Trace-VstsEnteringInvocation $MyInvocation
 try {
+    Write-Host "Starting AIAgentEvaluation v2 task"
     $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
 
     Write-Host "Checking Python installation..."

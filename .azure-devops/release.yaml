@@ -45,14 +45,14 @@ extends:
             templateContext:
               outputs:
                 - output: pipelineArtifact
-                  path: $(Build.SourcesDirectory)/dist/prod
+                  path: $(Build.SourcesDirectory)/out/prod
                   artifact: drop
 
                 - output: adoExtension
-                  targetPath: $(Build.SourcesDirectory)/dist/prod
+                  targetPath: $(Build.SourcesDirectory)/out/prod
                   connectedServiceNameAzureRM: "esrp-codesign-service-connection"
                   fileType: vsix
-                  vsixFile: $(Build.SourcesDirectory)/dist/prod/*.vsix
+                  vsixFile: $(Build.SourcesDirectory)/out/prod/*.vsix
                   useV5: true
             steps:
               - template: .azure-devops/common-steps.yml@self

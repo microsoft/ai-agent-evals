@@ -28,7 +28,7 @@ steps:
     displayName: Create VSIX
     inputs:
       targetType: "inline"
-      workingDirectory: "$(Build.SourcesDirectory)/dist/prod"
+      workingDirectory: "$(Build.SourcesDirectory)/out/prod"
       script: |
         tfx extension create --manifest-globs vss-extension.json
 
@@ -42,7 +42,7 @@ steps:
       AuthAKVName: $(AuthAKVName)
       AuthCertName: $(AuthCertName)
       AuthSignCertName: $(AuthSignCertName)
-      FolderPath: "$(Build.SourcesDirectory)/dist/prod"
+      FolderPath: "$(Build.SourcesDirectory)/out/prod"
       Pattern: "*.vsix"
       signConfigType: inlineSignParams
       inlineOperation: |

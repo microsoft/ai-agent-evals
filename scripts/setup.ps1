@@ -2,12 +2,11 @@
 # It installs the required ps_modules, sets up the task paths, and builds the front-end for AIAgentReport.
 # It also updates the version in vss-extension.json and creates a production version of the file.
 
-# Get the repository root directory regardless of where the script is invoked from
 $scriptPath = $MyInvocation.MyCommand.Path
 $scriptsFolder = Split-Path -Path $scriptPath -Parent
 $repoRoot = Split-Path -Path $scriptsFolder -Parent
 
-$prodExtensionDir = Join-Path -Path $repoRoot -ChildPath "dist/prod"
+$prodExtensionDir = Join-Path -Path $repoRoot -ChildPath "out/prod"
 New-Item -Path $prodExtensionDir -ItemType Directory -Force | Out-Null
 
 Push-Location -Path $repoRoot
@@ -74,6 +73,40 @@ try {
         exit 1
     }
     Write-Host "Copied supporting files for extension" -ForegroundColor Green
+
+    # Copy VstsTaskSdk module to the production directory
+    $vstsTaskSdkPath = Join-Path -Path $repoRoot -ChildPath "out/VstsTaskSdk"
+    $versions = @("V1", "V2")
+    $latestVersion = "V2"
+    foreach ($version in $versions) {
+        $vstsTaskSdkDestPath = Join-Path -Path $prodExtensionDir -ChildPath "tasks/AIAgentEvaluation/$version/ps_modules/VstsTaskSdk"
+        Copy-Directory -SourceDir $vstsTaskSdkPath -DestinationDir $vstsTaskSdkDestPath
+
+        $commonScriptPath = Join-Path -Path $repoRoot -ChildPath "tasks/AIAgentEvaluation/check-python.ps1"
+        $commonScriptDestPath = Join-Path -Path $prodExtensionDir -ChildPath "tasks/AIAgentEvaluation/$version/check-python.ps1"
+        Copy-Item -Path $commonScriptPath -Destination $commonScriptDestPath -Force
+        Write-Host "Copied check-python.ps1 to $commonScriptDestPath" -ForegroundColor Green
+    }
+    Write-Host "Copied VstsTaskSdk module to production directory" -ForegroundColor Green
+
+    # Add action.py, analysis and pyproject.toml to the production directory
+    $filesToCopy = @(
+        "action.py",
+        "pyproject.toml"
+    )
+    $foldersToCopy = @(
+        "analysis"
+    )
+    foreach ($file in $filesToCopy) {
+        $sourcePath = Join-Path -Path $repoRoot -ChildPath $file
+        $destPath = Join-Path -Path $prodExtensionDir -ChildPath "tasks/AIAgentEvaluation/$latestVersion/$file"
+        Copy-Item -Path $sourcePath -Destination $destPath -Force
+    }
+    foreach ($folder in $foldersToCopy) {
+        $sourcePath = Join-Path -Path $repoRoot -ChildPath $folder
+        $destPath = Join-Path -Path $prodExtensionDir -ChildPath "tasks/AIAgentEvaluation/$latestVersion/$folder"
+        Copy-Directory -SourceDir $sourcePath -DestinationDir $destPath
+    }
 
     $validate = Check-CriticalFiles -OutputDir $prodExtensionDir -IsDevExtension $false
     if (-not $validate) {

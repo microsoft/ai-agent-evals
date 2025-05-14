@@ -108,26 +108,60 @@ function Check-CriticalFiles {
         [bool]$IsDevExtension
     )
 
-    $AgentFolderName = if ($IsDevExtension) { "AIAgentEvaluationDev" } else { "AIAgentEvaluation" }
+    $AgentFolderName = if ($IsDevExtension) { "AIAgentEvaluation" } else { "AIAgentEvaluation" }
+    $versions = @("V1", "V2")
 
-    $criticalFiles = @(
+    # Common files that should exist regardless of version
+    $commonFiles = @(
         "vss-extension.json",
-        "analysis/analysis.py",
-        "action.py",
         "logo.png",
         "overview.md",
-        "pyproject.toml",
-        "tasks/$AgentFolderName/task.json",
-        "tasks/$AgentFolderName/run.ps1",
-        "tasks/$AgentFolderName/ps_modules/VstsTaskSdk/VstsTaskSdk.psm1"
         "tasks/AIAgentReport/dist/index.html"
     )
 
-    foreach ($file in $criticalFiles) {
+    # Version-specific files that should exist in each version folder
+    $versionSpecificFiles = @(
+        "analysis/analysis.py",
+        "action.py",
+        "pyproject.toml",
+        "task.json",
+        "run.ps1",
+        "check-python.ps1",
+        "ps_modules/VstsTaskSdk/VstsTaskSdk.psm1"
+    )
+    
+    # V1-specific files
+    $v1SpecificFiles = @(
+    )
+
+    # Check common files first
+    foreach ($file in $commonFiles) {
         $fullPath = Join-Path -Path $OutputDir -ChildPath $file
         if (-not (Test-Path -Path $fullPath)) {
             Write-Host "❌ Critical file not found: $fullPath" -ForegroundColor Red
             return $false
+        }
+    }
+
+    # Check version-specific files for each version
+    foreach ($version in $versions) {
+        foreach ($file in $versionSpecificFiles) {
+            $fullPath = Join-Path -Path $OutputDir -ChildPath "tasks/$AgentFolderName/$version/$file"
+            if (-not (Test-Path -Path $fullPath)) {
+                Write-Host "❌ Critical file not found: $fullPath" -ForegroundColor Red
+                return $false
+            }
+        }
+        
+        # Check V1-specific files only for V1
+        if ($version -eq "V1") {
+            foreach ($file in $v1SpecificFiles) {
+                $fullPath = Join-Path -Path $OutputDir -ChildPath "tasks/$AgentFolderName/$version/$file"
+                if (-not (Test-Path -Path $fullPath)) {
+                    Write-Host "❌ Critical file not found: $fullPath" -ForegroundColor Red
+                    return $false
+                }
+            }
         }
     }
 

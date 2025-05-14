@@ -14,12 +14,12 @@ $utilsPath = Join-Path -Path $repoRoot -ChildPath "scripts/utilities.ps1"
 Write-Host "Repository root: $repoRoot"
 
 # Define the target task directory
-$taskModulesPath = Join-Path -Path $repoRoot -ChildPath "tasks/AIAgentEvaluation/ps_modules/VstsTaskSdk"
+$outPath = Join-Path -Path $repoRoot -ChildPath "out/VstsTaskSdk"
 
 # Create the ps_modules/VstsTaskSdk directory if it doesn't exist
-if (-not (Test-Path -Path $taskModulesPath)) {
-    New-Item -Path $taskModulesPath -ItemType Directory -Force | Out-Null
-    Write-Host "Created directory: $taskModulesPath"
+if (-not (Test-Path -Path $outPath)) {
+    New-Item -Path $outPath -ItemType Directory -Force | Out-Null
+    Write-Host "Created directory: $outPath"
 }
 
 # Create a temporary directory to clone the repo
@@ -61,17 +61,16 @@ try {
     if (-not (Test-Path -Path $sourceDir)) {
         throw "VstsTaskSdk directory not found in cloned repository"
     }
-    
-    Write-Host "Copying VstsTaskSdk files from '$sourceDir' to '$taskModulesPath'..."
-
     # check if sourceDir contains "VstsTaskSdk.psm1"
     if (-not (Test-Path -Path "$sourceDir/VstsTaskSdk.psm1")) {
         throw "VstsTaskSdk.psm1 not found in source directory"
     }
-
-    Copy-Directory -SourceDir $sourceDir -DestinationDir $taskModulesPath
+    
+    Write-Host "Copying VstsTaskSdk files from '$sourceDir' to '$outPath'..."
+    Copy-Directory -SourceDir $sourceDir -DestinationDir $outPath
     Write-Host "Copied following files:"
-    Get-ChildItem -Path $taskModulesPath -File | ForEach-Object { Write-Host $_.FullName }
+    Get-ChildItem -Path $outPath -File | ForEach-Object { Write-Host $_.FullName }
+
     Write-Host "Successfully copied VstsTaskSdk to the task module directory"
 }
 catch {

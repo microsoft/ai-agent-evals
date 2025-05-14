@@ -29,7 +29,7 @@ steps:
     inputs:
       versionSpec: "3.10"
 
-  - task: AIAgentEvaluation@0
+  - task: AIAgentEvaluation@1
     inputs:
       azure-aiproject-connection-string: $(AZURE_AIPROJECT_CONNECTION_STRING)
       deployment-name: $(DEPLOYMENT_NAME)
