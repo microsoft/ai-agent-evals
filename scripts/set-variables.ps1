@@ -6,7 +6,6 @@ $devExtensionDir = Join-Path -Path $repoRoot -ChildPath "out/dev"
 $prodExtensionDir = Join-Path -Path $repoRoot -ChildPath "out/prod"
 
 $utilsPath = Join-Path -Path $repoRoot -ChildPath "scripts/utilities.ps1"
-$vstsTaskSdkOutPath = Join-Path -Path $repoRoot -ChildPath "out/VstsTaskSdk"
 
 $versions = @("V1", "V2")
 $latestVersion = "V2"

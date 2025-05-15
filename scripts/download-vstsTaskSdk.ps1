@@ -11,12 +11,6 @@ $scriptsFolder = Split-Path -Path $MyInvocation.MyCommand.Path -Parent
 
 Write-Host "Repository root: $repoRoot"
 
-# Create the ps_modules/VstsTaskSdk directory if it doesn't exist
-if (-not (Test-Path -Path $vstsTaskSdkOutPath)) {
-    New-Item -Path $vstsTaskSdkOutPath -ItemType Directory -Force | Out-Null
-    Write-Host "Created directory: $vstsTaskSdkOutPath"
-}
-
 New-Item -Path $tempDir -ItemType Directory -Force | Out-Null
 Write-Host "Created temporary directory: $tempDir"
 
@@ -51,12 +45,11 @@ try {
         throw "VstsTaskSdk.psm1 not found in source directory"
     }
     
-    Write-Host "Copying VstsTaskSdk files from '$buildResultDir' to '$vstsTaskSdkOutPath'..."
-    Copy-Directory -SourceDir $buildResultDir -DestinationDir $vstsTaskSdkOutPath
-    Write-Host "Copied following files:"
-    Get-ChildItem -Path $vstsTaskSdkOutPath -File | ForEach-Object { Write-Host $_.FullName }
-
-    Write-Host "Successfully copied VstsTaskSdk to the task module directory"
+    foreach ($version in $versions) {
+        $vstsTaskSdkDestPath = Join-Path -Path $prodExtensionDir -ChildPath "tasks/AIAgentEvaluation/$version/ps_modules/VstsTaskSdk"
+        Copy-Directory -SourceDir $buildResultDir -DestinationDir $vstsTaskSdkDestPath
+    }
+    Write-Host "Copied VstsTaskSdk module to production directory" -ForegroundColor Green
 }
 catch {
     Write-Error "An error occurred: $_"

@@ -23,17 +23,17 @@ try {
         $patch = [int]$matches[3]
         
         if ($major -gt $minimumPythonMajor -or ($major -eq $minimumPythonMajor -and $minor -ge $minimumPythonMinor)) {
-            Write-Host "✅ Python version $major.$minor.$patch meets requirements (minimum $minimumPythonMajor.$minimumPythonMinor)" -ForegroundColor Green
+            Write-Host "Python version $major.$minor.$patch meets requirements (minimum $minimumPythonMajor.$minimumPythonMinor)" -ForegroundColor Green
             return $true
         } else {
-            Write-Host "❌ Python version $major.$minor.$patch found, but version $minimumPythonMajor.$minimumPythonMinor or higher is required" -ForegroundColor Yellow
+            Write-Host "Python version $major.$minor.$patch found, but version $minimumPythonMajor.$minimumPythonMinor or higher is required" -ForegroundColor Yellow
             throw "Insufficient Python version"
         }
     } else {
         throw "Unable to determine Python version"
     }
 } catch {
-    Write-Host "❌ Python version check failed: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "Python version check failed: $($_.Exception.Message)" -ForegroundColor Red
     Write-Host ""
     Write-Host "Installation options:" -ForegroundColor Cyan
     Write-Host "1. Install Python $minimumPythonMajor.$minimumPythonMinor+ from https://www.python.org/downloads/" -ForegroundColor White

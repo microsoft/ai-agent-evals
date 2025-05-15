@@ -8,33 +8,12 @@ New-Item -Path $prodExtensionDir -ItemType Directory -Force | Out-Null
 Push-Location -Path $repoRoot
 
 try {
-    Write-Host "Setting up VstsTaskSdk module..."
-
-    # Use the download-vstsTaskSdk.ps1 
-    $downloadScriptPath = Join-Path -Path $scriptsFolder -ChildPath "download-vstsTaskSdk.ps1"
-    
-    if (Test-Path -Path $downloadScriptPath) {
-        Write-Host "Downloading VstsTaskSdk module from GitHub repository..."
-        & $downloadScriptPath
-        
-        if ($LASTEXITCODE -ne 0) {
-            Write-Error "Failed to download VstsTaskSdk module from GitHub. Exit code: $LASTEXITCODE"
-            exit 1
-        }
-    }
-    else {
-        Write-Error "download-vstsTaskSdk.ps1 script not found at path: $downloadScriptPath"
-        exit 1
-    }
-
     Write-Host "Building AIAgentReport web UI..."
     $reportPath = Join-Path -Path $repoRoot -ChildPath "tasks/AIAgentReport"
     Push-Location -Path $reportPath
     try {
         npm ci
-        
         npm run build
-        
         Write-Host "AIAgentReport build completed successfully" -ForegroundColor Green
     }
     catch {
@@ -69,27 +48,29 @@ try {
         exit 1
     }
     Write-Host "Copied supporting files for extension" -ForegroundColor Green
-  
-    foreach ($version in $versions) {
-        $vstsTaskSdkDestPath = Join-Path -Path $prodExtensionDir -ChildPath "tasks/AIAgentEvaluation/$version/ps_modules/VstsTaskSdk"
-        Copy-Directory -SourceDir $vstsTaskSdkOutPath -DestinationDir $vstsTaskSdkDestPath
 
+    Write-Host "Setting up VstsTaskSdk module..."
+
+    # Use the download-vstsTaskSdk.ps1 
+    & $scriptsFolder\download-vstsTaskSdk.ps1
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "Failed to download VstsTaskSdk module"
+        exit 1
+    }
+    Write-Host "VstsTaskSdk module downloaded successfully" -ForegroundColor Green
+
+    foreach ($version in $versions) {
         $commonScriptPath = Join-Path -Path $repoRoot -ChildPath "tasks/AIAgentEvaluation/check-python.ps1"
         $commonScriptDestPath = Join-Path -Path $prodExtensionDir -ChildPath "tasks/AIAgentEvaluation/$version/check-python.ps1"
         Copy-Item -Path $commonScriptPath -Destination $commonScriptDestPath -Force
         Write-Host "Copied check-python.ps1 to $commonScriptDestPath" -ForegroundColor Green
     }
-    Write-Host "Copied VstsTaskSdk module to production directory" -ForegroundColor Green
-
-    if (Test-Path -Path $vstsTaskSdkOutPath) {
-        Remove-Item -Path $vstsTaskSdkOutPath -Recurse -Force -ErrorAction SilentlyContinue
-        Write-Host "Cleaned up $vstsTaskSdkOutPath"
-    }
+    Write-Host "Copied check-python.ps1 to production directory" -ForegroundColor Green
 
     # add action.py, analysis and pyproject.toml to the production v1 directory
     . $scriptsFolder/download-previousVersions.ps1
 
-    # Add action.py, analysis and pyproject.toml to the production v2 directory
+    # Add action.py, analysis and pyproject.toml to the production latest(v2) directory
     $filesToCopy = @(
         "action.py",
         "pyproject.toml"
