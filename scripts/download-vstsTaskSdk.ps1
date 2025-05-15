@@ -3,34 +3,19 @@
 # and place it in the correct task folder
 
 # Get the repository root directory regardless of where the script is invoked from
-$scriptPath = $MyInvocation.MyCommand.Path
-$scriptsFolder = Split-Path -Path $scriptPath -Parent
-$repoRoot = Split-Path -Path $scriptsFolder -Parent
+$scriptsFolder = Split-Path -Path $MyInvocation.MyCommand.Path -Parent
+. $scriptsFolder\set-variables.ps1
 
 # load utils
-$utilsPath = Join-Path -Path $repoRoot -ChildPath "scripts/utilities.ps1"
 . $utilsPath
 
 Write-Host "Repository root: $repoRoot"
 
-# Define the target task directory
-$outPath = Join-Path -Path $repoRoot -ChildPath "out/VstsTaskSdk"
-
 # Create the ps_modules/VstsTaskSdk directory if it doesn't exist
-if (-not (Test-Path -Path $outPath)) {
-    New-Item -Path $outPath -ItemType Directory -Force | Out-Null
-    Write-Host "Created directory: $outPath"
+if (-not (Test-Path -Path $vstsTaskSdkOutPath)) {
+    New-Item -Path $vstsTaskSdkOutPath -ItemType Directory -Force | Out-Null
+    Write-Host "Created directory: $vstsTaskSdkOutPath"
 }
-
-# Create a temporary directory to clone the repo
-$tempEnv = $env:TEMP
-if ([string]::IsNullOrWhiteSpace($tempEnv)) {
-    $tempEnv = $env:TMPDIR
-}
-if ([string]::IsNullOrWhiteSpace($tempEnv)) {
-    $tempEnv = "/tmp"  # fallback default for Linux
-}
-$tempDir = Join-Path -Path $tempEnv -ChildPath "VstsTaskSdk_$(Get-Random)"
 
 New-Item -Path $tempDir -ItemType Directory -Force | Out-Null
 Write-Host "Created temporary directory: $tempDir"
@@ -56,20 +41,20 @@ try {
     npm run build
 
     # Navigate to the VstsTaskSdk directory in the cloned repo
-    $sourceDir = Join-Path -Path $tempDir -ChildPath "azure-pipelines-task-lib/powershell/_build/VstsTaskSdk"
+    $buildResultDir = Join-Path -Path $tempDir -ChildPath "azure-pipelines-task-lib/powershell/_build/VstsTaskSdk"
     
-    if (-not (Test-Path -Path $sourceDir)) {
+    if (-not (Test-Path -Path $buildResultDir)) {
         throw "VstsTaskSdk directory not found in cloned repository"
     }
     # check if sourceDir contains "VstsTaskSdk.psm1"
-    if (-not (Test-Path -Path "$sourceDir/VstsTaskSdk.psm1")) {
+    if (-not (Test-Path -Path "$buildResultDir/VstsTaskSdk.psm1")) {
         throw "VstsTaskSdk.psm1 not found in source directory"
     }
     
-    Write-Host "Copying VstsTaskSdk files from '$sourceDir' to '$outPath'..."
-    Copy-Directory -SourceDir $sourceDir -DestinationDir $outPath
+    Write-Host "Copying VstsTaskSdk files from '$buildResultDir' to '$vstsTaskSdkOutPath'..."
+    Copy-Directory -SourceDir $buildResultDir -DestinationDir $vstsTaskSdkOutPath
     Write-Host "Copied following files:"
-    Get-ChildItem -Path $outPath -File | ForEach-Object { Write-Host $_.FullName }
+    Get-ChildItem -Path $vstsTaskSdkOutPath -File | ForEach-Object { Write-Host $_.FullName }
 
     Write-Host "Successfully copied VstsTaskSdk to the task module directory"
 }

@@ -1,14 +1,10 @@
 # Run this script first to set up the environment for Azure DevOps Extension development.
 # It installs the required ps_modules, sets up the task paths, and builds the front-end for AIAgentReport.
 # It also updates the version in vss-extension.json and creates a production version of the file.
+$scriptsFolder = Split-Path -Path $MyInvocation.MyCommand.Path -Parent
+. $scriptsFolder\set-variables.ps1
 
-$scriptPath = $MyInvocation.MyCommand.Path
-$scriptsFolder = Split-Path -Path $scriptPath -Parent
-$repoRoot = Split-Path -Path $scriptsFolder -Parent
-
-$prodExtensionDir = Join-Path -Path $repoRoot -ChildPath "out/prod"
 New-Item -Path $prodExtensionDir -ItemType Directory -Force | Out-Null
-
 Push-Location -Path $repoRoot
 
 try {
@@ -73,14 +69,10 @@ try {
         exit 1
     }
     Write-Host "Copied supporting files for extension" -ForegroundColor Green
-
-    # Copy VstsTaskSdk module to the production directory
-    $vstsTaskSdkPath = Join-Path -Path $repoRoot -ChildPath "out/VstsTaskSdk"
-    $versions = @("V1", "V2")
-    $latestVersion = "V2"
+  
     foreach ($version in $versions) {
         $vstsTaskSdkDestPath = Join-Path -Path $prodExtensionDir -ChildPath "tasks/AIAgentEvaluation/$version/ps_modules/VstsTaskSdk"
-        Copy-Directory -SourceDir $vstsTaskSdkPath -DestinationDir $vstsTaskSdkDestPath
+        Copy-Directory -SourceDir $vstsTaskSdkOutPath -DestinationDir $vstsTaskSdkDestPath
 
         $commonScriptPath = Join-Path -Path $repoRoot -ChildPath "tasks/AIAgentEvaluation/check-python.ps1"
         $commonScriptDestPath = Join-Path -Path $prodExtensionDir -ChildPath "tasks/AIAgentEvaluation/$version/check-python.ps1"
@@ -89,7 +81,15 @@ try {
     }
     Write-Host "Copied VstsTaskSdk module to production directory" -ForegroundColor Green
 
-    # Add action.py, analysis and pyproject.toml to the production directory
+    if (Test-Path -Path $vstsTaskSdkOutPath) {
+        Remove-Item -Path $vstsTaskSdkOutPath -Recurse -Force -ErrorAction SilentlyContinue
+        Write-Host "Cleaned up $vstsTaskSdkOutPath"
+    }
+
+    # add action.py, analysis and pyproject.toml to the production v1 directory
+    . $scriptsFolder/download-previousVersions.ps1
+
+    # Add action.py, analysis and pyproject.toml to the production v2 directory
     $filesToCopy = @(
         "action.py",
         "pyproject.toml"

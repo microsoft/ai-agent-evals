@@ -3,14 +3,8 @@
 # and generate dist/dev/extension files for the dev version.
 
 # Get the repository root directory regardless of where the script is invoked from
-$scriptPath = $MyInvocation.MyCommand.Path
-$scriptsFolder = Split-Path -Path $scriptPath -Parent
-$repoRoot = Split-Path -Path $scriptsFolder -Parent
-
-$devExtensionDir = Join-Path -Path $repoRoot -ChildPath "out/dev"
-$prodExtensionDir = Join-Path -Path $repoRoot -ChildPath "out/prod"
-
-$devTaskId = "6c8d5e8b-16f2-4f7b-b991-99e3dfa9f359"
+$scriptsFolder = Split-Path -Path $MyInvocation.MyCommand.Path -Parent
+. $scriptsFolder\set-variables.ps1
 
 New-Item -Path $devExtensionDir -ItemType Directory -Force | Out-Null
 
