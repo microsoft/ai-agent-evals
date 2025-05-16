@@ -36,7 +36,10 @@ try {
     Copy-Directory -SourceDir "$v1ClonedDir/analysis" -DestinationDir "$v1TaskDir/analysis"
     Copy-Item -Path "$v1ClonedDir/action.py" -Destination "$v1TaskDir/action.py" -Force
     Copy-Item -Path "$v1ClonedDir/pyproject.toml" -Destination "$v1TaskDir/pyproject.toml" -Force
-    Write-Host "Copied analysis, action.py and pyproject.toml to $v1TaskDir"
+    Copy-Item -Path "$v1ClonedDir/tasks/AIAgentEvaluation/task.json" -Destination "$v1TaskDir/task.json" -Force
+    Copy-Item -Path "$v1ClonedDir/tasks/AIAgentEvaluation/run.ps1" -Destination "$v1TaskDir/run.ps1" -Force
+    Copy-Item -Path "$v1ClonedDir/tasks/AIAgentEvaluation/check-python.ps1" -Destination "$v1TaskDir/check-python.ps1" -Force
+    Write-Host "Copied analysis, action.py, task.json, run.ps1, check-python.ps1 and pyproject.toml to $v1TaskDir"
 }
 finally {
     Pop-Location

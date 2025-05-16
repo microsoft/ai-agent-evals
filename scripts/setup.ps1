@@ -59,13 +59,20 @@ try {
     }
     Write-Host "VstsTaskSdk module downloaded successfully" -ForegroundColor Green
 
-    foreach ($version in $versions) {
-        $commonScriptPath = Join-Path -Path $repoRoot -ChildPath "tasks/AIAgentEvaluation/check-python.ps1"
-        $commonScriptDestPath = Join-Path -Path $prodExtensionDir -ChildPath "tasks/AIAgentEvaluation/$version/check-python.ps1"
-        Copy-Item -Path $commonScriptPath -Destination $commonScriptDestPath -Force
-        Write-Host "Copied check-python.ps1 to $commonScriptDestPath" -ForegroundColor Green
+    $commonLatestTask = Join-Path -Path $repoRoot -ChildPath "tasks/AIAgentEvaluation"
+    $filesToCopyInLatest = @(
+        "task.json",
+        "run.ps1",
+        "check-python.ps1"
+    )
+    foreach ($file in $filesToCopyInLatest) {
+        $sourcePath = Join-Path -Path $commonLatestTask -ChildPath $file
+        $destPath = Join-Path -Path $prodExtensionDir -ChildPath "tasks/AIAgentEvaluation/$latestVersion/$file"
+        $removePath = Join-Path -Path $prodExtensionDir -ChildPath "tasks/AIAgentEvaluation/$file"
+        Copy-Item -Path $sourcePath -Destination $destPath -Force
+        Remove-Item -Path $removePath -Force -ErrorAction SilentlyContinue
+        Write-Host "Copied $file to $destPath" -ForegroundColor Green
     }
-    Write-Host "Copied check-python.ps1 to production directory" -ForegroundColor Green
 
     # add action.py, analysis and pyproject.toml to the production v1 directory
     . $scriptsFolder/download-previousVersions.ps1
@@ -88,6 +95,7 @@ try {
         $destPath = Join-Path -Path $prodExtensionDir -ChildPath "tasks/AIAgentEvaluation/$latestVersion/$folder"
         Copy-Directory -SourceDir $sourcePath -DestinationDir $destPath
     }
+
 
     $validate = Check-CriticalFiles -OutputDir $prodExtensionDir -IsDevExtension $false
     if (-not $validate) {
