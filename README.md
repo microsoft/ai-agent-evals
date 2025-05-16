@@ -113,7 +113,7 @@ jobs:
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
       - name: Run Evaluation
-        uses: microsoft/ai-agent-evals@v1-beta
+        uses: microsoft/ai-agent-evals@v2-beta
         with:
           # Replace placeholders with values for your Azure AI Project
           azure-ai-project-endpoint: "<your-ai-project-endpoint>"
