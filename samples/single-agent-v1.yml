@@ -7,14 +7,12 @@
 # - Create GitHub Wiki for the repository.
 #   - See https://docs.github.com/en/communities/documenting-your-project-with-wikis/about-wikis
 
-name: AI Agent Evaluation
+name: AI Agent Evaluation for Hub-based AI Project
 
 # Update for your setup
 env:
-  data-path: "${{ github.workspace }}/samples/data/dataset.json"
-  agent-ids: "<your-agent-id-1>,<your-agent-id-2>"
-  baseline-agent-id: "<your-agent-id-1>"
-  evaluation-result-view: "all-scores"
+  data-path: "${{ github.workspace }}/samples/data/dataset-small.json"
+  agent-id: "<your-agent-id>"
 
 on:
   # trigger manually (via GitHub Actions UI)
@@ -41,12 +39,9 @@ jobs:
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
       - name: Run evaluation
-        uses: microsoft/ai-agent-eval@v2-beta
+        uses: microsoft/ai-agent-eval@v1-beta
         with:
-          azure-ai-project-endpoint: ${{ vars.AZURE_AI_PROJECT_ENDPOINT }}
-          deployment-name: ${{ vars.DEPLOYMENT_NAME }}
-          api-version: ${{ vars.API_VERSION }}
-          data-path: ${{ env.data-path }}
-          agent-ids: ${{ env.agent-ids }}
-          baseline-agent-id: ${{ env.baseline-agent-id }}
-          evaluation-result-view: ${{ env.evaluation-result-view }}
+        azure-aiproject-connection-string: ${{ vars.AZURE_AIPROJECT_CONNECTION_STRING }}
+        deployment-name: ${{ vars.DEPLOYMENT_NAME }}
+        data-path: ${{ env.data-path }}
+        agent-ids: ${{ env.agent-id }}

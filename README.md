@@ -34,15 +34,15 @@ For the full list of evaluator scores and their types, see [analysis/evaluator-s
 
 ### Parameters
 
-| Name                              | Required? | Description                                                                                                                                                                                                                                           |
-| :-------------------------------- | :-------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| azure-aiproject-connection-string |    Yes    | Connection string of your Azure AI Project                                                                                                                                                                                                            |
-| deployment-name                   |    Yes    | The name of the Azure AI model deployment to use for evaluation                                                                                                                                                                                       |
-| data-path                         |    Yes    | Path to the data file that contains the evaluators and input queries for evaluations                                                                                                                                                                  |
-| agent-ids                         |    Yes    | ID of the agent(s) to evaluate. If multiple are provided, all agents should be comma-separated and will be evaluated and compared against the baseline with statistical test results                                                                  |
-| baseline-agent-id                 |    No     | ID of the baseline agent to compare against when evaluating multiple agents. If not provided, the first agent is used                                                                                                                                 |
-| evaluation-result-view            |    No     | Specifies the format of evaluation results. Defaults to "default" (boolean scores such as passing and defect rates) if omitted. Options are "default", "all-scores" (includes all evaluation scores), and "raw-scores-only" (non-boolean scores only) |
-| api-version                       |    No     | The API version to use when connecting to model deployment                                                                                                                                                                                            |
+| Name                      | Required? | Description                                                                                                                                                                                                                                           |
+| :------------------------ | :-------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| azure-ai-project-endpoint |    Yes    | Endpoint of your Azure AI Project                                                                                                                                                                                                                     |
+| deployment-name           |    Yes    | The name of the Azure AI model deployment to use for evaluation                                                                                                                                                                                       |
+| data-path                 |    Yes    | Path to the data file that contains the evaluators and input queries for evaluations                                                                                                                                                                  |
+| agent-ids                 |    Yes    | ID of the agent(s) to evaluate. If multiple are provided, all agents should be comma-separated and will be evaluated and compared against the baseline with statistical test results                                                                  |
+| baseline-agent-id         |    No     | ID of the baseline agent to compare against when evaluating multiple agents. If not provided, the first agent is used                                                                                                                                 |
+| evaluation-result-view    |    No     | Specifies the format of evaluation results. Defaults to "default" (boolean scores such as passing and defect rates) if omitted. Options are "default", "all-scores" (includes all evaluation scores), and "raw-scores-only" (non-boolean scores only) |
+| api-version               |    No     | The API version to use when connecting to model deployment                                                                                                                                                                                            |
 
 ### Data File
 
@@ -113,14 +113,17 @@ jobs:
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
       - name: Run Evaluation
-        uses: microsoft/ai-agent-evals@v1-beta
+        uses: microsoft/ai-agent-evals@v2-beta
         with:
           # Replace placeholders with values for your Azure AI Project
-          azure-aiproject-connection-string: "<your-ai-project-conn-str>"
+          azure-ai-project-endpoint: "<your-ai-project-endpoint>"
           deployment-name: "<your-deployment-name>"
           agent-ids: "<your-ai-agent-ids>"
           data-path: ${{ github.workspace }}/path/to/your/data-file
 ```
+
+> [!NOTE]
+> If you have a hub-based Azure AI Project, use the `v1-beta` version with `azure-aiproject-connection-string` parameter.
 
 ## Evaluation Outputs
 

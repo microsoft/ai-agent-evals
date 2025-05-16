@@ -11,7 +11,7 @@ for a single agent's performance metrics.
 from pathlib import Path
 
 import yaml
-from azure.ai.projects.models import Agent
+from azure.ai.agents.models import Agent
 
 from .analysis import (
     EvaluationResult,
@@ -55,7 +55,7 @@ def summarize(
     agents: dict[str, Agent],
     baseline: str,
     evaluators: list[str],
-    agent_base_url: str,
+    agent_base_url: str | None,
     result_view: EvaluationResultView,
 ) -> str:
     """Generate a markdown summary of evaluation results.
@@ -80,11 +80,8 @@ def summarize(
     def format_agent_row(agent: Agent, agent_url: str) -> str:
         result_url = eval_results[agent.id].ai_foundry_url
         result_link = fmt_hyperlink("Click here", result_url) if result_url else ""
-        return (
-            f"| {agent.name} | "
-            f"{fmt_hyperlink(agent.id, agent_url)} | "
-            f"{result_link} |"
-        )
+        agent_link = fmt_hyperlink(agent.id, agent_url) if agent_url else agent.id
+        return f"| {agent.name} | " f"{agent_link} | " f"{result_link} |"
 
     md.append("### Agent variants\n")
     md.append("| Agent name | Agent ID | Evaluation results |")

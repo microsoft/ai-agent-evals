@@ -10,13 +10,14 @@ import random
 import time
 import uuid
 from pathlib import Path
+from urllib.parse import parse_qs, urlparse
 
 import azure.ai.evaluation as evals
 import pandas as pd
 import yaml
+from azure.ai.agents.models import Agent, MessageRole, RunStatus
 from azure.ai.evaluation import AIAgentConverter, evaluate
 from azure.ai.projects import AIProjectClient
-from azure.ai.projects.models import Agent, ConnectionType, MessageRole, RunStatus
 from azure.identity import DefaultAzureCredential
 
 import analysis
@@ -32,7 +33,7 @@ if env_path.exists():
 
 STEP_SUMMARY = os.getenv("GITHUB_STEP_SUMMARY") or os.getenv("ADO_STEP_SUMMARY")
 
-AZURE_AIPROJECT_CONNECTION_STRING = os.getenv("AZURE_AIPROJECT_CONNECTION_STRING")
+AZURE_AI_PROJECT_ENDPOINT = os.getenv("AZURE_AI_PROJECT_ENDPOINT")
 DEPLOYMENT_NAME = os.getenv("DEPLOYMENT_NAME")
 API_VERSION = os.getenv("API_VERSION")
 DATA_PATH = os.getenv("DATA_PATH")
@@ -43,7 +44,7 @@ EVALUATION_RESULT_VIEW = os.getenv("EVALUATION_RESULT_VIEW")
 
 # pylint: disable=too-many-locals
 def simulate_question_answer(
-    project_client: AIProjectClient, agent: Agent, input_queries: dict
+    ai_project: AIProjectClient, agent: Agent, input_queries: dict
 ) -> dict:
     """
     Simulates a question-answering interaction with an agent.
@@ -69,9 +70,10 @@ def simulate_question_answer(
     Raises:
         ValueError: If the run fails for reasons other than rate limits or if retries are exhausted.
     """
-    thread = project_client.agents.create_thread()
-    project_client.agents.create_message(
-        thread.id, role=MessageRole.USER, content=input_queries["query"]
+    agent_client = ai_project.agents
+    thread = agent_client.threads.create()
+    agent_client.messages.create(
+        thread.id, role=MessageRole.USER, content=input_queries.get("query")
     )
 
     # Exponential backoff retry logic
@@ -79,7 +81,7 @@ def simulate_question_answer(
     base_wait_seconds = 2
     for attempt in range(max_retries):
         start_time = time.time()
-        run = project_client.agents.create_and_process_run(
+        run = agent_client.runs.create_and_process(
             thread_id=thread.id, agent_id=agent.id
         )
         end_time = time.time()
@@ -116,7 +118,7 @@ def simulate_question_answer(
     }
 
     # Generate evaluation data from the thread
-    converter = AIAgentConverter(project_client)
+    converter = AIAgentConverter(ai_project)
     evaluation_data = converter.prepare_evaluation_data(thread_ids=thread.id)
 
     output = evaluation_data[0]
@@ -297,7 +299,7 @@ def convert_pass_fail_to_boolean(
 # pylint: disable=too-many-locals, too-many-arguments, too-many-positional-arguments
 def main(
     credential,
-    conn_str: str,
+    endpoint: str,
     input_data_set: dict,
     agent_ids: list[str],
     eval_metadata: dict,
@@ -310,7 +312,7 @@ def main(
 
     Args:
         credential: The credential object for authentication.
-        conn_str (str): The connection string for the AI project.
+        endpoint (str): The endpoint for the AI project.
         input_data_set (dict): The input data containing evaluation details, including
             the dataset and evaluator configurations.
         agent_ids (list[str]): A list of agent IDs to be evaluated.
@@ -339,19 +341,18 @@ def main(
           used for comparison.
     """
     working_dir = Path(".") if working_dir is None else working_dir
-    project_client = AIProjectClient.from_connection_string(
-        conn_str, credential=credential
+    project_client = AIProjectClient(
+        credential=DefaultAzureCredential(exclude_shared_token_cache_credential=True),
+        endpoint=endpoint,
+        api_version="2025-05-01",
     )
 
-    # use default evaluator model config
-    default_connection = project_client.connections.get_default(
-        connection_type=ConnectionType.AZURE_OPEN_AI, include_credentials=True
-    )
-    model_config = default_connection.to_evaluator_model_config(
-        deployment_name=DEPLOYMENT_NAME,
-        api_version=API_VERSION or "",
-        include_credentials=True,
-    )
+    parsed_url = urlparse(endpoint)
+    model_config = {
+        "azure_deployment": DEPLOYMENT_NAME,
+        "azure_endpoint": f"{parsed_url.scheme}://{parsed_url.netloc}",
+        "api_version": API_VERSION or "",
+    }
 
     agents = {id: project_client.agents.get_agent(id) for id in agent_ids}
     eval_input_paths = {id: working_dir / f"eval-input_{id}.jsonl" for id in agent_ids}
@@ -380,7 +381,7 @@ def main(
     args_default = {
         "model_config": model_config,
         "credential": credential,
-        "azure_ai_project": project_client.scope,
+        "azure_ai_project": endpoint,
         "rouge_type": evals.RougeType.ROUGE_L,
     }
     evaluators = create_evaluators(input_data_set["evaluators"], args_default)
@@ -394,7 +395,7 @@ def main(
             data=eval_input_paths[agent_id],
             evaluators=evaluators,
             evaluation_name=eval_name,
-            azure_ai_project=project_client.scope,
+            azure_ai_project=endpoint,
             output_path=eval_output_paths[agent_id],
         )
         # display evaluation results
@@ -415,14 +416,16 @@ def main(
         )
 
     baseline_agent_id = baseline_agent_id or agent_ids[0]
-    project_scope = project_client.scope
-    agent_base_url = (
-        f"https://ai.azure.com/playground/agents?"
-        f"wsid=/subscriptions/{project_scope['subscription_id']}/"
-        f"resourceGroups/{project_scope['resource_group_name']}/"
-        f"providers/Microsoft.MachineLearningServices/workspaces/"
-        f"{project_scope['project_name']}&assistantId="
-    )
+
+    if eval_results[agent_id].ai_foundry_url:
+        parsed_foundry_url = urlparse(eval_results[agent_id].ai_foundry_url)
+        query_params = parse_qs(str(parsed_foundry_url.query))
+        agent_base_url = (
+            f"https://ai.azure.com/playground/agents?wsid={query_params['wsid'][0]}"
+            + "&assistantId="
+        )
+    else:
+        agent_base_url = None
 
     return analysis.summarize(
         eval_results,
@@ -436,10 +439,8 @@ def main(
 
 if __name__ == "__main__":
     # Check required environment variables
-    if not AZURE_AIPROJECT_CONNECTION_STRING:
-        raise ValueError(
-            "AZURE_AIPROJECT_CONNECTION_STRING environment variable is not set"
-        )
+    if not AZURE_AI_PROJECT_ENDPOINT:
+        raise ValueError("AZURE_AI_PROJECT_ENDPOINT environment variable is not set")
     if not DEPLOYMENT_NAME:
         raise ValueError("DEPLOYMENT_NAME environment variable is not set or empty")
     if not DATA_PATH:
@@ -476,7 +477,7 @@ if __name__ == "__main__":
     # Run evaluation and output summary
     SUMMARY_MD = main(
         credential=DefaultAzureCredential(),
-        conn_str=AZURE_AIPROJECT_CONNECTION_STRING,
+        endpoint=AZURE_AI_PROJECT_ENDPOINT,
         input_data_set=input_data,
         agent_ids=AGENT_IDS,
         eval_metadata=evaluator_score_metadata,

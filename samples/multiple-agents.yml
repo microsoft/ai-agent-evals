@@ -39,9 +39,9 @@ jobs:
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
       - name: Run evaluation
-        uses: microsoft/ai-agent-eval@v1
+        uses: microsoft/ai-agent-eval@v2-beta
         with:
-        azure-aiproject-connection-string: ${{ vars.AZURE_AIPROJECT_CONNECTION_STRING }}
+        azure-ai-project-endpoint: ${{ vars.AZURE_AI_PROJECT_ENDPOINT }}
         deployment-name: ${{ vars.DEPLOYMENT_NAME }}
         data-path: ${{ env.data-path }}
-        agent-ids: ${{ env.agent-id }}
+        agent-ids: ${{ env.agent-ids }}
