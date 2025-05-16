@@ -9,6 +9,7 @@ vss-extension-dev.json
 vss-extension-prod.json
 tasks/AIAgentEvaluationDev/
 node_modules/
+out/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

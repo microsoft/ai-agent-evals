@@ -7,9 +7,9 @@
   "helpMarkDown": "",
   "category": "Utility",
   "version": {
-    "Major": 0,
+    "Major": 1,
     "Minor": 0,
-    "Patch": 22
+    "Patch": 60
   },
   "instanceNameFormat": "AI Agent Evaluation",
   "inputs": [
