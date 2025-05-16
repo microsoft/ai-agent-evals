@@ -52,7 +52,7 @@ try {
     Write-Host "Setting up VstsTaskSdk module..."
 
     # Use the download-vstsTaskSdk.ps1 
-    & $scriptsFolder\download-vstsTaskSdk.ps1
+    & (Join-Path -Path $scriptsFolder -ChildPath "download-vstsTaskSdk.ps1")
     if ($LASTEXITCODE -ne 0) {
         Write-Error "Failed to download VstsTaskSdk module"
         exit 1

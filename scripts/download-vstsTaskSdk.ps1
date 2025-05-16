@@ -45,6 +45,7 @@ try {
         throw "VstsTaskSdk.psm1 not found in source directory"
     }
     
+    # Copy the VstsTaskSdk module to all the versions directory
     foreach ($version in $versions) {
         $vstsTaskSdkDestPath = Join-Path -Path $prodExtensionDir -ChildPath "tasks/AIAgentEvaluation/$version/ps_modules/VstsTaskSdk"
         Copy-Directory -SourceDir $buildResultDir -DestinationDir $vstsTaskSdkDestPath
