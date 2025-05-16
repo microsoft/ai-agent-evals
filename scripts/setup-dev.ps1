@@ -24,6 +24,7 @@ $vssExtension = Get-Content -Path $vssExtensionPath -Raw | ConvertFrom-Json
 $vssExtension.id = "microsoft-extension-ai-agent-evaluation-dev"
 $vssExtension.publisher = "ms-azure-exp-dev"
 $vssExtension.name = "$($vssExtension.name) (Dev)"
+$vssExtension.public = $false # Dev extension is not public
 
 $buildResultsContribution = $vssExtension.contributions | Where-Object { $_.id -eq "build-results" }
 if ($buildResultsContribution) {

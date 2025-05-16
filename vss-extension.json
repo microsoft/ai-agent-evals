@@ -4,7 +4,7 @@
   "publisher": "ms-azure-exp-external",
   "version": "0.0.x",
   "name": "AI Agent Evaluation",
-  "public": false,
+  "public": true,
   "categories": ["Azure Pipelines"],
   "tags": ["Preview"],
   "targets": [
