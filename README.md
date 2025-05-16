@@ -122,6 +122,9 @@ jobs:
           data-path: ${{ github.workspace }}/path/to/your/data-file
 ```
 
+> [!NOTE]
+> If you have a hub-based Azure AI Project, use the `v1-beta` version with `azure-aiproject-connection-string` parameter.
+
 ## Evaluation Outputs
 
 Evaluation results will be output to the summary section for each AI Evaluation GitHub Action run under Actions in GitHub.com.

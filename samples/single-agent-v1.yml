@@ -1,0 +1,47 @@
+# This workflow will run evaluations on all supported built-in evaluators on sample data set
+# for a single AI agent with the default result view (boolean scores only).
+#
+# Prerequisites:
+# - Copy to a new GitHub Actions workflow file in the .github/workflows directory.
+# - Update the environment variables for your setup.
+# - Create GitHub Wiki for the repository.
+#   - See https://docs.github.com/en/communities/documenting-your-project-with-wikis/about-wikis
+
+name: AI Agent Evaluation for Hub-based AI Project
+
+# Update for your setup
+env:
+  data-path: "${{ github.workspace }}/samples/data/dataset-small.json"
+  agent-id: "<your-agent-id>"
+
+on:
+  # trigger manually (via GitHub Actions UI)
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  evaluate:
+    name: AI Agent Evaluation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure login using Federated Credentials
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Run evaluation
+        uses: microsoft/ai-agent-eval@v1-beta
+        with:
+        azure-aiproject-connection-string: ${{ vars.AZURE_AIPROJECT_CONNECTION_STRING }}
+        deployment-name: ${{ vars.DEPLOYMENT_NAME }}
+        data-path: ${{ env.data-path }}
+        agent-ids: ${{ env.agent-id }}
