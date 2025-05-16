@@ -72,7 +72,7 @@ The input data file should be a JSON file with the following structure:
 
 ```yaml
 steps:
-  - task: AIAgentEvaluation@1
+  - task: AIAgentEvaluation@2
     displayName: "Evaluate AI Agents"
     inputs:
       azure-ai-project-endpoint: "$(AzureAIProjectEndpoint)"
