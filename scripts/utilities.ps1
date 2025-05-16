@@ -108,7 +108,7 @@ function Check-CriticalFiles {
         [bool]$IsDevExtension
     )
 
-    $AgentFolderName = if ($IsDevExtension) { "AIAgentEvaluation" } else { "AIAgentEvaluation" }
+    $AgentFolderName = "AIAgentEvaluation"
     $versions = @("V1", "V2")
 
     # Common files that should exist regardless of version
