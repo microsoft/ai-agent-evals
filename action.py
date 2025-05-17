@@ -341,10 +341,11 @@ def main(
           used for comparison.
     """
     working_dir = Path(".") if working_dir is None else working_dir
+    credential = DefaultAzureCredential()
     project_client = AIProjectClient(
-        credential=DefaultAzureCredential(exclude_shared_token_cache_credential=True),
+        credential=credential,
         endpoint=endpoint,
-        api_version="2025-05-01",
+        api_version = "2025-05-15-preview" # Evaluations yet not supported on stable (api_version="2025-05-01")
     )
 
     parsed_url = urlparse(endpoint)
