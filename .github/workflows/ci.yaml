@@ -56,4 +56,4 @@ jobs:
           azure-ai-project-endpoint: "https://aoai-qyrftgva6obps.services.ai.azure.com/api/projects/proj-qyrftgva6obps"
           deployment-name: "gpt-4o-mini"
           data-path: ${{ github.workspace }}/samples/data/dataset-tiny.json
-          agent-ids: "asst_2U73baIGjgCE6E7ec52JjcSU,asst_RwX4GFh37NyogAmQpGvfb06z"
+          agent-ids: "asst_7ZijCsebAPQ7ggOkqJE1uH4G,asst_q1l6UXTwGOa9smSOjRGROCEg"
