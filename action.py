@@ -344,7 +344,8 @@ def main(
     project_client = AIProjectClient(
         credential=credential,
         endpoint=endpoint,
-        api_version="2025-05-01",
+        api_version="2025-05-15-preview",
+        # Evaluations yet not supported on stable (api_version="2025-05-01")
     )
 
     parsed_url = urlparse(endpoint)
