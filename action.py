@@ -3,6 +3,7 @@
 
 """GitHub Action to evaluate Azure AI agents using the Azure AI Evaluation SDK."""
 
+import asyncio
 import inspect
 import json
 import os
@@ -17,8 +18,8 @@ import pandas as pd
 import yaml
 from azure.ai.agents.models import Agent, MessageRole, RunStatus
 from azure.ai.evaluation import AIAgentConverter, evaluate
-from azure.ai.projects import AIProjectClient
-from azure.identity import DefaultAzureCredential
+from azure.ai.projects.aio import AIProjectClient
+from azure.identity.aio import DefaultAzureCredential
 
 import analysis
 
@@ -43,8 +44,8 @@ EVALUATION_RESULT_VIEW = os.getenv("EVALUATION_RESULT_VIEW")
 
 
 # pylint: disable=too-many-locals
-def simulate_question_answer(
-    ai_project: AIProjectClient, agent: Agent, input_queries: dict
+async def simulate_question_answer(
+    ai_project: AIProjectClient, agent: Agent, input_query: dict
 ) -> dict:
     """
     Simulates a question-answering interaction with an agent.
@@ -71,9 +72,9 @@ def simulate_question_answer(
         ValueError: If the run fails for reasons other than rate limits or if retries are exhausted.
     """
     agent_client = ai_project.agents
-    thread = agent_client.threads.create()
-    agent_client.messages.create(
-        thread.id, role=MessageRole.USER, content=input_queries.get("query")
+    thread = await agent_client.threads.create()
+    await agent_client.messages.create(
+        thread.id, role=MessageRole.USER, content=input_query.get("query")
     )
 
     # Exponential backoff retry logic
@@ -81,7 +82,7 @@ def simulate_question_answer(
     base_wait_seconds = 2
     for attempt in range(max_retries):
         start_time = time.time()
-        run = agent_client.runs.create_and_process(
+        run = await agent_client.runs.create_and_process(
             thread_id=thread.id, agent_id=agent.id
         )
         end_time = time.time()
@@ -118,13 +119,23 @@ def simulate_question_answer(
     }
 
     # Generate evaluation data from the thread
-    converter = AIAgentConverter(ai_project)
-    evaluation_data = converter.prepare_evaluation_data(thread_ids=thread.id)
+    # converter = AIAgentConverter(ai_project)
+    # evaluation_data = converter.prepare_evaluation_data(thread_ids=thread.id)
 
-    output = evaluation_data[0]
-    output["id"] = input_queries.get(
-        "id", str(uuid.uuid4())
-    )  # Use provided ID or generate one
+    response = await agent_client.messages.get_last_message_text_by_role(
+        thread.id, role=MessageRole.AGENT
+    )
+
+    output = {
+        "id": input_query["id"],
+        "query": input_query["query"],
+        "response": response.text.value,
+        "ground_truth": input_query.get("ground_truth"),
+    }
+    # output = evaluation_data[0]
+    # output["id"] = input_queries.get(
+    #     "id", str(uuid.uuid4())
+    # )  # Use provided ID or generate one
     output["metrics"] = metrics
 
     return output
@@ -297,8 +308,7 @@ def convert_pass_fail_to_boolean(
 
 
 # pylint: disable=too-many-locals, too-many-arguments, too-many-positional-arguments
-def main(
-    credential,
+async def main(
     endpoint: str,
     input_data_set: dict,
     agent_ids: list[str],
@@ -341,66 +351,75 @@ def main(
           used for comparison.
     """
     working_dir = Path(".") if working_dir is None else working_dir
-    project_client = AIProjectClient(
-        credential=credential,
-        endpoint=endpoint,
-        api_version="2025-05-15-preview",
-        # Evaluations yet not supported on stable (api_version="2025-05-01")
-    )
 
-    parsed_url = urlparse(endpoint)
-    model_config = {
-        "azure_deployment": DEPLOYMENT_NAME,
-        "azure_endpoint": f"{parsed_url.scheme}://{parsed_url.netloc}",
-        "api_version": API_VERSION or "",
-    }
+    async with DefaultAzureCredential() as creds:
+        project_client = AIProjectClient(
+            credential=creds,
+            endpoint=endpoint,
+            api_version="2025-05-15-preview",
+            # Evaluations yet not supported on stable (api_version="2025-05-01")
+        )
 
-    agents = {id: project_client.agents.get_agent(id) for id in agent_ids}
-    eval_input_paths = {id: working_dir / f"eval-input_{id}.jsonl" for id in agent_ids}
-    eval_output_paths = {id: working_dir / f"eval-output_{id}.json" for id in agent_ids}
+        parsed_url = urlparse(endpoint)
+        model_config = {
+            "azure_deployment": DEPLOYMENT_NAME,
+            "azure_endpoint": f"{parsed_url.scheme}://{parsed_url.netloc}",
+            "api_version": API_VERSION or "",
+        }
 
-    # facilitate paired comparisons by adding GUIDs to input data
-    for row in input_data_set["data"]:
-        if "id" not in row:
-            row["id"] = str(uuid.uuid4())
+        async with project_client:
+            agents = {id: await project_client.agents.get_agent(id) for id in agent_ids}
+            eval_input_paths = {
+                id: working_dir / f"eval-input_{id}.jsonl" for id in agent_ids
+            }
+            eval_output_paths = {
+                id: working_dir / f"eval-output_{id}.json" for id in agent_ids
+            }
 
-    # simulate conversations with each agent to produce evaluation inputs
-    for agent_id, agent in agents.items():
-        eval_input_paths[agent_id].unlink(missing_ok=True)
-        for row in input_data_set["data"]:
-            try:
-                eval_input = simulate_question_answer(project_client, agent, row)
-                with eval_input_paths[agent_id].open("a", encoding="utf-8") as f:
-                    f.write(json.dumps(eval_input) + "\n")
-            # pylint: disable=broad-exception-caught
-            except Exception as e:
-                print(
-                    f"An error occurred while simulating question-answer for agent {agent_id}: {e}"
+            # facilitate paired comparisons by adding GUIDs to input data
+            for row in input_data_set["data"]:
+                if "id" not in row:
+                    row["id"] = str(uuid.uuid4())
+
+            # simulate conversations with each agent to produce evaluation inputs
+            for agent_id, agent in agents.items():
+                eval_input_paths[agent_id].unlink(missing_ok=True)
+                for row in input_data_set["data"]:
+                    try:
+                        eval_input = await simulate_question_answer(
+                            project_client, agent, row
+                        )
+                        with eval_input_paths[agent_id].open(
+                            "a", encoding="utf-8"
+                        ) as f:
+                            f.write(json.dumps(eval_input) + "\n")
+                    # pylint: disable=broad-exception-caught
+                    except Exception as e:
+                        print(
+                            f"An error occurred while simulating question-answer for agent {agent_id}: {e}"
+                        )
+
+            # create evaluator instances
+            args_default = {
+                "model_config": model_config,
+                "credential": creds,
+                "azure_ai_project": endpoint,
+                "rouge_type": evals.RougeType.ROUGE_L,
+            }
+            evaluators = create_evaluators(input_data_set["evaluators"], args_default)
+
+            # evaluate locally
+            for agent_id, agent in agents.items():
+                eval_name = f"Evaluating agent '{agent.name}' upon dataset '{input_data_set['name']}'"
+                evaluate(
+                    data=eval_input_paths[agent_id],
+                    evaluators=evaluators,
+                    evaluation_name=eval_name,
+                    azure_ai_project=endpoint,
+                    output_path=eval_output_paths[agent_id],
                 )
-
-    # create evaluator instances
-    args_default = {
-        "model_config": model_config,
-        "credential": credential,
-        "azure_ai_project": endpoint,
-        "rouge_type": evals.RougeType.ROUGE_L,
-    }
-    evaluators = create_evaluators(input_data_set["evaluators"], args_default)
-
-    # evaluate locally
-    for agent_id, agent in agents.items():
-        eval_name = (
-            f"Evaluating agent '{agent.name}' upon dataset '{input_data_set['name']}'"
-        )
-        evaluate(
-            data=eval_input_paths[agent_id],
-            evaluators=evaluators,
-            evaluation_name=eval_name,
-            azure_ai_project=endpoint,
-            output_path=eval_output_paths[agent_id],
-        )
-        # display evaluation results
-        print(f"Evaluation results for agent '{agent.name}': ")
+                # display evaluation results
+                print(f"Evaluation results for agent '{agent.name}': ")
 
     # analyze evaluation results
     eval_results = {}
@@ -476,15 +495,16 @@ if __name__ == "__main__":
         raise ValueError(f"Input data at {DATA_PATH} is not valid JSON") from exc
 
     # Run evaluation and output summary
-    SUMMARY_MD = main(
-        credential=DefaultAzureCredential(),
-        endpoint=AZURE_AI_PROJECT_ENDPOINT,
-        input_data_set=input_data,
-        agent_ids=AGENT_IDS,
-        eval_metadata=evaluator_score_metadata,
-        baseline_agent_id=BASELINE_AGENT_ID,
-        working_dir=input_data_path.parent,
-        eval_result_view=result_view,
+    SUMMARY_MD = asyncio.run(
+        main(
+            endpoint=AZURE_AI_PROJECT_ENDPOINT,
+            input_data_set=input_data,
+            agent_ids=AGENT_IDS,
+            eval_metadata=evaluator_score_metadata,
+            baseline_agent_id=BASELINE_AGENT_ID,
+            working_dir=input_data_path.parent,
+            eval_result_view=result_view,
+        )
     )
 
     if STEP_SUMMARY:
