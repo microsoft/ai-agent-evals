@@ -1,0 +1,227 @@
+---
+sections:
+  - name: "Operational metrics"
+    evaluators:
+      - class: "OperationalMetricsEvaluator"
+        key: "operational_metrics"
+        scores:
+          - name: "Client run duration [s]"
+            key: "client-run-duration-in-seconds"
+            type: "Continuous"
+            desired_direction: "Decrease"
+            range: [0, null]
+          - name: "Server run duration [s]"
+            key: "server-run-duration-in-seconds"
+            type: "Continuous"
+            desired_direction: "Decrease"
+            range: [0, null]
+          - name: "Completion tokens"
+            key: "completion-tokens"
+            type: "Continuous"
+            desired_direction: "Neutral"
+            range: [0, null]
+          - name: "Prompt tokens"
+            key: "prompt-tokens"
+            type: "Continuous"
+            desired_direction: "Neutral"
+            range: [0, null]
+
+  - name: "AI quality (AI assisted)"
+    evaluators:
+      # AI Agent Evaluators
+      - class: "IntentResolutionEvaluator"
+        key: "intent_resolution"
+        scores:
+          - name: "Intent Resolution"
+            key: "intent_resolution"
+            type: "Ordinal"
+            desired_direction: "Increase"
+            range: [1, 5]
+          - name: "Intent Resolution passing rate"
+            key: "intent_resolution_result"
+            type: "Boolean"
+            desired_direction: "Increase"
+
+      - class: "TaskAdherenceEvaluator"
+        key: "task_adherence"
+        scores:
+          - name: "Task Adherence"
+            key: "task_adherence"
+            type: "Ordinal"
+            desired_direction: "Increase"
+            range: [1, 5]
+          - name: "Task Adherence passing rate"
+            key: "task_adherence_result"
+            type: "Boolean"
+            desired_direction: "Increase"
+
+      - class: "RelevanceEvaluator"
+        key: "relevance"
+        scores:
+          - name: "Relevance"
+            key: "relevance"
+            type: "Ordinal"
+            desired_direction: "Increase"
+            range: [1, 5]
+          - name: "Relevance passing rate"
+            key: "relevance_result"
+            type: "Boolean"
+            desired_direction: "Increase"
+
+      - class: "CoherenceEvaluator"
+        key: "coherence"
+        scores:
+          - name: "Coherence"
+            key: "coherence"
+            type: "Ordinal"
+            desired_direction: "Increase"
+            range: [1, 5]
+          - name: "Coherence passing rate"
+            key: "coherence_result"
+            type: "Boolean"
+            desired_direction: "Increase"
+
+      - class: "FluencyEvaluator"
+        key: "fluency"
+        scores:
+          - name: "Fluency"
+            key: "fluency"
+            type: "Ordinal"
+            desired_direction: "Increase"
+            range: [1, 5]
+          - name: "Fluency passing rate"
+            key: "fluency_result"
+            type: "Boolean"
+            desired_direction: "Increase"
+
+  - name: "Risk and safety"
+    evaluators:
+      - class: "ViolenceEvaluator"
+        key: "violence"
+        scores:
+          - name: "Violent content"
+            key: "violence_score"
+            type: "Ordinal"
+            desired_direction: "Decrease"
+            range: [0, 7]
+          - name: "Violent content defect rate"
+            key: "violence_result"
+            type: "Boolean"
+            desired_direction: "Decrease"
+
+      - class: "SexualEvaluator"
+        key: "sexual"
+        scores:
+          - name: "Sexual content"
+            key: "sexual_score"
+            type: "Ordinal"
+            desired_direction: "Decrease"
+            range: [0, 7]
+          - name: "Sexual content defect rate"
+            key: "sexual_result"
+            type: "Boolean"
+            desired_direction: "Decrease"
+
+      - class: "SelfHarmEvaluator"
+        key: "self_harm"
+        scores:
+          - name: "Self-harm-related content"
+            key: "self_harm_score"
+            type: "Ordinal"
+            desired_direction: "Decrease"
+            range: [0, 7]
+          - name: "Self-harm-related content defect rate"
+            key: "self_harm_result"
+            type: "Boolean"
+            desired_direction: "Decrease"
+
+      - class: "HateUnfairnessEvaluator"
+        key: "hate_unfairness"
+        scores:
+          - name: "Hateful and unfair content"
+            key: "hate_unfairness_score"
+            type: "Ordinal"
+            desired_direction: "Decrease"
+            range: [0, 7]
+          - name: "Hateful and unfair content defect rate"
+            key: "hate_unfairness_result"
+            type: "Boolean"
+            desired_direction: "Decrease"
+
+      - class: "IndirectAttackEvaluator"
+        key: "indirect_attack"
+        scores:
+          - name: "Indirect attack defect rate"
+            key: "xpia_label"
+            type: "Boolean"
+            desired_direction: "Decrease"
+          - name: "Indirect attack: manipulated content"
+            key: "xpia_manipulated_content"
+            type: "Boolean"
+            desired_direction: "Decrease"
+          - name: "Indirect attack: intrusion"
+            key: "xpia_intrusion"
+            type: "Boolean"
+            desired_direction: "Decrease"
+          - name: "Indirect attack: information gathering"
+            key: "xpia_information_gathering"
+            type: "Boolean"
+            desired_direction: "Decrease"
+
+      - class: "ProtectedMaterialEvaluator"
+        key: "protected_material"
+        scores:
+          - name: "Protected material defect rate"
+            key: "protected_material_label"
+            type: "Boolean"
+            desired_direction: "Decrease"
+
+      - class: "CodeVulnerabilityEvaluator"
+        key: "code_vulnerability_defect_rate"
+        scores:
+          - name: "Code vulnerability defect rate"
+            key: "code_vulnerability_label"
+            type: "Boolean"
+            desired_direction: "Decrease"
+
+  - name: "Composite"
+    evaluators:
+      - class: "ContentSafetyEvaluator"
+        key: "content_safety"
+        scores:
+          - name: "Violent content"
+            key: "violence_score"
+            type: "Ordinal"
+            desired_direction: "Decrease"
+            range: [0, 7]
+          - name: "Violent content defect rate"
+            key: "violence_result"
+            type: "Boolean"
+            desired_direction: "Decrease"
+          - name: "Sexual content"
+            key: "sexual_score"
+            type: "Ordinal"
+            desired_direction: "Decrease"
+            range: [0, 7]
+          - name: "Sexual content defect rate"
+            key: "sexual_result"
+            type: "Boolean"
+            desired_direction: "Decrease"
+          - name: "Self-harm-related content"
+            key: "self_harm_score"
+            type: "Ordinal"
+            desired_direction: "Decrease"
+            range: [0, 7]
+          - name: "Self-harm-related content defect rate"
+            key: "self_harm_result"
+            type: "Boolean"
+            desired_direction: "Decrease"
+          - name: "Hateful and unfair content"
+            key: "hate_unfairness_score"
+            type: "Ordinal"
+            desired_direction: "Decrease"
+            range: [0, 7]
+          - name: "Hateful and unfair content defect rate"
+            key: "hate_unfairness_result"
+            type: "Boolean"
+            desired_direction: "Decrease"

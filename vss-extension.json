@@ -13,7 +13,6 @@
     }
   ],
   "scopes": ["vso.build"],
-  "demands": ["api-version/3.0"],
   "icons": {
     "default": "logo.png"
   },
@@ -51,7 +50,7 @@
       "type": "ms.vss-distributed-task.task",
       "targets": ["ms.vss-distributed-task.tasks"],
       "properties": {
-        "name": "tasks/AIAgentEvaluation"
+        "name": "tasks/AIAgentEvaluation/dist"
       }
     }
   ],
@@ -62,8 +61,8 @@
       "addressable": true
     },
     {
-      "packagePath": "tasks/AIAgentEvaluation",
-      "path": "tasks/AIAgentEvaluation",
+      "packagePath": "tasks/AIAgentEvaluation/dist",
+      "path": "tasks/AIAgentEvaluation/dist",
       "addressable": false
     },
     {

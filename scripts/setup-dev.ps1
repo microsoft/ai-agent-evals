@@ -38,13 +38,14 @@ if ($buildResultsContribution) {
 $agentEvalContribution = $vssExtension.contributions | Where-Object { $_.id -eq "AIAgentEvaluation" }
 if ($agentEvalContribution) {
     $agentEvalContribution.id = "AIAgentEvaluationDev"
-    $agentEvalContribution.properties.name = "tasks/AIAgentEvaluation"
 }
 
 $vssExtension | ConvertTo-Json -Depth 10 | Set-Content -Path "$devExtensionDir/vss-extension.json" -Encoding UTF8
+
 $versions = @("V1", "V2")
+
 foreach ($version in $versions) {
-    $taskJsonPath = Join-Path $devExtensionDir "tasks/AIAgentEvaluation/$version/task.json"
+    $taskJsonPath = Join-Path $devExtensionDir "tasks/AIAgentEvaluation/dist/$version/task.json"
     $taskJson = Get-Content -Path $taskJsonPath -Raw | ConvertFrom-Json
     $taskJson.id = $devTaskId
     $taskJson.name = "AIAgentEvaluationDev"
@@ -55,9 +56,10 @@ foreach ($version in $versions) {
     Write-Host "Created modified task.json at: $taskJsonPath"
 }
 
-$validate = Check-CriticalFiles -OutputDir $devExtensionDir -IsDevExtension $true
-if (-not $validate) {
-    Write-Error "Critical files check failed for production extension"
+$criticalFileChecks = Check-CriticalFiles -OutputDir $devExtensionDir -IsDevExtension $true
+if (-not $criticalFileChecks) {
+    Write-Error "Critical files check failed. Ensure all required files are present in the output directory."
     exit 1
 }
-Write-Host "Critical files check passed for production extension" -ForegroundColor Green
+Write-Host "✅ Dev extension setup complete. Files copied to '$devExtensionDir'."
+      

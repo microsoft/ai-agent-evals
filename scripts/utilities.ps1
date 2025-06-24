@@ -107,8 +107,6 @@ function Check-CriticalFiles {
         [Parameter(Mandatory = $true)]
         [bool]$IsDevExtension
     )
-
-    $AgentFolderName = "AIAgentEvaluation"
     $versions = @("V1", "V2")
 
     # Common files that should exist regardless of version
@@ -125,9 +123,8 @@ function Check-CriticalFiles {
         "action.py",
         "pyproject.toml",
         "task.json",
-        "run.ps1",
-        "check-python.ps1",
-        "ps_modules/VstsTaskSdk/VstsTaskSdk.psm1"
+        "index.js",
+        "node_modules/azure-pipelines-task-lib/task.js"
     )
     
     # V1-specific files
@@ -146,7 +143,7 @@ function Check-CriticalFiles {
     # Check version-specific files for each version
     foreach ($version in $versions) {
         foreach ($file in $versionSpecificFiles) {
-            $fullPath = Join-Path -Path $OutputDir -ChildPath "tasks/$AgentFolderName/$version/$file"
+            $fullPath = Join-Path -Path $OutputDir -ChildPath "tasks/AIAgentEvaluation/dist/$version/$file"
             if (-not (Test-Path -Path $fullPath)) {
                 Write-Host "❌ Critical file not found: $fullPath" -ForegroundColor Red
                 return $false
@@ -156,7 +153,7 @@ function Check-CriticalFiles {
         # Check V1-specific files only for V1
         if ($version -eq "V1") {
             foreach ($file in $v1SpecificFiles) {
-                $fullPath = Join-Path -Path $OutputDir -ChildPath "tasks/$AgentFolderName/$version/$file"
+                $fullPath = Join-Path -Path $OutputDir -ChildPath "tasks/AIAgentEvaluation/dist/$version/$file"
                 if (-not (Test-Path -Path $fullPath)) {
                     Write-Host "❌ Critical file not found: $fullPath" -ForegroundColor Red
                     return $false
