@@ -29,7 +29,7 @@ try {
     $evalPath = Join-Path -Path $repoRoot -ChildPath "tasks/AIAgentEvaluation"
     Push-Location -Path $evalPath
     try {
-        $setupScriptPath = Join-Path -Path $evalPath -ChildPath "build-dist.ps1"
+        $setupScriptPath = Join-Path -Path $evalPath -ChildPath "build.ps1"
         & $setupScriptPath
         Write-Host "AIAgentEvaluation build completed successfully" -ForegroundColor Green
     }

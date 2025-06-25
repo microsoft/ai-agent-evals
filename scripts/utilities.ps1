@@ -143,7 +143,7 @@ function Check-CriticalFiles {
     # Check version-specific files for each version
     foreach ($version in $versions) {
         foreach ($file in $versionSpecificFiles) {
-            $fullPath = Join-Path -Path $OutputDir -ChildPath "tasks/AIAgentEvaluation/dist/$version/$file"
+            $fullPath = Join-Path -Path $OutputDir -ChildPath "tasks/AIAgentEvaluation/$version/$file"
             if (-not (Test-Path -Path $fullPath)) {
                 Write-Host "❌ Critical file not found: $fullPath" -ForegroundColor Red
                 return $false
@@ -153,7 +153,7 @@ function Check-CriticalFiles {
         # Check V1-specific files only for V1
         if ($version -eq "V1") {
             foreach ($file in $v1SpecificFiles) {
-                $fullPath = Join-Path -Path $OutputDir -ChildPath "tasks/AIAgentEvaluation/dist/$version/$file"
+                $fullPath = Join-Path -Path $OutputDir -ChildPath "tasks/AIAgentEvaluation/$version/$file"
                 if (-not (Test-Path -Path $fullPath)) {
                     Write-Host "❌ Critical file not found: $fullPath" -ForegroundColor Red
                     return $false

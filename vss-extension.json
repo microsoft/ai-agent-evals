@@ -50,7 +50,7 @@
       "type": "ms.vss-distributed-task.task",
       "targets": ["ms.vss-distributed-task.tasks"],
       "properties": {
-        "name": "tasks/AIAgentEvaluation/dist"
+        "name": "tasks/AIAgentEvaluation"
       }
     }
   ],
@@ -61,8 +61,8 @@
       "addressable": true
     },
     {
-      "packagePath": "tasks/AIAgentEvaluation/dist",
-      "path": "tasks/AIAgentEvaluation/dist",
+      "packagePath": "tasks/AIAgentEvaluation",
+      "path": "tasks/AIAgentEvaluation",
       "addressable": false
     },
     {

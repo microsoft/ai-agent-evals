@@ -45,7 +45,7 @@ $vssExtension | ConvertTo-Json -Depth 10 | Set-Content -Path "$devExtensionDir/v
 $versions = @("V1", "V2")
 
 foreach ($version in $versions) {
-    $taskJsonPath = Join-Path $devExtensionDir "tasks/AIAgentEvaluation/dist/$version/task.json"
+    $taskJsonPath = Join-Path $devExtensionDir "tasks/AIAgentEvaluation/$version/task.json"
     $taskJson = Get-Content -Path $taskJsonPath -Raw | ConvertFrom-Json
     $taskJson.id = $devTaskId
     $taskJson.name = "AIAgentEvaluationDev"
