@@ -25,6 +25,23 @@ try {
         Pop-Location
     }
 
+    Write-Host "Building AIAgentEvaluation"
+    $evalPath = Join-Path -Path $repoRoot -ChildPath "tasks/AIAgentEvaluation"
+    Push-Location -Path $evalPath
+    try {
+        $setupScriptPath = Join-Path -Path $evalPath -ChildPath "build.ps1"
+        & $setupScriptPath
+        Write-Host "AIAgentEvaluation build completed successfully" -ForegroundColor Green
+    }
+    catch {
+        Write-Error "Error building AIAgentEvaluation: $_"
+        exit 1
+    }
+    finally {
+        # Always return to the previous directory even if there are errors
+        Pop-Location
+    }
+
     # Import the utilities module with shared functions
     $utilsPath = Join-Path -Path $repoRoot -ChildPath "scripts/utilities.ps1"
     . $utilsPath
@@ -49,60 +66,11 @@ try {
     }
     Write-Host "Copied supporting files for extension" -ForegroundColor Green
 
-    Write-Host "Setting up VstsTaskSdk module..."
-
-    # Use the download-vstsTaskSdk.ps1 
-    & (Join-Path -Path $scriptsFolder -ChildPath "download-vstsTaskSdk.ps1")
-    if ($LASTEXITCODE -ne 0) {
-        Write-Error "Failed to download VstsTaskSdk module"
+    $criticalFileChecks = Check-CriticalFiles -OutputDir $prodExtensionDir -IsDevExtension $false 
+    if (-not $criticalFileChecks) {
+        Write-Error "Critical files check failed. Ensure all required files are present in the output directory."
         exit 1
     }
-    Write-Host "VstsTaskSdk module downloaded successfully" -ForegroundColor Green
-
-    $commonLatestTask = Join-Path -Path $repoRoot -ChildPath "tasks/AIAgentEvaluation"
-    $filesToCopyInLatest = @(
-        "task.json",
-        "run.ps1",
-        "check-python.ps1"
-    )
-    foreach ($file in $filesToCopyInLatest) {
-        $sourcePath = Join-Path -Path $commonLatestTask -ChildPath $file
-        $destPath = Join-Path -Path $prodExtensionDir -ChildPath "tasks/AIAgentEvaluation/$latestVersion/$file"
-        $removePath = Join-Path -Path $prodExtensionDir -ChildPath "tasks/AIAgentEvaluation/$file"
-        Copy-Item -Path $sourcePath -Destination $destPath -Force
-        Remove-Item -Path $removePath -Force -ErrorAction SilentlyContinue
-        Write-Host "Copied $file to $destPath" -ForegroundColor Green
-    }
-
-    # add action.py, analysis and pyproject.toml to the production v1 directory
-    . $scriptsFolder/download-previousVersions.ps1
-
-    # Add action.py, analysis and pyproject.toml to the production latest(v2) directory
-    $filesToCopy = @(
-        "action.py",
-        "pyproject.toml"
-    )
-    $foldersToCopy = @(
-        "analysis"
-    )
-    foreach ($file in $filesToCopy) {
-        $sourcePath = Join-Path -Path $repoRoot -ChildPath $file
-        $destPath = Join-Path -Path $prodExtensionDir -ChildPath "tasks/AIAgentEvaluation/$latestVersion/$file"
-        Copy-Item -Path $sourcePath -Destination $destPath -Force
-    }
-    foreach ($folder in $foldersToCopy) {
-        $sourcePath = Join-Path -Path $repoRoot -ChildPath $folder
-        $destPath = Join-Path -Path $prodExtensionDir -ChildPath "tasks/AIAgentEvaluation/$latestVersion/$folder"
-        Copy-Directory -SourceDir $sourcePath -DestinationDir $destPath
-    }
-
-
-    $validate = Check-CriticalFiles -OutputDir $prodExtensionDir -IsDevExtension $false
-    if (-not $validate) {
-        Write-Error "Critical files check failed for production extension"
-        exit 1
-    }
-    Write-Host "Critical files check passed for production extension" -ForegroundColor Green
 }
 finally {
     # Return to the original directory

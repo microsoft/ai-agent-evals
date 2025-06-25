@@ -1,0 +1,78 @@
+{
+  "id": "5b7b4d7a-05e1-4f6a-b880-88e2dfa9f248",
+  "name": "AIAgentEvaluation",
+  "friendlyName": "AI Agent Evaluation",
+  "description": "Evaluate AI Agents",
+  "author": "",
+  "helpMarkDown": "",
+  "category": "Utility",
+  "version": {
+    "Major": 2,
+    "Minor": 0,
+    "Patch": 85
+  },
+  "instanceNameFormat": "AI Agent Evaluation",
+  "inputs": [
+    {
+      "name": "azure-ai-project-endpoint",
+      "type": "string",
+      "label": "Azure AI Project Endpoint",
+      "defaultValue": "",
+      "required": true,
+      "helpMarkDown": "The endpoint for the Azure AI Project. This is used to connect to Azure AI Foundry to simulate conversations with each agent, and to connect to the Azure AI Evaluation SDK to perform the evaluation."
+    },
+    {
+      "name": "deployment-name",
+      "type": "string",
+      "label": "Deployment Name",
+      "defaultValue": "",
+      "required": true,
+      "helpMarkDown": "The name of the Azure AI model deployment to use for evaluation."
+    },
+    {
+      "name": "data-path",
+      "type": "string",
+      "label": "Input Data Path",
+      "defaultValue": "",
+      "required": true,
+      "helpMarkDown": "Path to the input data file containing the conversation starters. Each conversation starter will be sent to each agent for a pairwise comparison of evaluation results."
+    },
+    {
+      "name": "agent-ids",
+      "type": "string",
+      "label": "Agent IDs",
+      "defaultValue": "",
+      "required": true,
+      "helpMarkDown": "Comma-separated list of agent IDs to evaluate."
+    },
+    {
+      "name": "baseline-agent-id",
+      "type": "string",
+      "label": "Baseline Agent ID",
+      "defaultValue": "",
+      "required": false,
+      "helpMarkDown": "Agent ID of the baseline agent to compare against. By default, the first agent is used."
+    },
+    {
+      "name": "evaluation-result-view",
+      "type": "string",
+      "label": "Evaluation Result View",
+      "defaultValue": "default",
+      "required": false,
+      "helpMarkDown": "The evaluation result view. Options are \"default\" (boolean scores only such as passing and defect rates), \"all-scores\" (all scores), \"raw-scores-only\" (all non-boolean scores)"
+    },
+    {
+      "name": "api-version",
+      "type": "string",
+      "label": "API Version",
+      "required": false,
+      "defaultValue": "",
+      "helpMarkDown": "The API version to use when connecting to model deployment."
+    }
+  ],
+  "execution": {
+    "Node20_1": {
+      "target": "index.js"
+    }
+  }
+}

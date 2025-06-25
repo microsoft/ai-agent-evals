@@ -1,0 +1,10 @@
+node_modules
+*.js
+*.vsix
+*.zip
+dist
+
+# Latest version python files are copied from root directory
+V2/action.py 
+V2/analysis
+V2/pyproject.toml

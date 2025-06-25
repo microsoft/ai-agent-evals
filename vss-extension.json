@@ -13,7 +13,6 @@
     }
   ],
   "scopes": ["vso.build"],
-  "demands": ["api-version/3.0"],
   "icons": {
     "default": "logo.png"
   },
