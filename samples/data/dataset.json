@@ -3,6 +3,7 @@
   "evaluators": [
     "IntentResolutionEvaluator",
     "TaskAdherenceEvaluator",
+    "ToolCallAccuracyEvaluator",
     "CoherenceEvaluator",
     "RelevanceEvaluator",
     "FluencyEvaluator",
