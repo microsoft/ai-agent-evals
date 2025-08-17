@@ -14,6 +14,7 @@ dependencies = [
     "numpy",
     "pyyaml",
     "scipy",
+    "tabulate",
     "azure-ai-evaluation>=1.7.0",
     "azure-ai-projects>=1.0.0b11",
     "azure-ai-agents",
