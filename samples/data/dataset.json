@@ -14,7 +14,9 @@
     "IndirectAttackEvaluator",
     "ProtectedMaterialEvaluator",
     "CodeVulnerabilityEvaluator",
-    "ContentSafetyEvaluator"
+    "ContentSafetyEvaluator",
+    "ToolCallAccuracyEvaluator", 
+    "GroundednessEvaluator"
   ],
   "data": [
     {

@@ -1,12 +1,13 @@
 {
   "name": "test-dataset-tiny",
-  "evaluators": ["IntentResolutionEvaluator", "FluencyEvaluator", "ToolCallAccuracyEvaluator"],
+  "evaluators": [
+    "FluencyEvaluator",
+    "ToolCallAccuracyEvaluator", 
+    "GroundednessEvaluator"
+  ],
   "data": [
     {
       "query": "Tell me about Smart eyeware"
-    },
-    {
-      "query": "How do I rebase my branch in git?"
     }
   ]
 }
