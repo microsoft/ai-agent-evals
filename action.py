@@ -42,6 +42,7 @@ AGENT_IDS = [x.strip() for x in os.getenv("AGENT_IDS", "").split(",") if x.strip
 BASELINE_AGENT_ID = os.getenv("BASELINE_AGENT_ID")
 EVALUATION_RESULT_VIEW = os.getenv("EVALUATION_RESULT_VIEW")
 
+
 # pylint: disable=too-many-locals
 def simulate_question_answer(
     ai_project: AIProjectClient, agent: Agent, input_queries: dict
@@ -398,7 +399,7 @@ def main(
             evaluation_name=eval_name,
             azure_ai_project=endpoint,
             output_path=eval_output_paths[agent_id],
-            user_agent=USER_AGENT
+            user_agent=USER_AGENT,
         )
         # display evaluation results
         print(f"Evaluation results for agent '{agent.name}': ")
