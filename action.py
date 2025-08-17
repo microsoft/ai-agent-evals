@@ -31,6 +31,7 @@ if env_path.exists():
 
     load_dotenv(dotenv_path=env_path)
 
+USER_AGENT = "ai-agent-evals/v2-beta (+https://github.com/microsoft/ai-agent-evals)"
 STEP_SUMMARY = os.getenv("GITHUB_STEP_SUMMARY") or os.getenv("ADO_STEP_SUMMARY")
 
 AZURE_AI_PROJECT_ENDPOINT = os.getenv("AZURE_AI_PROJECT_ENDPOINT")
@@ -40,7 +41,6 @@ DATA_PATH = os.getenv("DATA_PATH")
 AGENT_IDS = [x.strip() for x in os.getenv("AGENT_IDS", "").split(",") if x.strip()]
 BASELINE_AGENT_ID = os.getenv("BASELINE_AGENT_ID")
 EVALUATION_RESULT_VIEW = os.getenv("EVALUATION_RESULT_VIEW")
-
 
 # pylint: disable=too-many-locals
 def simulate_question_answer(
@@ -398,6 +398,7 @@ def main(
             evaluation_name=eval_name,
             azure_ai_project=endpoint,
             output_path=eval_output_paths[agent_id],
+            user_agent=USER_AGENT
         )
         # display evaluation results
         print(f"Evaluation results for agent '{agent.name}': ")
