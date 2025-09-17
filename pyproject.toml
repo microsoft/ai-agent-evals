@@ -16,7 +16,7 @@ dependencies = [
     "scipy",
     "tabulate",
     "azure-ai-evaluation>=1.11.0",
-    "azure-ai-projects>=1..0",
+    "azure-ai-projects>=1.0.0",
     "azure-ai-agents",
     "azure-identity",
     "aiohttp>=3.8.5",
