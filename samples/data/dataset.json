@@ -3,6 +3,7 @@
   "evaluators": [
     "IntentResolutionEvaluator",
     "TaskAdherenceEvaluator",
+    "ToolCallAccuracyEvaluator",
     "CoherenceEvaluator",
     "RelevanceEvaluator",
     "FluencyEvaluator",
@@ -13,7 +14,9 @@
     "IndirectAttackEvaluator",
     "ProtectedMaterialEvaluator",
     "CodeVulnerabilityEvaluator",
-    "ContentSafetyEvaluator"
+    "ContentSafetyEvaluator",
+    "ToolCallAccuracyEvaluator", 
+    "GroundednessEvaluator"
   ],
   "data": [
     {

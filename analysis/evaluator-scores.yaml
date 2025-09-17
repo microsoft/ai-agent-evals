@@ -55,6 +55,19 @@ sections:
             type: "Boolean"
             desired_direction: "Increase"
 
+      - class: "ToolCallAccuracyEvaluator"
+        key: "tool_call_accuracy"
+        scores:
+          - name: "Tool Call Accuracy"
+            key: "tool_call_accuracy"
+            type: "Ordinal"
+            desired_direction: "Increase"
+            range: [1, 5]
+          - name: "Tool Call Accuracy passing rate"
+            key: "tool_call_accuracy_result"
+            type: "Boolean"
+            desired_direction: "Increase"
+
       - class: "RelevanceEvaluator"
         key: "relevance"
         scores:
@@ -93,6 +106,53 @@ sections:
             key: "fluency_result"
             type: "Boolean"
             desired_direction: "Increase"
+
+      - class: "GroundednessEvaluator"
+        key: "groundedness"
+        scores:
+          - name: "Groundedness"
+            key: "groundedness"
+            type: "Ordinal"
+            desired_direction: "Increase"
+            range: [1, 5]
+          - name: "Groundedness passing rate"
+            key: "groundedness_result"
+            type: "Boolean"
+            desired_direction: "Increase"
+
+      # - class: "GroundednessProEvaluator"
+      #   key: "groundedness_pro"
+      #   scores:
+      #     - name: "GroundednessPro"
+      #       key: "groundedness_pro_score"
+      #       type: "Ordinal"
+      #       desired_direction: "Increase"
+      #       range: [1, 5]
+      #     - name: "GroundednessPro passing rate"
+      #       key: "groundedness_pro_result"
+      #       type: "Boolean"
+      #       desired_direction: "Increase"
+
+      # - class: "UngroundedAttributesEvaluator"
+      #   key: "ungrounded_attributes"
+      #   scores:
+      #     - name: "UngroundedAttributes defect rate"
+      #       key: "ungrounded_attributes_label"
+      #       type: "Boolean"
+      #       desired_direction: "Decrease"
+
+      # - class: "RetrievalEvaluator"
+      #   key: "retrieval"
+      #   scores:
+      #     - name: "Retrieval"
+      #       key: "retrieval"
+      #       type: "Ordinal"
+      #       desired_direction: "Increase"
+      #       range: [1, 5]
+      #     - name: "Retrieval passing rate"
+      #       key: "retrieval_result"
+      #       type: "Boolean"
+      #       desired_direction: "Increase"
 
   - name: "Risk and safety"
     evaluators:

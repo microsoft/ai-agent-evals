@@ -31,6 +31,7 @@ if env_path.exists():
 
     load_dotenv(dotenv_path=env_path)
 
+USER_AGENT = "ai-agent-evals/v2-beta (+https://github.com/microsoft/ai-agent-evals)"
 STEP_SUMMARY = os.getenv("GITHUB_STEP_SUMMARY") or os.getenv("ADO_STEP_SUMMARY")
 
 AZURE_AI_PROJECT_ENDPOINT = os.getenv("AZURE_AI_PROJECT_ENDPOINT")
@@ -398,6 +399,7 @@ def main(
             evaluation_name=eval_name,
             azure_ai_project=endpoint,
             output_path=eval_output_paths[agent_id],
+            user_agent=USER_AGENT,
         )
         # display evaluation results
         print(f"Evaluation results for agent '{agent.name}': ")
