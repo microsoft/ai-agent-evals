@@ -26,6 +26,8 @@ and token counts, run the evaluations, and generate a summary report.
 |                          | RelevanceEvaluator         |
 |                          | CoherenceEvaluator         |
 |                          | FluencyEvaluator           |
+|                          | GroundednessEvaluator      |
+|                          | ToolCallAccuracyEvaluator  |
 | Risk and safety          | ViolenceEvaluator          |
 |                          | SexualEvaluator            |
 |                          | SelfHarmEvaluator          |
