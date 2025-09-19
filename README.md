@@ -19,6 +19,8 @@ To use this action, all you need to provide is a data set with test queries and 
 |                          | RelevanceEvaluator         |
 |                          | CoherenceEvaluator         |
 |                          | FluencyEvaluator           |
+|                          | GroundednessEvaluator      |
+|                          | ToolCallAccuracyEvaluator  |
 | Risk and safety          | ViolenceEvaluator          |
 |                          | SexualEvaluator            |
 |                          | SelfHarmEvaluator          |
