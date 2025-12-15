@@ -8,8 +8,6 @@ from urllib.parse import quote
 import pandas as pd
 
 from .analysis import (
-    EvaluationResult,
-    EvaluationScore,
     EvaluationScoreCI,
     EvaluationScoreComparison,
     EvaluationScoreDataType,
@@ -180,65 +178,98 @@ def fmt_ci(x: EvaluationScoreCI) -> str:
 
 
 def fmt_table_compare(
-    scores: list[EvaluationScore],
-    results: dict[str, EvaluationResult],
-    baseline: str,
+    comparisons_by_evaluator: dict[str, list[EvaluationScoreComparison]],
+    baseline_name: str,
 ) -> str:
-    """Render a table comparing the evaluation results from multiple agent variants"""
-    if not results:
-        raise ValueError("No evaluation results provided")
-
-    if not scores:
-        raise ValueError("No evaluator scores provided")
+    """Render a table comparing evaluation results from multiple agent variants.
+    
+    Args:
+        comparisons_by_evaluator: Dictionary mapping evaluator names to lists of
+            EvaluationScoreComparison objects (one per treatment agent)
+        baseline_name: Name of the baseline agent
+        
+    Returns:
+        Markdown formatted comparison table
+    """
+    if not comparisons_by_evaluator:
+        raise ValueError("No comparison results provided")
 
     records = []
-    for score in scores:
+    for evaluator_name, comparisons in comparisons_by_evaluator.items():
         try:
-            row = {"Evaluation score": score.name}
-
-            compare_result = EvaluationScoreComparison(
-                results[baseline], results[baseline], score=score
-            )
-            row[results[baseline].variant] = fmt_control_badge(compare_result)
-
-            for variant, variant_result in results.items():
-                if variant == baseline:
-                    continue
-
-                compare_result = EvaluationScoreComparison(
-                    results[baseline], variant_result, score=score
+            # Format evaluation score label: "test_criteria" or "test_criteria: metric"
+            first_comp = comparisons[0] if comparisons else None
+            if first_comp and first_comp.score.field != evaluator_name:
+                eval_score_label = f"{evaluator_name}: {first_comp.score.field}"
+            else:
+                eval_score_label = evaluator_name
+            
+            row = {"Evaluation score": eval_score_label}
+            
+            # Create a control badge using first comparison (same baseline for all)
+            if first_comp:
+                # Create a self-comparison for the baseline
+                baseline_comp = EvaluationScoreComparison(
+                    score=first_comp.score,
+                    control_variant=baseline_name,
+                    treatment_variant=baseline_name,
+                    count=first_comp.count,
+                    control_mean=first_comp.control_mean,
+                    treatment_mean=first_comp.control_mean,
+                    delta_estimate=0.0,
+                    p_value=1.0,
+                    treatment_effect_result="Inconclusive"
                 )
-                row[variant_result.variant] = fmt_treatment_badge(compare_result)
-
+                row[baseline_name] = fmt_control_badge(baseline_comp)
+                
+                # Add treatment badges for each comparison
+                for comp in comparisons:
+                    row[comp.treatment_variant] = fmt_treatment_badge(comp)
+            
             records.append(row)
 
-        except ValueError as e:
-            print(f"Error comparing score {score.name}: {e}")
+        except (ValueError, KeyError) as e:
+            print(f"Error comparing score {evaluator_name}: {e}")
 
     df_summary = pd.DataFrame.from_records(records)
     return df_summary.to_markdown(index=False)
 
 
-def fmt_table_ci(scores: list[EvaluationScore], result: EvaluationResult) -> str:
-    """Render a table of confidence intervals for the evaluation result"""
-    if not scores:
-        raise ValueError("No evaluator scores provided")
+def fmt_table_ci(evaluation_scores: dict[str, any], agent_name: str) -> str:
+    """Render a table of confidence intervals for the evaluation scores
+    
+    Args:
+        evaluation_scores: Dictionary mapping evaluator names to EvaluationScoreCI objects
+        agent_name: Name of the agent being evaluated
+        
+    Returns:
+        Markdown formatted table string
+    """
+    if not evaluation_scores:
+        raise ValueError("No evaluation scores provided")
 
     records = []
-    for score in scores:
+    for evaluator_name, score_ci in evaluation_scores.items():
         try:
-            result_ci = EvaluationScoreCI(result, score=score)
+            # Format evaluation score label: "test_criteria" or "test_criteria: metric"
+            if score_ci.score.field != evaluator_name:
+                eval_score_label = f"{evaluator_name}: {score_ci.score.field}"
+            else:
+                eval_score_label = evaluator_name
+            
             records.append(
                 {
-                    "Evaluation score": score.name,
-                    result.variant: fmt_metric_value(
-                        result_ci.mean, result_ci.score.data_type
+                    "Evaluation score": eval_score_label,
+                    agent_name: fmt_metric_value(
+                        score_ci.mean, score_ci.score.data_type
                     ),
-                    "95% Confidence Interval": fmt_ci(result_ci),
+                    "95% Confidence Interval": fmt_ci(score_ci),
+                    "Pass Rate": f"{score_ci.item_summary['pass_rate']:.1%}" if score_ci.item_summary else "N/A",
+                    "Total Tokens": score_ci.item_summary['total_tokens'] if score_ci.item_summary else "N/A",
                 }
             )
-        except ValueError as e:
-            print(f"Error comparing score {score.name}: {e}")
+        except (ValueError, KeyError) as e:
+            print(f"Error formatting score {evaluator_name}: {e}")
 
     df_summary = pd.DataFrame.from_records(records)
 
