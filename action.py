@@ -466,7 +466,7 @@ def main(
             # Build compare URL if insight available
             if comparison_insight and eval_base_url:
                 insight_id = comparison_insight.id
-                compare_url = f"{eval_base_url}/compare/{insight_id}_EvaluationComparison"
+                compare_url = f"{eval_base_url}/compare/{insight_id}"
         
         # Generate and return summary markdown
         return summarize(
