@@ -15,7 +15,7 @@ from action import (
 def test_generate_data_mappings_empty():
     """Test data mapping generation with no input."""
     result = _generate_data_mappings(None)
-    assert result == {}
+    assert not result
 
 
 def test_generate_data_mappings_with_user_mappings():

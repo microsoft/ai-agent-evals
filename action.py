@@ -120,7 +120,13 @@ def get_evaluator_metadata(
                     }
                     continue
 
-        except Exception as e:
+        except (  # pylint: disable=broad-exception-caught
+            KeyError,
+            AttributeError,
+            TypeError,
+            ValueError,
+            Exception,
+        ) as e:
             # Custom evaluator or error fetching metadata - use defaults
             print(
                 f"Could not fetch metadata for evaluator '{evaluator_name}': {e}. Using defaults."
@@ -133,20 +139,20 @@ def get_evaluator_metadata(
     return evaluator_metadata
 
 
-def _generate_data_mappings(input_data: dict | None) -> dict:
+def _generate_data_mappings(data: dict | None) -> dict:
     """Generate data mappings from input data.
 
     Args:
-        input_data: Input data dictionary containing data_mapping and data fields
+        data: Input data dictionary containing data_mapping and data fields
 
     Returns:
         Dictionary of data field mappings
     """
-    user_data_mappings = input_data.get("data_mapping", None) if input_data else None
+    user_data_mappings = data.get("data_mapping", None) if data else None
 
     # Auto-generate data mappings from fields in data items
-    if input_data and "data" in input_data and len(input_data["data"]) > 0:
-        first_item = input_data["data"][0]
+    if data and "data" in data and len(data["data"]) > 0:
+        first_item = data["data"][0]
         if user_data_mappings is None:
             user_data_mappings = {}
         # Add all fields from the first data item that aren't already mapped
@@ -300,7 +306,7 @@ def _validate_data_schema(
 def create_testing_criteria(
     evaluators: list[str],
     evaluator_metadata: dict,
-    input_data: dict | None = None,
+    input_data: dict | None = None,  # pylint: disable=redefined-outer-name
     evaluator_parameters: dict | None = None,
 ) -> list[dict]:
     """Build testing criteria dynamically from evaluator names.
@@ -420,6 +426,7 @@ def print_agent_results(agent_results: dict):
     print(f"Processed results for {agent.name} ({evaluator_count} evaluators)")
 
 
+# pylint: disable-next=too-many-arguments,too-many-positional-arguments
 def generate_comparison_insight(
     project_client: AIProjectClient,
     eval_object,
@@ -456,16 +463,16 @@ def generate_comparison_insight(
     if compare_insight.state == OperationState.SUCCEEDED:
         print("Comparison insight generated successfully")
         return compare_insight
-    else:
-        print("Comparison insight generation failed")
-        return None
+
+    print("Comparison insight generation failed")
+    return None
 
 
 def create_evaluation_and_dataset(
     openai_client,
     project_client,
-    input_data_path: Path,
-    input_data: dict,
+    data_path: Path,
+    data: dict,
     evaluator_metadata: dict,
 ) -> tuple:
     """Create evaluation object and upload dataset.
@@ -473,8 +480,8 @@ def create_evaluation_and_dataset(
     Args:
         openai_client: OpenAI client
         project_client: AI Project client
-        input_data_path: Path to input data file
-        input_data: Input data dictionary
+        data_path: Path to input data file
+        data: Input data dictionary
         evaluator_metadata: Evaluator metadata with categories
 
     Returns:
@@ -491,13 +498,13 @@ def create_evaluation_and_dataset(
     )
 
     # Get evaluator-specific parameters from input data if provided
-    evaluator_parameters = input_data.get("evaluator_parameters", None)
+    evaluator_parameters = data.get("evaluator_parameters", None)
 
     # Build testing criteria dynamically from evaluators in input data
     testing_criteria = create_testing_criteria(
-        input_data.get("evaluators", []),
+        data.get("evaluators", []),
         evaluator_metadata,
-        input_data,
+        data,
         evaluator_parameters,
     )
 
@@ -509,10 +516,10 @@ def create_evaluation_and_dataset(
     print(f"Created evaluation with {len(testing_criteria)} evaluator(s)")
 
     # Convert JSON to JSONL format
-    jsonl_path = convert_json_to_jsonl(input_data_path)
+    jsonl_path = convert_json_to_jsonl(data_path)
 
     dataset = project_client.datasets.upload_file(
-        name=input_data_path.stem,
+        name=data_path.stem,
         version=str(int(time.time())),
         file_path=jsonl_path,
     )
@@ -521,13 +528,13 @@ def create_evaluation_and_dataset(
     return eval_object, dataset
 
 
+# pylint: disable-next=too-many-arguments,too-many-positional-arguments
 def generate_and_print_comparisons(
     project_client,
     eval_object,
     agent_ids: list[str],
     baseline_agent_id: str | None,
     agent_eval_runs: dict,
-    evaluator_names: list[str],
     evaluator_metadata: dict,
 ) -> tuple[dict, Insight | None]:
     """Generate comparison insights for multiple agents.
@@ -564,17 +571,17 @@ def generate_and_print_comparisons(
         comparison_insight,
         baseline_id,
         treatment_agent_ids,
-        evaluator_names,
         evaluator_metadata,
     )
 
     return comparisons_by_evaluator, comparison_insight
 
 
+# pylint: disable-next=too-many-locals
 def main(
     endpoint: str,
-    input_data_path: Path,
-    input_data: dict,
+    data_path: Path,
+    data: dict,
     agent_ids: list[str],
     baseline_agent_id: str | None = None,
 ) -> str:
@@ -595,15 +602,15 @@ def main(
     ):
         # Setup: Parse agents and get evaluator metadata
         agents = get_agents(project_client, agent_ids)
-        evaluator_names = input_data.get("evaluators", [])
+        evaluator_names = data.get("evaluators", [])
         evaluator_metadata = get_evaluator_metadata(project_client, evaluator_names)
 
         # Create evaluation and prepare dataset
         eval_object, dataset = create_evaluation_and_dataset(
             openai_client,
             project_client,
-            input_data_path,
-            input_data,
+            data_path,
+            data,
             evaluator_metadata,
         )
 
@@ -653,7 +660,6 @@ def main(
                     agent_ids,
                     baseline_agent_id,
                     agent_eval_runs,
-                    evaluator_names,
                     evaluator_metadata,
                 )
             )
@@ -693,16 +699,16 @@ if __name__ == "__main__":
 
     # Load input data
     try:
-        input_data_path = Path(DATA_PATH)
-        input_data = json.loads(input_data_path.read_text(encoding="utf-8"))
+        data_path = Path(DATA_PATH)
+        data = json.loads(data_path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
         raise ValueError(f"Input data at {DATA_PATH} is not valid JSON") from exc
 
     # Run evaluation and output summary
     SUMMARY_MD = main(
         endpoint=AZURE_AI_PROJECT_ENDPOINT,
-        input_data_path=input_data_path,
-        input_data=input_data,
+        data_path=data_path,
+        data=data,
         agent_ids=AGENT_IDS,
         baseline_agent_id=BASELINE_AGENT_ID,
     )

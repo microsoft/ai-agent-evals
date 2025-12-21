@@ -81,6 +81,7 @@ def convert_json_to_jsonl(
     return output_jsonl_path
 
 
+# pylint: disable-next=too-many-locals
 def process_evaluation_results(
     openai_client, eval_object, eval_run, agent, evaluator_metadata: dict
 ) -> dict:
@@ -208,11 +209,11 @@ def process_evaluation_results(
     }
 
 
+# pylint: disable-next=too-many-locals
 def convert_insight_to_comparisons(
     insight,
     baseline_agent_id: str,
     treatment_agent_ids: list[str],
-    evaluator_names: list[str],
     evaluator_metadata: dict,
 ) -> dict:
     """Convert comparison insight result to EvaluationScoreComparison objects.
@@ -221,7 +222,6 @@ def convert_insight_to_comparisons(
         insight: The comparison insight object from Azure AI
         baseline_agent_id: ID of the baseline agent (name:version)
         treatment_agent_ids: List of treatment agent IDs (name:version)
-        evaluator_names: List of evaluator names to process
         evaluator_metadata: Dictionary with evaluator metadata (data_type, desired_direction, field)
 
     Returns:

@@ -230,9 +230,7 @@ def fmt_table_compare(
     return df_summary.to_markdown(index=False)
 
 
-def fmt_table_ci(
-    evaluation_scores: dict[str, EvaluationScoreCI], agent_name: str
-) -> str:
+def fmt_table_ci(evaluation_scores: dict[str, EvaluationScoreCI]) -> str:
     """Render a table of confidence intervals for the evaluation scores
 
     Args:

@@ -54,7 +54,7 @@ class EvaluationScore:
             self.desired_direction = DesiredDirection(self.desired_direction)
 
 
-# pylint: disable-next=too-few-public-methods
+# pylint: disable-next=too-few-public-methods,too-many-instance-attributes
 class EvaluationScoreCI:
     """Confidence interval for an evaluation score"""
 
@@ -74,6 +74,10 @@ class EvaluationScoreCI:
         self.variant = variant
         self.result_items = result_items
         self.count = len(result_items)
+        # Initialize statistical attributes
+        self.mean = None
+        self.ci_lower = None
+        self.ci_upper = None
 
         # Extract scores from result items
         scores = self._extract_scores_from_items()
@@ -204,6 +208,7 @@ class EvaluationScoreCI:
 class EvaluationScoreComparison:
     """Comparison of paired evaluation scores from two variants"""
 
+    # pylint: disable-next=too-many-arguments,too-many-positional-arguments
     def __init__(
         self,
         score: EvaluationScore,

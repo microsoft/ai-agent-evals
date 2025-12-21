@@ -98,7 +98,7 @@ def summarize(
     if comparisons_by_evaluator and treatment_agent_names:
         md_table = fmt_table_compare(comparisons_by_evaluator, agent_name)
     else:
-        md_table = fmt_table_ci(evaluation_scores, agent_name)
+        md_table = fmt_table_ci(evaluation_scores)
     md.append(md_table)
     md.append("")
 
