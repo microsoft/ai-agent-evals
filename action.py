@@ -9,18 +9,16 @@ import time
 from pathlib import Path
 
 from azure.ai.projects import AIProjectClient
-from azure.ai.projects.models import EvaluatorMetricDirection, EvaluatorMetricType
+from azure.ai.projects.models import (EvaluatorMetricDirection,
+                                      EvaluatorMetricType)
 from azure.ai.projects.models._enums import OperationState
-from azure.ai.projects.models._models import EvaluationComparisonRequest, Insight
+from azure.ai.projects.models._models import (EvaluationComparisonRequest,
+                                              Insight)
 from azure.identity import DefaultAzureCredential
 from openai.types.eval_create_params import DataSourceConfigCustom
 
-from analysis import (
-    convert_insight_to_comparisons,
-    convert_json_to_jsonl,
-    process_evaluation_results,
-    summarize,
-)
+from analysis import (convert_insight_to_comparisons, convert_json_to_jsonl,
+                      process_evaluation_results, summarize)
 from analysis.constants import DEFAULT_EVALUATOR_METADATA
 
 current_dir = Path(__file__).parent
@@ -300,8 +298,8 @@ def _validate_data_schema(
 def create_testing_criteria(
     evaluators: list[str],
     evaluator_metadata: dict,
-    input_data: dict = None,
-    evaluator_parameters: dict = None,
+    input_data: dict | None = None,
+    evaluator_parameters: dict | None = None,
 ) -> list[dict]:
     """Build testing criteria dynamically from evaluator names.
 
@@ -643,7 +641,7 @@ def main(
 
         # Generate comparison insights if multiple agents
         # (uses API, doesn't need individual processing)
-        comparisons_by_evaluator = {}
+        comparisons_by_evaluator: dict[str, list] = {}
         compare_url = None
         if len(agent_ids) > 1:
             comparisons_by_evaluator, comparison_insight = (

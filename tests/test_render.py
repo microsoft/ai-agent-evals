@@ -2,7 +2,6 @@
 
 from pathlib import Path
 
-import pandas as pd
 import pytest
 
 from analysis.analysis import (
@@ -20,8 +19,6 @@ from analysis.render import (
     fmt_image,
     fmt_metric_value,
     fmt_pvalue,
-    fmt_table_ci,
-    fmt_table_compare,
     fmt_treatment_badge,
 )
 

@@ -1,13 +1,9 @@
 """Tests for summary module."""
 
-import pytest
+from analysis.analysis import (DesiredDirection, EvaluationScore,
+                               EvaluationScoreCI, EvaluationScoreComparison,
+                               EvaluationScoreDataType)
 from analysis.summary import summarize
-from analysis.analysis import (
-    EvaluationScore,
-    EvaluationScoreCI,
-    EvaluationScoreComparison,
-)
-from analysis.analysis import EvaluationScoreDataType, DesiredDirection
 
 
 class MockAgent:
@@ -62,7 +58,6 @@ def test_summarize_with_comparisons():
     )
 
     control_items = [{"score": 0.7}, {"score": 0.75}, {"score": 0.72}]
-    treatment_items = [{"score": 0.85}, {"score": 0.88}, {"score": 0.87}]
 
     score_ci = EvaluationScoreCI(
         variant="control:v1", score=score, result_items=control_items

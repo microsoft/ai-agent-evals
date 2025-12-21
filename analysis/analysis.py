@@ -6,7 +6,7 @@
 from dataclasses import dataclass
 from enum import Enum
 from math import isnan
-from typing import Literal
+from typing import Literal, cast
 
 import pandas as pd
 from scipy.stats import binomtest, t
@@ -330,7 +330,17 @@ class EvaluationScoreComparison:
         """
         # Return pre-computed result if available
         if self._treatment_effect_result:
-            return self._treatment_effect_result
+            return cast(
+                Literal[
+                    "Zero samples",
+                    "Too few samples",
+                    "Inconclusive",
+                    "Changed",
+                    "Improved",
+                    "Degraded",
+                ],
+                self._treatment_effect_result,
+            )
 
         # Otherwise compute from statistics
         if self.count == 0:

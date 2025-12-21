@@ -3,7 +3,8 @@
 
 """Constants used across the analysis module."""
 
-from azure.ai.projects.models import EvaluatorMetricDirection, EvaluatorMetricType
+from azure.ai.projects.models import (EvaluatorMetricDirection,
+                                      EvaluatorMetricType)
 
 # Statistical thresholds
 SAMPLE_SIZE_THRESHOLD = (

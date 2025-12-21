@@ -6,7 +6,8 @@
 import json
 from pathlib import Path
 
-from azure.ai.projects.models import EvaluatorMetricDirection, EvaluatorMetricType
+from azure.ai.projects.models import (EvaluatorMetricDirection,
+                                      EvaluatorMetricType)
 from azure.ai.projects.models._enums import OperationState
 
 from . import analysis
@@ -115,7 +116,7 @@ def process_evaluation_results(
     print(f"DEBUG: Retrieved {len(all_output_items)} output items")
 
     # Group results by evaluator:metric (supporting multiple metrics per evaluator)
-    evaluator_metric_results = {}
+    evaluator_metric_results: dict[str, list] = {}
     total_results = 0
     for output_item in all_output_items:
         for result in output_item.results:
@@ -235,10 +236,10 @@ def convert_insight_to_comparisons(
     if not result or "comparisons" not in result:
         return {}
 
-    comparisons_by_evaluator = {}
+    comparisons_by_evaluator: dict[str, list] = {}
 
     # Group comparisons by evaluator to detect multiple metrics
-    evaluator_comparisons_temp = {}
+    evaluator_comparisons_temp: dict[str, list] = {}
     for comparison_data in result["comparisons"]:
         evaluator_name = comparison_data["evaluator"]
         metric_name = comparison_data.get("metric", "score")

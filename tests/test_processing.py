@@ -1,12 +1,14 @@
 """Tests for analysis processing functions."""
 
 import json
-from pathlib import Path
 import tempfile
-import pytest
-from analysis.processing import convert_json_to_jsonl, _convert_sdk_enums_to_analysis
-from azure.ai.projects.models import EvaluatorMetricType, EvaluatorMetricDirection
-from analysis.analysis import EvaluationScoreDataType, DesiredDirection
+from pathlib import Path
+
+from azure.ai.projects.models import EvaluatorMetricDirection, EvaluatorMetricType
+
+from analysis.analysis import DesiredDirection, EvaluationScoreDataType
+from analysis.processing import (_convert_sdk_enums_to_analysis,
+                                 convert_json_to_jsonl)
 
 
 def test_convert_json_to_jsonl():
