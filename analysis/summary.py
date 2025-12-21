@@ -99,9 +99,9 @@ def summarize(
 
     md.append("### References\n")
     md.append(
-        "- For in-depth details on evaluators, please see the "
-        "[Agent Evaluation SDK section in the Azure AI documentation]"
-        "(https://learn.microsoft.com/en-us/azure/ai-foundry/how-to/develop/agent-evaluate-sdk)"
+        "- For in-depth details on evaluators, please see "
+        "[Observability in generative AI]"
+        "(https://learn.microsoft.com/en-us/azure/ai-foundry/concepts/observability?view=foundry)"
     )
     md.append("")
 

@@ -33,6 +33,7 @@ if env_path.exists():
 USER_AGENT = "ai-agent-evals/v2-beta (+https://github.com/microsoft/ai-agent-evals)"
 STEP_SUMMARY = os.getenv("GITHUB_STEP_SUMMARY") or os.getenv("ADO_STEP_SUMMARY")
 POLLING_INTERVAL_SECONDS = 5
+DEPLOYMENT_NAME_PARAM = "deployment_name"
 
 AZURE_AI_PROJECT_ENDPOINT = os.getenv("AZURE_AI_PROJECT_ENDPOINT")
 DEPLOYMENT_NAME = os.getenv("DEPLOYMENT_NAME")
@@ -114,19 +115,15 @@ def get_evaluator_metadata(project_client: AIProjectClient, evaluator_names: lis
     return evaluator_metadata
 
 
-def create_testing_criteria(evaluators: list[str], evaluator_metadata: dict, input_data: dict = None, evaluator_parameters: dict = None) -> list[dict]:
-    """Build testing criteria dynamically from evaluator names.
+def _generate_data_mappings(input_data: dict | None) -> dict:
+    """Generate data mappings from input data.
     
     Args:
-        evaluators: List of evaluator names
-        evaluator_metadata: Dictionary with evaluator metadata including category
         input_data: Input data dictionary containing data_mapping and data fields
-        evaluator_parameters: Optional dictionary of evaluator-specific initialization parameters
         
     Returns:
-        List of testing criteria dictionaries
+        Dictionary of data field mappings
     """
-    # Get user-defined data mappings from input data if provided
     user_data_mappings = input_data.get("data_mapping", None) if input_data else None
     
     # Auto-generate data mappings from fields in data items
@@ -138,6 +135,160 @@ def create_testing_criteria(evaluators: list[str], evaluator_metadata: dict, inp
         for field in first_item.keys():
             user_data_mappings[field] = f"{{{{item.{field}}}}}"
     
+    return user_data_mappings or {}
+
+
+def _get_response_field(evaluator_name: str, categories: list) -> str:
+    """Determine the response field based on evaluator name and categories.
+    
+    Args:
+        evaluator_name: Name of the evaluator
+        categories: List of evaluator categories
+        
+    Returns:
+        Response field template string
+    """
+    if evaluator_name == "builtin.groundedness" or categories == ["agents"]:
+        return "{{sample.output_items}}"
+    return "{{sample.output_text}}"
+
+
+def _build_base_data_mapping(response_field: str, user_data_mappings: dict) -> dict:
+    """Build the base data mapping for an evaluator.
+    
+    Args:
+        response_field: Response field template string
+        user_data_mappings: User-provided data mappings
+        
+    Returns:
+        Complete data mapping dictionary
+    """
+    evaluator_data_mapping = {
+        "response": response_field,
+        "tool_calls": "{{sample.tool_calls}}",
+        "tool_definitions": "{{sample.tool_definitions}}"
+    }
+    evaluator_data_mapping.update(user_data_mappings)
+    return evaluator_data_mapping
+
+
+def _validate_init_parameters(
+    evaluator_name: str,
+    init_params_schema: dict,
+    initialization_parameters: dict
+) -> None:
+    """Validate that all required initialization parameters are provided.
+    
+    Args:
+        evaluator_name: Name of the evaluator
+        init_params_schema: Schema defining required parameters
+        initialization_parameters: Dictionary of provided parameters
+        
+    Raises:
+        ValueError: If required parameters are missing
+    """
+    if not init_params_schema or 'required' not in init_params_schema:
+        return
+    
+    required_params = init_params_schema['required']
+    
+    # Add deployment_name if required and not present
+    if DEPLOYMENT_NAME_PARAM in required_params and DEPLOYMENT_NAME_PARAM not in initialization_parameters:
+        initialization_parameters[DEPLOYMENT_NAME_PARAM] = DEPLOYMENT_NAME
+    
+    # Validate all other required parameters are provided
+    missing_params = [
+        param for param in required_params
+        if param != DEPLOYMENT_NAME_PARAM and param not in initialization_parameters
+    ]
+    
+    if missing_params:
+        raise ValueError(
+            f"Evaluator '{evaluator_name}' requires the following parameters that are not provided: "
+            f"{', '.join(missing_params)}. Please add them to 'evaluator_parameters' in your input JSON."
+        )
+
+
+def _validate_data_schema(
+    evaluator_name: str,
+    data_schema: dict,
+    evaluator_data_mapping: dict
+) -> None:
+    """Validate that data mapping satisfies the required data schema.
+    
+    Args:
+        evaluator_name: Name of the evaluator
+        data_schema: Schema defining required data fields
+        evaluator_data_mapping: Dictionary of data field mappings
+        
+    Raises:
+        ValueError: If required data fields are missing
+    """
+    if not data_schema:
+        return
+    
+    # Check if schema has anyOf (multiple acceptable combinations)
+    if 'anyOf' in data_schema:
+        any_combination_satisfied = False
+        all_missing_combinations = []
+        
+        for schema_option in data_schema['anyOf']:
+            if 'required' in schema_option:
+                required_fields = schema_option['required']
+                missing_fields = [
+                    field for field in required_fields
+                    if field not in evaluator_data_mapping
+                ]
+                
+                if not missing_fields:
+                    any_combination_satisfied = True
+                    break
+                all_missing_combinations.append(missing_fields)
+        
+        if not any_combination_satisfied:
+            combinations_str = " OR ".join(
+                f"[{', '.join(combo)}]" for combo in all_missing_combinations
+            )
+            raise ValueError(
+                f"Evaluator '{evaluator_name}' requires at least one of these field combinations: "
+                f"{combinations_str}. Please add the required fields to 'data_mapping' or ensure they exist in your data items."
+            )
+    
+    # Check if schema has simple required list
+    elif 'required' in data_schema:
+        required_data_fields = data_schema['required']
+        missing_data_fields = [
+            field for field in required_data_fields
+            if field not in evaluator_data_mapping
+        ]
+        
+        if missing_data_fields:
+            raise ValueError(
+                f"Evaluator '{evaluator_name}' requires the following data fields that are not mapped: "
+                f"{', '.join(missing_data_fields)}. Please add them to 'data_mapping' or ensure they exist in your data items."
+            )
+
+
+def create_testing_criteria(
+    evaluators: list[str],
+    evaluator_metadata: dict,
+    input_data: dict = None,
+    evaluator_parameters: dict = None
+) -> list[dict]:
+    """Build testing criteria dynamically from evaluator names.
+    
+    Args:
+        evaluators: List of evaluator names
+        evaluator_metadata: Dictionary with evaluator metadata including category
+        input_data: Input data dictionary containing data_mapping and data fields
+        evaluator_parameters: Optional dictionary of evaluator-specific initialization parameters
+        
+    Returns:
+        List of testing criteria dictionaries
+    """
+    # Generate data mappings from input data
+    user_data_mappings = _generate_data_mappings(input_data)
+    
     testing_criteria = []
     for evaluator_name in evaluators:
         evaluator_display_name = evaluator_name.split('.')[-1] if '.' in evaluator_name else evaluator_name
@@ -146,34 +297,19 @@ def create_testing_criteria(evaluators: list[str], evaluator_metadata: dict, inp
         metadata = evaluator_metadata.get(evaluator_name, {})
         categories = metadata.get('categories', [])
         init_params_schema = metadata.get('init_parameters', {})
+        data_schema = metadata.get('data_schema', {})
         
-        # Use output_items only if categories contains exactly "agents" and nothing else, or if it's builtin.groundedness
-        if evaluator_name == "builtin.groundedness" or categories == ["agents"]:
-            response_field = "{{sample.output_items}}"
-        else:
-            response_field = "{{sample.output_text}}"
+        # Determine response field and build data mapping
+        response_field = _get_response_field(evaluator_name, categories)
+        evaluator_data_mapping = _build_base_data_mapping(response_field, user_data_mappings)
         
-        # Build base data mapping for this evaluator
-        evaluator_data_mapping = {
-            "response": response_field,
-            "tool_calls": "{{sample.tool_calls}}",
-            "tool_definitions": "{{sample.tool_definitions}}"
-        }
-        
-        # Add user-defined data mappings from input JSON if provided
-        if user_data_mappings:
-            evaluator_data_mapping.update(user_data_mappings)
-        
-        # Get initialization parameters for this evaluator
+        # Get and validate initialization parameters
         initialization_parameters = {}
         if evaluator_parameters and evaluator_name in evaluator_parameters:
-            # Use parameters from input JSON
-            initialization_parameters = evaluator_parameters[evaluator_name]
+            initialization_parameters = evaluator_parameters[evaluator_name].copy()
         
-        # Add deployment_name if it's required and not already in initialization_parameters
-        if init_params_schema and 'required' in init_params_schema:
-            if 'deployment_name' in init_params_schema['required'] and 'deployment_name' not in initialization_parameters:
-                initialization_parameters['deployment_name'] = DEPLOYMENT_NAME
+        _validate_init_parameters(evaluator_name, init_params_schema, initialization_parameters)
+        _validate_data_schema(evaluator_name, data_schema, evaluator_data_mapping)
         
         testing_criteria.append({
             "type": "azure_ai_evaluator",
