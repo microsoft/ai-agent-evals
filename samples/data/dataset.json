@@ -7,7 +7,7 @@
     "builtin.coherence",   
     "builtin.fluency",   
     "builtin.groundedness",
-    "builtin.groundedness_pro",    
+ 
     "builtin.intent_resolution",
     "builtin.relevance",
     "builtin.response_completeness",
