@@ -196,10 +196,13 @@ def _validate_init_parameters(
     if DEPLOYMENT_NAME_PARAM in required_params and DEPLOYMENT_NAME_PARAM not in initialization_parameters:
         initialization_parameters[DEPLOYMENT_NAME_PARAM] = DEPLOYMENT_NAME
     
+    # Parameters to exclude from validation (auto-populated by system)
+    excluded_params = {DEPLOYMENT_NAME_PARAM, 'azure_ai_project'}
+    
     # Validate all other required parameters are provided
     missing_params = [
         param for param in required_params
-        if param != DEPLOYMENT_NAME_PARAM and param not in initialization_parameters
+        if param not in excluded_params and param not in initialization_parameters
     ]
     
     if missing_params:

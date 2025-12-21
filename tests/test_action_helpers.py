@@ -114,6 +114,16 @@ def test_validate_init_parameters_all_provided():
     _validate_init_parameters("test_evaluator", schema, params)
 
 
+def test_validate_init_parameters_excludes_azure_ai_project():
+    """Test that azure_ai_project is excluded from validation."""
+    schema = {"required": ["azure_ai_project", "deployment_name"]}
+    params = {}
+    
+    # Should not raise - both excluded params are auto-populated
+    _validate_init_parameters("test_evaluator", schema, params)
+    assert "deployment_name" in params
+
+
 def test_validate_data_schema_no_schema():
     """Test data schema validation with no schema."""
     # Should not raise
