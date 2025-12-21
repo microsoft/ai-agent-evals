@@ -1,7 +1,16 @@
 {
   "name": "test-dataset-tiny",
   "evaluators": [
-    "builtin.f1_score"
+    "builtin.fluency",
+    "builtin.coherence",
+    "builtin.task_adherence",
+    "builtin.groundedness",
+    "builtin.intent_resolution",
+    "builtin.f1_score",
+    "builtin.rouge_score",
+    "builtin.violence",
+    "builtin.indirect_attack",
+    "builtin.protected_material"
   ],
   "data_mapping": {
   },
@@ -28,7 +37,47 @@
     {
       "query": "How do I rebase my branch in git?",
       "context": "To rebase your branch in git, first ensure you are on the branch you want to rebase. Then, use the command 'git rebase <target-branch>' to apply your changes on top of the target branch. Resolve any conflicts that arise during the process and use 'git rebase --continue' to complete the rebase.",
-      "ground_truth": "To rebase a branch in git, check out the branch you"
+      "ground_truth": "To rebase a branch in git, check out the branch you want to rebase and use 'git rebase <target-branch>' to apply your changes on top of the target branch."
+    },
+    {
+      "query": "What is machine learning?",
+      "context": "Machine learning is a subset of artificial intelligence that enables systems to learn and improve from experience without being explicitly programmed. It uses algorithms to analyze data, identify patterns, and make decisions.",
+      "ground_truth": "Machine learning is a branch of AI that allows computers to learn from data and improve their performance over time without explicit programming."
+    },
+    {
+      "query": "Explain quantum computing",
+      "context": "Quantum computing leverages quantum mechanical phenomena like superposition and entanglement to perform computations. Unlike classical computers that use bits, quantum computers use qubits that can exist in multiple states simultaneously.",
+      "ground_truth": "Quantum computing uses quantum mechanics principles to process information using qubits instead of classical bits, enabling parallel processing of multiple states."
+    },
+    {
+      "query": "How does blockchain work?",
+      "context": "Blockchain is a distributed ledger technology that records transactions across multiple computers. Each block contains a cryptographic hash of the previous block, transaction data, and a timestamp, making it tamper-resistant.",
+      "ground_truth": "Blockchain is a decentralized digital ledger where transactions are recorded in blocks linked together using cryptography, ensuring data integrity and transparency."
+    },
+    {
+      "query": "What are microservices?",
+      "context": "Microservices is an architectural style that structures an application as a collection of loosely coupled services. Each service is independently deployable, scalable, and focuses on a specific business capability.",
+      "ground_truth": "Microservices architecture breaks down applications into small, independent services that can be developed, deployed, and scaled separately."
+    },
+    {
+      "query": "Describe cloud computing",
+      "context": "Cloud computing delivers computing services including servers, storage, databases, networking, software, and analytics over the internet. It offers flexible resources, faster innovation, and economies of scale.",
+      "ground_truth": "Cloud computing provides on-demand access to computing resources over the internet, offering scalability, flexibility, and cost-efficiency."
+    },
+    {
+      "query": "What is DevOps?",
+      "context": "DevOps is a set of practices that combines software development and IT operations. It aims to shorten the development lifecycle and provide continuous delivery with high software quality through automation and collaboration.",
+      "ground_truth": "DevOps is a culture and practice that unifies software development and operations to enable faster, more reliable software delivery through automation and collaboration."
+    },
+    {
+      "query": "Explain neural networks",
+      "context": "Neural networks are computing systems inspired by biological neural networks. They consist of interconnected nodes (neurons) organized in layers that process information using dynamic responses to external inputs.",
+      "ground_truth": "Neural networks are AI models inspired by the human brain, consisting of interconnected nodes that learn to recognize patterns and make decisions from data."
+    },
+    {
+      "query": "What is containerization?",
+      "context": "Containerization is a lightweight virtualization method that packages applications with their dependencies into portable containers. Containers share the host OS kernel but run in isolated user spaces, making them efficient and consistent across environments.",
+      "ground_truth": "Containerization packages applications and their dependencies into isolated, portable units that can run consistently across different computing environments."
     }
   ]
 }
