@@ -201,7 +201,7 @@ def fmt_table_compare(
             # It's either "evaluator" or "evaluator:metric" for multiple metrics
             first_comp = comparisons[0] if comparisons else None
             
-            row = {"Evaluation score": score_key}
+            row = {"Evaluation metric": score_key}
             
             # Create a control badge using first comparison (same baseline for all)
             if first_comp:
@@ -254,12 +254,12 @@ def fmt_table_ci(evaluation_scores: dict[str, any], agent_name: str) -> str:
             
             records.append(
                 {
-                    "Evaluation score": eval_score_label,
-                    agent_name: fmt_metric_value(
+                    "Evaluation metric": eval_score_label,
+                    "Pass Rate": f"{score_ci.item_summary['pass_rate']:.1%}" if score_ci.item_summary else "N/A",
+                    "Score": fmt_metric_value(
                         score_ci.mean, score_ci.score.data_type
                     ) if score_ci.mean is not None else "N/A",
-                    "95% Confidence Interval": fmt_ci(score_ci),
-                    "Pass Rate": f"{score_ci.item_summary['pass_rate']:.1%}" if score_ci.item_summary else "N/A",
+                    "95% Confidence Interval": fmt_ci(score_ci),                    
                 }
             )
         except (ValueError, KeyError) as e:
@@ -268,7 +268,7 @@ def fmt_table_ci(evaluation_scores: dict[str, any], agent_name: str) -> str:
     df_summary = pd.DataFrame.from_records(records)
 
     if not df_summary.empty:
-        # First column (Evaluation score) left-aligned, all other columns right-aligned
+        # First column (Evaluation metric) left-aligned, all other columns right-aligned
         alignments = ["left"] + ["right"] * (len(df_summary.columns) - 1)
         return df_summary.to_markdown(index=False, colalign=alignments)
 

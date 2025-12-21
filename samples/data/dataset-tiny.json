@@ -1,24 +1,46 @@
 {
   "name": "test-dataset-tiny",
   "evaluators": [
-    "builtin.fluency",
+    "custom_prompt_kid_friendly",
+    "custom_code_1",
+    "builtin.bleu_score",
+    "builtin.code_vulnerability",
     "builtin.coherence",
-    "builtin.task_adherence",
-    "builtin.groundedness",
-    "builtin.intent_resolution",
+    "builtin.document_retrieval",
     "builtin.f1_score",
-    "builtin.rouge_score",
-    "builtin.violence",
+    "builtin.fluency",
+    "builtin.gleu_score",
+    "builtin.groundedness",
+    "builtin.groundedness_pro",
+    "builtin.hate_unfairness",
     "builtin.indirect_attack",
-    "builtin.protected_material"
+    "builtin.intent_resolution",
+    "builtin.meteor_score",
+    "builtin.protected_material",
+    "builtin.relevance",
+    "builtin.response_completeness",
+    "builtin.retrieval",
+    "builtin.rouge_score",
+    "builtin.self_harm",
+    "builtin.sexual",
+    "builtin.task_adherence",
+    "builtin.task_completion",
+    "builtin.task_navigation_efficiency",
+    "builtin.tool_call_accuracy",
+    "builtin.tool_call_success",
+    "builtin.tool_input_accuracy",
+    "builtin.tool_output_utilization",
+    "builtin.tool_selection",
+    "builtin.ungrounded_attributes",
+    "builtin.violence"
   ],
   "data_mapping": {
   },
   "evaluator_parameters": { 
-    "aprilk_prompt_evaluator": {
-      "threshold": 3
+    "custom_prompt_kid_friendly": {
+      "threshold": 4
     },
-    "aprilk_code_evaluator": {
+    "custom_code_1": {
       "pass_threshold": 0.5
     },
     "builtin.rouge_score": {

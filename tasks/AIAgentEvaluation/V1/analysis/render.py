@@ -194,7 +194,7 @@ def fmt_table_compare(
     records = []
     for score in scores:
         try:
-            row = {"Evaluation score": score.name}
+            row = {"Evaluation metric": score.name}
 
             compare_result = EvaluationScoreComparison(
                 results[baseline], results[baseline], score=score
@@ -230,7 +230,7 @@ def fmt_table_ci(scores: list[EvaluationScore], result: EvaluationResult) -> str
             result_ci = EvaluationScoreCI(result, score=score)
             records.append(
                 {
-                    "Evaluation score": score.name,
+                    "Evaluation metric": score.name,
                     result.variant: fmt_metric_value(
                         result_ci.mean, result_ci.score.data_type
                     ),
@@ -243,7 +243,7 @@ def fmt_table_ci(scores: list[EvaluationScore], result: EvaluationResult) -> str
     df_summary = pd.DataFrame.from_records(records)
 
     if not df_summary.empty:
-        # First column (Evaluation score) left-aligned, all other columns right-aligned
+        # First column (Evaluation metric) left-aligned, all other columns right-aligned
         alignments = ["left"] + ["right"] * (len(df_summary.columns) - 1)
         return df_summary.to_markdown(index=False, colalign=alignments)
 

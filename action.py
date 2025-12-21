@@ -31,6 +31,7 @@ if env_path.exists():
 
 USER_AGENT = "ai-agent-evals/v2-beta (+https://github.com/microsoft/ai-agent-evals)"
 STEP_SUMMARY = os.getenv("GITHUB_STEP_SUMMARY") or os.getenv("ADO_STEP_SUMMARY")
+POLLING_INTERVAL_SECONDS = 5
 
 AZURE_AI_PROJECT_ENDPOINT = os.getenv("AZURE_AI_PROJECT_ENDPOINT")
 DEPLOYMENT_NAME = os.getenv("DEPLOYMENT_NAME")
@@ -125,7 +126,7 @@ def get_evaluator_metadata(project_client: AIProjectClient, evaluator_names: lis
     print(f"Loaded metadata for {len(evaluator_metadata)} evaluators")
     return evaluator_metadata
 
-#TODO: support OAI graders and parameters from input json
+
 def create_testing_criteria(evaluators: list[str], evaluator_metadata: dict, input_data: dict = None, evaluator_parameters: dict = None) -> list[dict]:
     """Build testing criteria dynamically from evaluator names.
     
@@ -154,17 +155,16 @@ def create_testing_criteria(evaluators: list[str], evaluator_metadata: dict, inp
     for evaluator_name in evaluators:
         evaluator_display_name = evaluator_name.split('.')[-1] if '.' in evaluator_name else evaluator_name
         
-        # Get categories to determine response mapping
-        metadata = evaluator_metadata.get(evaluator_name, {'categories': None})
+        # Get metadata for this evaluator
+        metadata = evaluator_metadata.get(evaluator_name, {})
         categories = metadata.get('categories', [])
+        init_params_schema = metadata.get('init_parameters', {})
         
         # Use output_items only if categories contains exactly "agents" and nothing else, or if it's builtin.groundedness
         if evaluator_name == "builtin.groundedness" or categories == ["agents"]:
             response_field = "{{sample.output_items}}"
         else:
             response_field = "{{sample.output_text}}"
-
-            
         
         # Build base data mapping for this evaluator
         evaluator_data_mapping = {
@@ -182,10 +182,6 @@ def create_testing_criteria(evaluators: list[str], evaluator_metadata: dict, inp
         if evaluator_parameters and evaluator_name in evaluator_parameters:
             # Use parameters from input JSON
             initialization_parameters = evaluator_parameters[evaluator_name]
-        
-        # Check if evaluator requires deployment_name in init_parameters
-        metadata = evaluator_metadata.get(evaluator_name, {})
-        init_params_schema = metadata.get('init_parameters', {})
         
         # Add deployment_name if it's required and not already in initialization_parameters
         if init_params_schema and 'required' in init_params_schema:
@@ -237,7 +233,7 @@ def create_evaluation_runs(openai_client, eval_object, dataset, agents: dict) ->
     return agent_eval_runs
 
 
-def wait_for_evaluation_runs(openai_client, eval_object, agent_eval_runs: dict, agents: dict):
+def wait_for_evaluation_runs(openai_client, eval_object, agent_eval_runs: dict):
     """Wait for all evaluation runs to complete."""
     print("Waiting for evaluation runs to complete...")
     while True:
@@ -251,7 +247,7 @@ def wait_for_evaluation_runs(openai_client, eval_object, agent_eval_runs: dict, 
         
         if all_completed:
             break
-        time.sleep(5)
+        time.sleep(POLLING_INTERVAL_SECONDS)
 
     print(f"All {len(agent_eval_runs)} evaluation run(s) completed")
 
@@ -288,7 +284,7 @@ def generate_comparison_insight(
     # Wait for insight generation to complete
     while compare_insight.state not in [OperationState.SUCCEEDED, OperationState.FAILED]:
         compare_insight = project_client.insights.get(id=compare_insight.id)
-        time.sleep(5)
+        time.sleep(POLLING_INTERVAL_SECONDS)
     
     if compare_insight.state == OperationState.SUCCEEDED:
         print("Comparison insight generated successfully")
@@ -348,27 +344,6 @@ def create_evaluation_and_dataset(openai_client, project_client, input_data_path
     return eval_object, dataset
 
 
-def process_all_agent_results(
-    openai_client,
-    eval_object,
-    agent_eval_runs: dict,
-    agents: dict,
-    evaluator_metadata: dict
-) -> dict:
-    """Process evaluation results for all agents.
-    
-    Returns:
-        Dictionary mapping agent IDs to their results
-    """
-    all_agent_results = {}
-    for agent_id, eval_run in agent_eval_runs.items():
-        agent = agents[agent_id]
-        agent_results = process_evaluation_results(openai_client, eval_object, eval_run, agent, evaluator_metadata)
-        all_agent_results[agent_id] = agent_results
-        print_agent_results(agent_results)
-    return all_agent_results
-
-
 def generate_and_print_comparisons(
     project_client,
     eval_object,
@@ -421,7 +396,7 @@ def generate_and_print_comparisons(
 
 def main(
     endpoint: str,
-    input_data_path: str,
+    input_data_path: Path,
     input_data: dict,
     agent_ids: list[str],
     baseline_agent_id: str | None = None,
@@ -454,7 +429,7 @@ def main(
 
         # Execute evaluation runs for all agents
         agent_eval_runs = create_evaluation_runs(openai_client, eval_object, dataset, agents)
-        wait_for_evaluation_runs(openai_client, eval_object, agent_eval_runs, agents)
+        wait_for_evaluation_runs(openai_client, eval_object, agent_eval_runs)
 
         # Extract report URLs from all completed eval runs
         report_urls = {}
