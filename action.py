@@ -352,14 +352,14 @@ def generate_and_print_comparisons(
     agent_eval_runs: dict,
     evaluator_names: list[str],
     evaluator_metadata: dict
-) -> dict:
+) -> tuple[dict, object | None]:
     """Generate comparison insights for multiple agents.
     
     Returns:
-        Dictionary of comparisons by evaluator
+        Tuple of (comparisons_by_evaluator dict, comparison_insight object)
     """
     if len(agent_ids) <= 1:
-        return {}
+        return {}, None
     
     # Use baseline agent if specified, otherwise use first agent
     baseline_id = baseline_agent_id if baseline_agent_id else agent_ids[0]
@@ -379,7 +379,7 @@ def generate_and_print_comparisons(
     )
     
     if not comparison_insight:
-        return {}
+        return {}, None
     
     # Convert insight to EvaluationScoreComparison objects
     treatment_agent_ids = [aid for aid in agent_ids if aid != baseline_id]
@@ -391,7 +391,7 @@ def generate_and_print_comparisons(
         evaluator_metadata
     )
     
-    return comparisons_by_evaluator
+    return comparisons_by_evaluator, comparison_insight
 
 
 def main(
@@ -433,11 +433,16 @@ def main(
 
         # Extract report URLs from all completed eval runs
         report_urls = {}
+        eval_base_url = None
         for agent_id, eval_run in agent_eval_runs.items():
             report_url = getattr(eval_run, 'report_url', None)
             if report_url:
                 report_urls[agent_id] = report_url
-        print(f"Collected {len(report_urls)} evaluation report URL(s)")
+                # Extract evaluation base URL (remove last 2 path segments)
+                if not eval_base_url:
+                    parts = report_url.rsplit('/', 2)
+                    eval_base_url = parts[0] if len(parts) > 2 else report_url
+        print(f"Collected {len(report_urls)} evaluation report URL(s))")
 
         # Determine baseline agent
         baseline_id = baseline_agent_id if baseline_agent_id else agent_ids[0]
@@ -452,17 +457,24 @@ def main(
         
         # Generate comparison insights if multiple agents (uses API, doesn't need individual processing)
         comparisons_by_evaluator = {}
+        compare_url = None
         if len(agent_ids) > 1:
-            comparisons_by_evaluator = generate_and_print_comparisons(
+            comparisons_by_evaluator, comparison_insight = generate_and_print_comparisons(
                 project_client, eval_object, agent_ids, baseline_agent_id,
                 agent_eval_runs, evaluator_names, evaluator_metadata
             )
+            # Build compare URL if insight available
+            if comparison_insight and eval_base_url:
+                insight_id = comparison_insight.id
+                compare_url = f"{eval_base_url}/compare/{insight_id}_EvaluationComparison"
         
         # Generate and return summary markdown
         return summarize(
             baseline_results=baseline_results,
             comparisons_by_evaluator=comparisons_by_evaluator if len(agent_ids) > 1 else None,
             report_urls=report_urls,
+            eval_url=eval_base_url,
+            compare_url=compare_url,
         )
 
 

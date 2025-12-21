@@ -17,6 +17,8 @@ def summarize(
     baseline_results: dict,
     comparisons_by_evaluator: dict[str, list] | None = None,
     report_urls: dict[str, str] | None = None,
+    eval_url: str | None = None,
+    compare_url: str | None = None,
 ) -> str:
     """Generate a markdown summary of evaluation results.
 
@@ -28,6 +30,8 @@ def summarize(
         comparisons_by_evaluator: Optional dictionary of comparison results for multiple agents.
             Each evaluator maps to a list of EvaluationScoreComparison objects.
         report_urls: Optional dictionary mapping agent IDs to their report URLs
+        eval_url: Optional evaluation base URL
+        compare_url: Optional comparison report URL
 
     Returns:
         Formatted markdown string with evaluation summary
@@ -47,10 +51,15 @@ def summarize(
     
     md = []
     md.append("## Azure AI Evaluation\n")
+    
+    if eval_url:
+        eval_link = fmt_hyperlink("Link to evaluation", eval_url)        
 
     # Show agents section - list all agents if comparisons available
     if comparisons_by_evaluator and treatment_agent_names:
         md.append("### Agents\n")
+        if eval_url:
+            md.append(f"{eval_link}\n")
         md.append("| Agent ID | Role | Evaluation results |")
         md.append("|:---------|:-----|:-------------------|")
         
@@ -65,6 +74,8 @@ def summarize(
             md.append(f"| {treatment_name} | Treatment | {treatment_link} |")
     else:
         md.append("### Agent\n")
+        if eval_url:
+            md.append(f"{eval_link}\n")
         md.append("| Agent ID | Evaluation results |")
         md.append("|:---------|:-------------------|")
         agent_url = report_urls.get(agent_name) if report_urls else None
@@ -72,6 +83,11 @@ def summarize(
         md.append(f"| {agent_name} | {result_link} |")
 
     md.append("\n### Evaluation results\n")
+    
+    # Add comparison link above the results table if available
+    if compare_url:
+        compare_link = fmt_hyperlink("Link to compare report", compare_url)
+        md.append(f"{compare_link}\n")
     
     # Generate comparison table if comparisons are available, otherwise show CI table
     if comparisons_by_evaluator and treatment_agent_names:
