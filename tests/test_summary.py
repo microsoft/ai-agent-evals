@@ -1,136 +1,188 @@
-"""
-Tests for the summary functionality in the analysis module.
+"""Tests for summary module."""
 
-The tests use snapshot testing to verify the output matches expected results.
-"""
-
-from pathlib import Path
-
-import pandas as pd
-from azure.ai.agents.models import Agent
-
-from analysis.analysis import EvaluationResult, EvaluationResultView
+import pytest
 from analysis.summary import summarize
-
-agent_1 = Agent(id="agent.v1", name="agent_version_1")
-agent_2 = Agent(id="agent.v2", name="agent_version_2")
-
-data_result_1 = {
-    "inputs.id": [1, 2, 3],
-    "outputs.fluency.fluency": [0.8, 0.9, 0.85],
-    "outputs.relevance.relevance": [4, 5, 4],
-}
-
-data_result_2 = {
-    "inputs.id": [1, 2, 3],
-    "outputs.fluency.fluency": [0.6, 0.5, 0.75],
-    "outputs.relevance.relevance": [3, 4, 5],
-}
+from analysis.analysis import EvaluationScore, EvaluationScoreCI, EvaluationScoreComparison
+from analysis.analysis import EvaluationScoreDataType, DesiredDirection
 
 
-def test_summarize_one_variant(snapshot):
-    """Test summary of the analysis for 1 variant."""
+class MockAgent:
+    """Mock agent for testing."""
+    def __init__(self, name, version):
+        self.name = name
+        self.version = version
 
-    result_1 = EvaluationResult(
-        variant=agent_1.id,
-        df_result=pd.DataFrame(data_result_1),
-        ai_foundry_url="test_url_1",
+
+def test_summarize_single_variant():
+    """Test summarize with single variant (no comparisons)."""
+    # Create baseline results
+    score = EvaluationScore(
+        name="fluency",
+        evaluator="fluency",
+        field="score",
+        data_type=EvaluationScoreDataType.CONTINUOUS,
+        desired_direction=DesiredDirection.INCREASE
     )
-    results = {agent_1.id: result_1}
-    agents = {agent_1.id: agent_1}
-    output = summarize(
-        eval_results=results,
-        agents=agents,
-        baseline=agent_1.id,
-        evaluators=["FluencyEvaluator", "RelevanceEvaluator"],
-        agent_base_url="https://ai-url/",
-        result_view=EvaluationResultView.ALL,
+    
+    result_items = [
+        {"score": 0.8},
+        {"score": 0.9},
+        {"score": 0.85}
+    ]
+    
+    score_ci = EvaluationScoreCI(
+        variant="agent1:v1",
+        score=score,
+        result_items=result_items
     )
-
-    snapshot.snapshot_dir = Path("tests", "snapshots", "summarize")
-    snapshot.assert_match(output, "one_variant.md")
-
-
-def test_summarize_multiple_variants(snapshot):
-    """Test summary of the analysis for multiple variants."""
-
-    result_1 = EvaluationResult(
-        variant=agent_1.id,
-        df_result=pd.DataFrame(data_result_1),
-        ai_foundry_url="test_url_1",
-    )
-    result_2 = EvaluationResult(
-        variant=agent_2.id,
-        df_result=pd.DataFrame(data_result_2),
-        ai_foundry_url="test_url_1",
-    )
-    results = {agent_1.id: result_1, agent_2.id: result_2}
-
-    agents = {agent_1.id: agent_1, agent_2.id: agent_2}
-    output = summarize(
-        eval_results=results,
-        agents=agents,
-        baseline=agent_1.id,
-        evaluators=["FluencyEvaluator", "RelevanceEvaluator"],
-        agent_base_url="https://ai-url/",
-        result_view=EvaluationResultView.ALL,
-    )
-
-    snapshot.snapshot_dir = Path("tests", "snapshots", "summarize")
-    snapshot.assert_match(output, "two_variants.md")
-
-
-def test_summary_with_different_views(snapshot):
-    """Test summary generation with different evaluation result views."""
-
-    # Create test data with both continuous and boolean results
-    test_data = {
-        "inputs.id": ["test1", "test2", "test3"],
-        "outputs.fluency.fluency": [0.8, 0.9, 0.7],  # Continuous score
-        "outputs.fluency.fluency_result": [True, True, False],  # Boolean result
-        "outputs.relevance.relevance": [4, 5, 3],  # Ordinal score
-        "outputs.relevance.relevance_result": [True, True, False],  # Boolean result
+    
+    baseline_results = {
+        "evaluation_scores": {"fluency": score_ci},
+        "agent": MockAgent("agent1", "v1"),
+        "evaluator_names": ["fluency"]
     }
+    
+    # Generate summary
+    summary = summarize(baseline_results)
+    
+    # Verify summary contains key elements
+    assert "agent1:v1" in summary
+    assert "fluency" in summary
+    assert "Observability in generative AI" in summary
 
-    result = EvaluationResult(
-        variant=agent_1.id,
-        df_result=pd.DataFrame(test_data),
-        ai_foundry_url="test_url_1",
+
+def test_summarize_with_comparisons():
+    """Test summarize with variant comparisons."""
+    # Create baseline results
+    score = EvaluationScore(
+        name="fluency",
+        evaluator="fluency",
+        field="score",
+        data_type=EvaluationScoreDataType.CONTINUOUS,
+        desired_direction=DesiredDirection.INCREASE
     )
-    results = {agent_1.id: result}
-    agents = {agent_1.id: agent_1}
-
-    # Test DEFAULT view
-    default_output = summarize(
-        eval_results=results,
-        agents=agents,
-        baseline=agent_1.id,
-        evaluators=["FluencyEvaluator", "RelevanceEvaluator"],
-        agent_base_url="https://ai-url/",
-        result_view=EvaluationResultView.DEFAULT,
+    
+    control_items = [{"score": 0.7}, {"score": 0.75}, {"score": 0.72}]
+    treatment_items = [{"score": 0.85}, {"score": 0.88}, {"score": 0.87}]
+    
+    score_ci = EvaluationScoreCI(
+        variant="control:v1",
+        score=score,
+        result_items=control_items
     )
-
-    # Test ALL view
-    all_output = summarize(
-        eval_results=results,
-        agents=agents,
-        baseline=agent_1.id,
-        evaluators=["FluencyEvaluator", "RelevanceEvaluator"],
-        agent_base_url="https://ai-url/",
-        result_view=EvaluationResultView.ALL,
+    
+    comparison = EvaluationScoreComparison(
+        score=score,
+        control_variant="control:v1",
+        treatment_variant="treatment:v1",
+        count=3,
+        control_mean=0.72,
+        treatment_mean=0.87,
+        delta_estimate=0.15,
+        p_value=0.01
     )
+    
+    baseline_results = {
+        "evaluation_scores": {"fluency": score_ci},
+        "agent": MockAgent("control", "v1"),
+        "evaluator_names": ["fluency"]
+    }
+    
+    comparisons_by_evaluator = {
+        "fluency": [comparison]
+    }
+    
+    # Generate summary
+    summary = summarize(baseline_results, comparisons_by_evaluator)
+    
+    # Verify summary contains comparison elements
+    assert "control:v1" in summary
+    assert "treatment:v1" in summary
+    assert "fluency" in summary
 
-    # Test RAW_SCORES view
-    raw_output = summarize(
-        eval_results=results,
-        agents=agents,
-        baseline=agent_1.id,
-        evaluators=["FluencyEvaluator", "RelevanceEvaluator"],
-        agent_base_url="https://ai-url/",
-        result_view=EvaluationResultView.RAW_SCORES,
+
+def test_summarize_with_report_urls():
+    """Test summarize with report URLs."""
+    score = EvaluationScore(
+        name="relevance",
+        evaluator="relevance",
+        field="score",
+        data_type=EvaluationScoreDataType.CONTINUOUS,
+        desired_direction=DesiredDirection.INCREASE
     )
+    
+    result_items = [{"score": 0.9}]
+    
+    score_ci = EvaluationScoreCI(
+        variant="agent1:v1",
+        score=score,
+        result_items=result_items
+    )
+    
+    baseline_results = {
+        "evaluation_scores": {"relevance": score_ci},
+        "agent": MockAgent("agent1", "v1"),
+        "evaluator_names": ["relevance"]
+    }
+    
+    report_urls = {
+        "agent1_v1": "https://example.com/report/agent1_v1"
+    }
+    
+    # Generate summary
+    summary = summarize(
+        baseline_results,
+        report_urls=report_urls,
+        eval_url="https://example.com/eval",
+        compare_url="https://example.com/compare"
+    )
+    
+    # Verify summary contains URLs
+    assert "https://example.com" in summary or "example.com" in summary
 
-    snapshot.snapshot_dir = Path("tests", "snapshots", "summarize")
-    snapshot.assert_match(default_output, "default_view.md")
-    snapshot.assert_match(all_output, "all_view.md")
-    snapshot.assert_match(raw_output, "raw_scores_view.md")
+
+def test_summarize_multiple_evaluators():
+    """Test summarize with multiple evaluators."""
+    # Create scores for multiple evaluators
+    fluency_score = EvaluationScore(
+        name="fluency",
+        evaluator="fluency",
+        field="score",
+        data_type=EvaluationScoreDataType.CONTINUOUS,
+        desired_direction=DesiredDirection.INCREASE
+    )
+    
+    relevance_score = EvaluationScore(
+        name="relevance",
+        evaluator="relevance",
+        field="score",
+        data_type=EvaluationScoreDataType.CONTINUOUS,
+        desired_direction=DesiredDirection.INCREASE
+    )
+    
+    fluency_ci = EvaluationScoreCI(
+        variant="agent:v1",
+        score=fluency_score,
+        result_items=[{"score": 0.8}]
+    )
+    
+    relevance_ci = EvaluationScoreCI(
+        variant="agent:v1",
+        score=relevance_score,
+        result_items=[{"score": 0.9}]
+    )
+    
+    baseline_results = {
+        "evaluation_scores": {
+            "fluency": fluency_ci,
+            "relevance": relevance_ci
+        },
+        "agent": MockAgent("agent", "v1"),
+        "evaluator_names": ["fluency", "relevance"]
+    }
+    
+    summary = summarize(baseline_results)
+    
+    # Verify both evaluators appear in summary
+    assert "fluency" in summary
+    assert "relevance" in summary

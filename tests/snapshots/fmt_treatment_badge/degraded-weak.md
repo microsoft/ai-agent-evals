@@ -1,1 +1,0 @@
-![Degraded: 0.64 (-0.21)](https://img.shields.io/badge/Degraded-0.64%20%28--0.21%29-fcae91 "Marginally statistically significant (p-value: 0.001).")

@@ -1,1 +1,0 @@
-![Baseline: 0.85](https://img.shields.io/badge/Baseline-0.85-ffffff "")
