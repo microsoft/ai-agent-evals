@@ -163,7 +163,7 @@ def fmt_ci(x: EvaluationScoreCI) -> str:
     """Format a confidence interval as a badge"""
     if x.ci_lower is None or x.ci_upper is None:
         color = "Information"
-        tooltip_stat = "Confidence interval not applicable for this score type"
+        tooltip_stat = "Confidence interval not available"
         return fmt_badge("", "N/A", color, tooltip_stat)
 
     if x.count < 10:
@@ -195,16 +195,13 @@ def fmt_table_compare(
         raise ValueError("No comparison results provided")
 
     records = []
-    for evaluator_name, comparisons in comparisons_by_evaluator.items():
+    for score_key, comparisons in comparisons_by_evaluator.items():
         try:
-            # Format evaluation score label: "test_criteria" or "test_criteria: metric"
+            # The key is already formatted properly from processing.py
+            # It's either "evaluator" or "evaluator:metric" for multiple metrics
             first_comp = comparisons[0] if comparisons else None
-            if first_comp and first_comp.score.field != evaluator_name:
-                eval_score_label = f"{evaluator_name}: {first_comp.score.field}"
-            else:
-                eval_score_label = evaluator_name
             
-            row = {"Evaluation score": eval_score_label}
+            row = {"Evaluation score": score_key}
             
             # Create a control badge using first comparison (same baseline for all)
             if first_comp:
@@ -229,7 +226,7 @@ def fmt_table_compare(
             records.append(row)
 
         except (ValueError, KeyError) as e:
-            print(f"Error comparing score {evaluator_name}: {e}")
+            print(f"Error comparing score {score_key}: {e}")
 
     df_summary = pd.DataFrame.from_records(records)
     return df_summary.to_markdown(index=False)
@@ -249,27 +246,24 @@ def fmt_table_ci(evaluation_scores: dict[str, any], agent_name: str) -> str:
         raise ValueError("No evaluation scores provided")
 
     records = []
-    for evaluator_name, score_ci in evaluation_scores.items():
+    for score_key, score_ci in evaluation_scores.items():
         try:
-            # Format evaluation score label: "test_criteria" or "test_criteria: metric"
-            if score_ci.score.field != evaluator_name:
-                eval_score_label = f"{evaluator_name}: {score_ci.score.field}"
-            else:
-                eval_score_label = evaluator_name
+            # The key is already formatted properly from processing.py
+            # It's either "evaluator" or "evaluator:metric" for multiple metrics
+            eval_score_label = score_key
             
             records.append(
                 {
                     "Evaluation score": eval_score_label,
                     agent_name: fmt_metric_value(
                         score_ci.mean, score_ci.score.data_type
-                    ),
+                    ) if score_ci.mean is not None else "N/A",
                     "95% Confidence Interval": fmt_ci(score_ci),
                     "Pass Rate": f"{score_ci.item_summary['pass_rate']:.1%}" if score_ci.item_summary else "N/A",
-                    "Total Tokens": score_ci.item_summary['total_tokens'] if score_ci.item_summary else "N/A",
                 }
             )
         except (ValueError, KeyError) as e:
-            print(f"Error formatting score {evaluator_name}: {e}")
+            print(f"Error formatting score {score_key}: {e}")
 
     df_summary = pd.DataFrame.from_records(records)
 

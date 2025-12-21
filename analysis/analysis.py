@@ -109,6 +109,16 @@ class EvaluationScoreCI:
         
         return pd.Series(scores)
 
+    def _validate_numeric_data(self, data: pd.Series) -> bool:
+        """Check if data is numeric. Return False and set mean/CI to None if not."""
+        if not pd.api.types.is_numeric_dtype(data):
+            print(f"Warning: Data for {self.score.name} is not numeric, skipping calculation")
+            self.mean = None
+            self.ci_lower = None
+            self.ci_upper = None
+            return False
+        return True
+
     def _compute_ci(self, data: pd.Series, confidence_level: float = 0.95):
         """Compute the confidence interval for the given data"""
         ci_lower = None
@@ -124,6 +134,9 @@ class EvaluationScoreCI:
             return
         
         if self.score.data_type == EvaluationScoreDataType.BOOLEAN:
+            if not self._validate_numeric_data(data):
+                return
+            
             result = binomtest(data.sum(), data.count())
             mean = result.proportion_estimate
             ci = result.proportion_ci(
@@ -134,6 +147,9 @@ class EvaluationScoreCI:
 
         elif self.score.data_type == EvaluationScoreDataType.CONTINUOUS:
             # NOTE: parametric CI does not respect score bounds (use bootstrapping if needed)
+            if not self._validate_numeric_data(data):
+                return
+            
             mean = data.mean()
             if len(data) > 1:
                 stderr = data.std() / (len(data)**0.5)
@@ -143,6 +159,9 @@ class EvaluationScoreCI:
 
         elif self.score.data_type == EvaluationScoreDataType.ORDINAL:
             # NOTE: ordinal data has non-linear intervals, so we omit CI
+            if not self._validate_numeric_data(data):
+                return
+            
             mean = data.mean()
             ci_lower = None
             ci_upper = None
@@ -162,19 +181,14 @@ class EvaluationScoreCI:
         failed_count = len(self.result_items) - passed_count
         
         scores = [item.get('score') for item in self.result_items if item.get('score') is not None]
-        avg_score = sum(scores) / len(scores) if scores else None
+        avg_score = None
+        if scores:
+            scores_series = pd.Series(scores)
+            if pd.api.types.is_numeric_dtype(scores_series):
+                avg_score = sum(scores) / len(scores)
         
         # Collect reasons for failures
         fail_reasons = [item.get('reason', '') for item in self.result_items if not item.get('passed', False)]
-        
-        # Collect usage statistics if available
-        total_prompt_tokens = 0
-        total_completion_tokens = 0
-        for item in self.result_items:
-            sample = item.get('sample', {})
-            usage = sample.get('usage', {})
-            total_prompt_tokens += usage.get('prompt_tokens', 0)
-            total_completion_tokens += usage.get('completion_tokens', 0)
         
         self.item_summary = {
             'total_items': len(self.result_items),
@@ -182,10 +196,7 @@ class EvaluationScoreCI:
             'failed_count': failed_count,
             'pass_rate': passed_count / len(self.result_items) if self.result_items else 0,
             'average_score': avg_score,
-            'fail_reasons': fail_reasons,
-            'total_prompt_tokens': total_prompt_tokens,
-            'total_completion_tokens': total_completion_tokens,
-            'total_tokens': total_prompt_tokens + total_completion_tokens
+            'fail_reasons': fail_reasons
         }
 
 

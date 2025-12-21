@@ -66,59 +66,140 @@ def get_evaluator_metadata(project_client: AIProjectClient, evaluator_names: lis
     """
     evaluator_metadata = {}
     
-    for evaluator_name in evaluator_names:
-        try:
-            # Try to get the evaluator (works for built-in evaluators)
-            evaluator = project_client.evaluators.get(name=evaluator_name)
-            
-            # Get metrics from the evaluator definition
-            if hasattr(evaluator, 'definition') and evaluator.definition:
-                definition = evaluator.definition
-                if hasattr(definition, 'metrics') and definition.metrics:
-                    # Get first metric (evaluators typically have one primary metric)
-                    for metric_name, metric in definition.metrics.items():
-                        # Use SDK enums directly
-                        metric_type = metric.type if hasattr(metric, 'type') else EvaluatorMetricType.CONTINUOUS
-                        metric_direction = metric.desirable_direction if hasattr(metric, 'desirable_direction') else EvaluatorMetricDirection.INCREASE
-                        
-                        evaluator_metadata[evaluator_name] = {
-                            'data_type': metric_type,
-                            'desired_direction': metric_direction,
-                            'field': metric_name
-                        }
-                        break  # Use first metric
-        
-        except Exception as e:
-            # Custom evaluator or error fetching metadata - use defaults
-            evaluator_metadata[evaluator_name] = {
+    # Default metadata for evaluators without definitions
+    default_metadata = {
+        'metrics': {
+            'score': {
                 'data_type': EvaluatorMetricType.CONTINUOUS,
                 'desired_direction': EvaluatorMetricDirection.INCREASE,
                 'field': 'score'
             }
+        },
+        'categories': [],
+        'init_parameters': None,
+        'data_schema': None
+    }
+    
+    for evaluator_name in evaluator_names:
+        try:
+            evaluator = project_client.evaluators.get_version(name=evaluator_name, version="latest")
+            
+            # Get categories from evaluator
+            categories = getattr(evaluator, 'categories', [])
+            
+            # Get metrics from the evaluator definition
+            if hasattr(evaluator, 'definition') and evaluator.definition:
+                definition = evaluator.definition
+                
+                # Extract init_parameters and data_schema from definition
+                init_parameters = getattr(definition, 'init_parameters', None)
+                data_schema = getattr(definition, 'data_schema', None)
+                
+                if hasattr(definition, 'metrics') and definition.metrics:
+                    # Store all metrics for this evaluator
+                    metrics_dict = {}
+                    for metric_name, metric in definition.metrics.items():
+                        metric_type = metric.type if hasattr(metric, 'type') else EvaluatorMetricType.CONTINUOUS
+                        metric_direction = metric.desirable_direction if hasattr(metric, 'desirable_direction') else EvaluatorMetricDirection.INCREASE
+                        
+                        metrics_dict[metric_name] = {
+                            'data_type': metric_type,
+                            'desired_direction': metric_direction,
+                            'field': metric_name
+                        }
+                    evaluator_metadata[evaluator_name] = {
+                        'metrics': metrics_dict,
+                        'categories': categories,
+                        'init_parameters': init_parameters,
+                        'data_schema': data_schema
+                    }
+                    continue
+        
+        except Exception as e:
+            # Custom evaluator or error fetching metadata - use defaults
+            print(f"Could not fetch metadata for evaluator '{evaluator_name}': {e}. Using defaults.")
+        
+        # Use default metadata (for errors or missing definitions)
+        evaluator_metadata[evaluator_name] = default_metadata
     
     print(f"Loaded metadata for {len(evaluator_metadata)} evaluators")
     return evaluator_metadata
 
 #TODO: support OAI graders and parameters from input json
-def create_testing_criteria(evaluators: list[str]) -> list[dict]:
-    """Build testing criteria dynamically from evaluator names."""
+def create_testing_criteria(evaluators: list[str], evaluator_metadata: dict, input_data: dict = None, evaluator_parameters: dict = None) -> list[dict]:
+    """Build testing criteria dynamically from evaluator names.
+    
+    Args:
+        evaluators: List of evaluator names
+        evaluator_metadata: Dictionary with evaluator metadata including category
+        input_data: Input data dictionary containing data_mapping and data fields
+        evaluator_parameters: Optional dictionary of evaluator-specific initialization parameters
+        
+    Returns:
+        List of testing criteria dictionaries
+    """
+    # Get user-defined data mappings from input data if provided
+    user_data_mappings = input_data.get("data_mapping", None) if input_data else None
+    
+    # Auto-generate data mappings from fields in data items
+    if input_data and "data" in input_data and len(input_data["data"]) > 0:
+        first_item = input_data["data"][0]
+        if user_data_mappings is None:
+            user_data_mappings = {}
+        # Add all fields from the first data item that aren't already mapped
+        for field in first_item.keys():
+            user_data_mappings[field] = f"{{{{item.{field}}}}}"
+    
     testing_criteria = []
     for evaluator_name in evaluators:
         evaluator_display_name = evaluator_name.split('.')[-1] if '.' in evaluator_name else evaluator_name
+        
+        # Get categories to determine response mapping
+        metadata = evaluator_metadata.get(evaluator_name, {'categories': None})
+        categories = metadata.get('categories', [])
+        
+        # Use output_items only if categories contains exactly "agents" and nothing else, or if it's builtin.groundedness
+        if evaluator_name == "builtin.groundedness" or categories == ["agents"]:
+            response_field = "{{sample.output_items}}"
+        else:
+            response_field = "{{sample.output_text}}"
+
+            
+        
+        # Build base data mapping for this evaluator
+        evaluator_data_mapping = {
+            "response": response_field,
+            "tool_calls": "{{sample.tool_calls}}",
+            "tool_definitions": "{{sample.tool_definitions}}"
+        }
+        
+        # Add user-defined data mappings from input JSON if provided
+        if user_data_mappings:
+            evaluator_data_mapping.update(user_data_mappings)
+        
+        # Get initialization parameters for this evaluator
+        initialization_parameters = {}
+        if evaluator_parameters and evaluator_name in evaluator_parameters:
+            # Use parameters from input JSON
+            initialization_parameters = evaluator_parameters[evaluator_name]
+        
+        # Check if evaluator requires deployment_name in init_parameters
+        metadata = evaluator_metadata.get(evaluator_name, {})
+        init_params_schema = metadata.get('init_parameters', {})
+        
+        # Add deployment_name if it's required and not already in initialization_parameters
+        if init_params_schema and 'required' in init_params_schema:
+            if 'deployment_name' in init_params_schema['required'] and 'deployment_name' not in initialization_parameters:
+                initialization_parameters['deployment_name'] = DEPLOYMENT_NAME
+        
         testing_criteria.append({
             "type": "azure_ai_evaluator",
             "name": evaluator_display_name,
             "evaluator_name": evaluator_name,
-            "initialization_parameters": {
-                "deployment_name": DEPLOYMENT_NAME
-            },
-            "data_mapping": {
-                "query": "{{item.query}}", 
-                "response": "{{sample.output_items}}",
-                "tool_calls": "{{sample.tool_calls}}",
-                "tool_definitions": "{{sample.tool_definitions}}"
-            },
+            "initialization_parameters": initialization_parameters,
+            "data_mapping": evaluator_data_mapping,
         })
+
     return testing_criteria
 
 
@@ -217,8 +298,15 @@ def generate_comparison_insight(
         return None
 
 
-def create_evaluation_and_dataset(openai_client, project_client, input_data_path: Path, input_data: dict) -> tuple:
+def create_evaluation_and_dataset(openai_client, project_client, input_data_path: Path, input_data: dict, evaluator_metadata: dict) -> tuple:
     """Create evaluation object and upload dataset.
+    
+    Args:
+        openai_client: OpenAI client
+        project_client: AI Project client
+        input_data_path: Path to input data file
+        input_data: Input data dictionary
+        evaluator_metadata: Evaluator metadata with categories
     
     Returns:
         Tuple of (eval_object, dataset)
@@ -229,8 +317,16 @@ def create_evaluation_and_dataset(openai_client, project_client, input_data_path
         include_sample_schema=True,
     )
     
+    # Get evaluator-specific parameters from input data if provided
+    evaluator_parameters = input_data.get("evaluator_parameters", None)
+    
     # Build testing criteria dynamically from evaluators in input data
-    testing_criteria = create_testing_criteria(input_data.get("evaluators", []))
+    testing_criteria = create_testing_criteria(
+        input_data.get("evaluators", []), 
+        evaluator_metadata,
+        input_data,
+        evaluator_parameters
+    )
     
     eval_object = openai_client.evals.create(
         name="Agent Evaluation",
@@ -353,7 +449,7 @@ def main(
     
         # Create evaluation and prepare dataset
         eval_object, dataset = create_evaluation_and_dataset(
-            openai_client, project_client, input_data_path, input_data
+            openai_client, project_client, input_data_path, input_data, evaluator_metadata
         )
 
         # Execute evaluation runs for all agents

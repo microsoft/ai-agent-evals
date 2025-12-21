@@ -36,7 +36,6 @@ def summarize(
     evaluation_scores = baseline_results['evaluation_scores']
     agent = baseline_results['agent']
     agent_name = f"{agent.name}:{agent.version}"
-    evaluators = baseline_results['evaluator_names']
     
     # Extract treatment agent names from comparisons if available
     treatment_agent_names = None

@@ -105,60 +105,97 @@ def process_evaluation_results(openai_client, eval_object, eval_run, agent, eval
             break
         after = output_items.data[-1].id if output_items.data else None
     
-    # Group results by evaluator
-    evaluator_results = {}
+    print(f"DEBUG: Retrieved {len(all_output_items)} output items")
+    
+    # Group results by evaluator:metric (supporting multiple metrics per evaluator)
+    evaluator_metric_results = {}
+    total_results = 0
     for output_item in all_output_items:
         for result in output_item.results:
+            total_results += 1
             evaluator_name = result.name
-            if evaluator_name not in evaluator_results:
-                evaluator_results[evaluator_name] = []
+            metric_name = result.metric if result.metric else 'score'
             
             # Convert result to dict format
             result_dict = {
-                'name': result.name,
                 'passed': result.passed,
                 'score': result.score,
-                'sample': result.sample,
-                'type': result.type,
-                'metric': result.metric,
-                'label': result.label,
-                'reason': result.reason,
-                'threshold': result.threshold
+                'reason': result.reason
             }
-            evaluator_results[evaluator_name].append(result_dict)
+            
+            # Group by evaluator:metric
+            if evaluator_name not in evaluator_metric_results:
+                evaluator_metric_results[evaluator_name] = {}
+            if metric_name not in evaluator_metric_results[evaluator_name]:
+                evaluator_metric_results[evaluator_name][metric_name] = []
+            
+            evaluator_metric_results[evaluator_name][metric_name].append(result_dict)
     
-    # Create EvaluationScoreCI objects for each evaluator
+    print(f"DEBUG: Processed {total_results} total results")
+    print(f"DEBUG: Grouped results into {len(evaluator_metric_results)} evaluators")
+    for eval_name, metrics in evaluator_metric_results.items():
+        print(f"  {eval_name}: {list(metrics.keys())}")
+    
+    # Create EvaluationScoreCI objects for each evaluator:metric combination
     evaluation_scores = {}
-    for evaluator_name, results in evaluator_results.items():
-        # Get metadata for this evaluator (with SDK enums), with defaults if not found
-        sdk_metadata = evaluator_metadata.get(evaluator_name, {
-            'data_type': EvaluatorMetricType.CONTINUOUS,
-            'desired_direction': EvaluatorMetricDirection.INCREASE,
-            'field': 'score'
+    evaluator_names = []
+    
+    for evaluator_name, metrics_dict in evaluator_metric_results.items():
+        # Get evaluator metadata (now has 'metrics' and 'categories' keys)
+        evaluator_entry = evaluator_metadata.get(evaluator_name, {
+            'metrics': {
+                'score': {
+                    'data_type': EvaluatorMetricType.CONTINUOUS,
+                    'desired_direction': EvaluatorMetricDirection.INCREASE,
+                    'field': 'score'
+                }
+            },
+            'categories': []
         })
+        evaluator_meta = evaluator_entry.get('metrics', evaluator_entry)  # Handle old format for backward compat
         
-        # Convert SDK enums to analysis enums
-        metadata = _convert_sdk_enums_to_analysis(sdk_metadata)
-        
-        score_metadata = analysis.EvaluationScore(
-            name=evaluator_name,
-            evaluator=evaluator_name,
-            field=metadata['field'],
-            data_type=metadata['data_type'],
-            desired_direction=metadata['desired_direction']
-        )
-        
-        score_ci = analysis.EvaluationScoreCI(
-            variant=agent.name,
-            score=score_metadata,
-            result_items=results
-        )
-        evaluation_scores[evaluator_name] = score_ci
+        for metric_name, results in metrics_dict.items():
+            # Get metadata for this specific metric
+            sdk_metadata = evaluator_meta.get(metric_name, evaluator_meta.get('score', {
+                'data_type': EvaluatorMetricType.CONTINUOUS,
+                'desired_direction': EvaluatorMetricDirection.INCREASE,
+                'field': metric_name
+            }))
+            
+            # Convert SDK enums to analysis enums
+            metadata = _convert_sdk_enums_to_analysis(sdk_metadata)
+            
+            score_metadata = analysis.EvaluationScore(
+                name=evaluator_name,
+                evaluator=evaluator_name,
+                field=metadata['field'],
+                data_type=metadata['data_type'],
+                desired_direction=metadata['desired_direction']
+            )
+            
+            score_ci = analysis.EvaluationScoreCI(
+                variant=agent.name,
+                score=score_metadata,
+                result_items=results
+            )
+            
+            # Use composite key for multiple metrics: "evaluator_name:metric_name" or just "evaluator_name"
+            # But only use composite if there are multiple metrics for this evaluator
+            if len(metrics_dict) > 1:
+                score_key = f"{evaluator_name}:{metric_name}"
+            else:
+                score_key = evaluator_name
+            
+            evaluation_scores[score_key] = score_ci
+            if score_key not in evaluator_names:
+                evaluator_names.append(score_key)
+    
+    print(f"DEBUG: Created {len(evaluation_scores)} evaluation scores: {list(evaluation_scores.keys())}")
     
     return {
         'agent': agent,
         'evaluation_scores': evaluation_scores,
-        'evaluator_names': list(evaluator_results.keys())
+        'evaluator_names': evaluator_names
     }
 
 
@@ -191,45 +228,77 @@ def convert_insight_to_comparisons(
     
     comparisons_by_evaluator = {}
     
-    # Process each comparison from the insight result
+    # Group comparisons by evaluator to detect multiple metrics
+    evaluator_comparisons_temp = {}
     for comparison_data in result['comparisons']:
         evaluator_name = comparison_data['evaluator']
+        metric_name = comparison_data.get('metric', 'score')
         
-        # Get metadata for this evaluator (with SDK enums), with defaults if not found
-        sdk_metadata = evaluator_metadata.get(evaluator_name, {
-            'data_type': EvaluatorMetricType.CONTINUOUS,
-            'desired_direction': EvaluatorMetricDirection.INCREASE,
-            'field': 'score'
-        })
-        
-        # Convert SDK enums to analysis enums
-        metadata = _convert_sdk_enums_to_analysis(sdk_metadata)
-        
-        # Create EvaluationScore metadata
-        score_metadata = analysis.EvaluationScore(
-            name=evaluator_name,
-            evaluator=evaluator_name,
-            field=metadata['field'],
-            data_type=metadata['data_type'],
-            desired_direction=metadata['desired_direction']
-        )
-        
-        # Create comparison for each treatment agent
-        comparisons = []
-        for i, compare_item_data in enumerate(comparison_data.get('compareItems', [])):
-            treatment_id = treatment_agent_ids[i] if i < len(treatment_agent_ids) else f"Treatment {i+1}"
-            
-            comparison = analysis.EvaluationScoreComparison.from_insight_comparison(
-                comparison_data={
-                    **comparison_data,
-                    'compareItems': [compare_item_data]  # Pass single item
+        if evaluator_name not in evaluator_comparisons_temp:
+            evaluator_comparisons_temp[evaluator_name] = {}
+        if metric_name not in evaluator_comparisons_temp[evaluator_name]:
+            evaluator_comparisons_temp[evaluator_name][metric_name] = []
+        evaluator_comparisons_temp[evaluator_name][metric_name].append(comparison_data)
+    
+    # Process each comparison from the insight result
+    comparisons_by_evaluator = {}
+    for evaluator_name, metrics_dict in evaluator_comparisons_temp.items():
+        for metric_name, comparison_data_list in metrics_dict.items():
+            # Get evaluator metadata (now has 'metrics' and 'categories' keys)
+            evaluator_entry = evaluator_metadata.get(evaluator_name, {
+                'metrics': {
+                    'score': {
+                        'data_type': EvaluatorMetricType.CONTINUOUS,
+                        'desired_direction': EvaluatorMetricDirection.INCREASE,
+                        'field': 'score'
+                    }
                 },
-                control_variant=baseline_agent_id,
-                treatment_variant=treatment_id,
-                score=score_metadata
+                'categories': []
+            })
+            evaluator_meta = evaluator_entry.get('metrics', evaluator_entry)  # Handle old format for backward compat
+            
+            # Get metadata for this specific metric
+            sdk_metadata = evaluator_meta.get(metric_name, evaluator_meta.get('score', {
+                'data_type': EvaluatorMetricType.CONTINUOUS,
+                'desired_direction': EvaluatorMetricDirection.INCREASE,
+                'field': metric_name
+            }))
+            
+            # Convert SDK enums to analysis enums
+            metadata = _convert_sdk_enums_to_analysis(sdk_metadata)
+            
+            # Create EvaluationScore metadata
+            score_metadata = analysis.EvaluationScore(
+                name=evaluator_name,
+                evaluator=evaluator_name,
+                field=metadata['field'],
+                data_type=metadata['data_type'],
+                desired_direction=metadata['desired_direction']
             )
-            comparisons.append(comparison)
-        
-        comparisons_by_evaluator[evaluator_name] = comparisons
+            
+            # Create comparison for each treatment agent
+            comparisons = []
+            for comparison_data in comparison_data_list:
+                for i, compare_item_data in enumerate(comparison_data.get('compareItems', [])):
+                    treatment_id = treatment_agent_ids[i] if i < len(treatment_agent_ids) else f"Treatment {i+1}"
+                    
+                    comparison = analysis.EvaluationScoreComparison.from_insight_comparison(
+                        comparison_data={
+                            **comparison_data,
+                            'compareItems': [compare_item_data]  # Pass single item
+                        },
+                        control_variant=baseline_agent_id,
+                        treatment_variant=treatment_id,
+                        score=score_metadata
+                    )
+                    comparisons.append(comparison)
+            
+            # Use composite key for multiple metrics, matching process_evaluation_results logic
+            if len(metrics_dict) > 1:
+                score_key = f"{evaluator_name}:{metric_name}"
+            else:
+                score_key = evaluator_name
+            
+            comparisons_by_evaluator[score_key] = comparisons
     
     return comparisons_by_evaluator

@@ -1,13 +1,34 @@
 {
   "name": "test-dataset-tiny",
   "evaluators": [
-    "FluencyEvaluator",
-    "ToolCallAccuracyEvaluator", 
-    "GroundednessEvaluator"
+    "builtin.f1_score"
   ],
+  "data_mapping": {
+  },
+  "evaluator_parameters": { 
+    "aprilk_prompt_evaluator": {
+      "threshold": 3
+    },
+    "aprilk_code_evaluator": {
+      "pass_threshold": 0.5
+    },
+    "builtin.rouge_score": {
+        "rouge_type": "rouge1",
+        "f1_score_threshold": 0.5,
+        "precision_threshold": 0.5,
+        "recall_threshold": 0.5
+    }
+  },
   "data": [
     {
-      "query": "Tell me about Smart eyeware"
+      "query": "Tell me about Smart eyeware",
+      "context": "Smart eyeware refers to wearable technology integrated into eyeglasses or contact lenses that provide additional functionalities such as augmented reality, health monitoring, or connectivity.",
+      "ground_truth": "Smart eyeware includes devices like augmented reality glasses and smart contact lenses that offer features beyond traditional vision correction."
+    },
+    {
+      "query": "How do I rebase my branch in git?",
+      "context": "To rebase your branch in git, first ensure you are on the branch you want to rebase. Then, use the command 'git rebase <target-branch>' to apply your changes on top of the target branch. Resolve any conflicts that arise during the process and use 'git rebase --continue' to complete the rebase.",
+      "ground_truth": "To rebase a branch in git, check out the branch you"
     }
   ]
 }
