@@ -3,7 +3,7 @@
 
 """Constants used across the analysis module."""
 
-from azure.ai.projects.models import EvaluatorMetricType, EvaluatorMetricDirection
+from azure.ai.projects.models import EvaluatorMetricDirection, EvaluatorMetricType
 
 # Statistical thresholds
 SAMPLE_SIZE_THRESHOLD = 10  # Minimum samples required for statistical significance testing

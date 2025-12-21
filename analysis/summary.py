@@ -8,7 +8,6 @@ of evaluation results for AI agents. It includes functions to create
 tables comparing multiple agent variants or displaying confidence intervals
 for a single agent's performance metrics.
 """
-from .analysis import EvaluationResultView
 from .render import fmt_hyperlink, fmt_table_ci, fmt_table_compare
 
 
@@ -40,7 +39,7 @@ def summarize(
     evaluation_scores = baseline_results['evaluation_scores']
     agent = baseline_results['agent']
     agent_name = f"{agent.name}:{agent.version}"
-    
+
     # Extract treatment agent names from comparisons if available
     treatment_agent_names = None
     if comparisons_by_evaluator:
@@ -48,10 +47,10 @@ def summarize(
         first_evaluator_comparisons = next(iter(comparisons_by_evaluator.values()), [])
         if first_evaluator_comparisons:
             treatment_agent_names = [comp.treatment_variant for comp in first_evaluator_comparisons]
-    
+
     md = []
     md.append("## Azure AI Evaluation\n")
-    
+
     # Create eval link if URL available
     eval_link = fmt_hyperlink("View evaluation", eval_url) if eval_url else None
 
@@ -62,12 +61,12 @@ def summarize(
             md.append(f"{eval_link}\n")
         md.append("| Agent ID | Role | Evaluation results |")
         md.append("|:---------|:-----|:-------------------|")
-        
+
         # Use per-agent URLs from report_urls dictionary
         baseline_url = report_urls.get(agent_name) if report_urls else None
         baseline_link = fmt_hyperlink("View results", baseline_url) if baseline_url else ""
         md.append(f"| {agent_name} | Baseline | {baseline_link} |")
-        
+
         for treatment_name in treatment_agent_names:
             treatment_url = report_urls.get(treatment_name) if report_urls else None
             treatment_link = fmt_hyperlink("View results", treatment_url) if treatment_url else ""
@@ -83,12 +82,12 @@ def summarize(
         md.append(f"| {agent_name} | {result_link} |")
 
     md.append("\n### Evaluation results\n")
-    
+
     # Add comparison link above the results table if available
     if compare_url:
         compare_link = fmt_hyperlink("View comparison", compare_url)
         md.append(f"{compare_link}\n")
-    
+
     # Generate comparison table if comparisons are available, otherwise show CI table
     if comparisons_by_evaluator and treatment_agent_names:
         md_table = fmt_table_compare(comparisons_by_evaluator, agent_name)

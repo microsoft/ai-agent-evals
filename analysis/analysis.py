@@ -73,7 +73,7 @@ class EvaluationScoreCI:
     def __init__(self, variant: str, score: EvaluationScore, result_items: list):
         """
         Initialize EvaluationScoreCI from result items.
-        
+
         Args:
             variant: Name/identifier of the variant
             score: Metadata about the evaluation score
@@ -86,7 +86,7 @@ class EvaluationScoreCI:
         self.variant = variant
         self.result_items = result_items
         self.count = len(result_items)
-        
+
         # Extract scores from result items
         scores = self._extract_scores_from_items()
         self._compute_ci(scores)
@@ -106,7 +106,7 @@ class EvaluationScoreCI:
             else:
                 # Default to score field if field not found
                 scores.append(item.get('score'))
-        
+
         return pd.Series(scores)
 
     def _validate_numeric_data(self, data: pd.Series) -> bool:
@@ -123,20 +123,20 @@ class EvaluationScoreCI:
         """Compute the confidence interval for the given data"""
         ci_lower = None
         ci_upper = None
-        
+
         # Remove None values
         data = data.dropna()
-        
+
         if len(data) == 0:
             self.mean = None
             self.ci_lower = None
             self.ci_upper = None
             return
-        
+
         if self.score.data_type == EvaluationScoreDataType.BOOLEAN:
             if not self._validate_numeric_data(data):
                 return
-            
+
             result = binomtest(data.sum(), data.count())
             mean = result.proportion_estimate
             ci = result.proportion_ci(
@@ -149,7 +149,7 @@ class EvaluationScoreCI:
             # NOTE: parametric CI does not respect score bounds (use bootstrapping if needed)
             if not self._validate_numeric_data(data):
                 return
-            
+
             mean = data.mean()
             if len(data) > 1:
                 stderr = data.std() / (len(data)**0.5)
@@ -161,7 +161,7 @@ class EvaluationScoreCI:
             # NOTE: ordinal data has non-linear intervals, so we omit CI
             if not self._validate_numeric_data(data):
                 return
-            
+
             mean = data.mean()
             ci_lower = None
             ci_upper = None
@@ -179,17 +179,18 @@ class EvaluationScoreCI:
         # Extract key metrics from result items
         passed_count = sum(1 for item in self.result_items if item.get('passed', False))
         failed_count = len(self.result_items) - passed_count
-        
+
         scores = [item.get('score') for item in self.result_items if item.get('score') is not None]
         avg_score = None
         if scores:
             scores_series = pd.Series(scores)
             if pd.api.types.is_numeric_dtype(scores_series):
                 avg_score = sum(scores) / len(scores)
-        
+
         # Collect reasons for failures
-        fail_reasons = [item.get('reason', '') for item in self.result_items if not item.get('passed', False)]
-        
+        fail_reasons = [item.get('reason', '')
+                        for item in self.result_items if not item.get('passed', False)]
+
         self.item_summary = {
             'total_items': len(self.result_items),
             'passed_count': passed_count,
@@ -217,7 +218,7 @@ class EvaluationScoreComparison:
         treatment_effect_result: str | None = None,
     ):
         """Initialize comparison with pre-computed statistics.
-        
+
         Args:
             score: Metadata about the evaluation score
             control_variant: Name of the baseline/control variant
@@ -248,16 +249,16 @@ class EvaluationScoreComparison:
         score: EvaluationScore,
     ):
         """Create comparison from Azure AI comparison insight result.
-        
+
         Args:
             comparison_data: Single comparison item from insight result
             control_variant: Name of the baseline/control variant
             treatment_variant: Name of the treatment variant
             score: Metadata about the evaluation score
-            
+
         Returns:
             EvaluationScoreComparison instance
-            
+
         Example comparison_data structure:
             {
                 'testingCriteria': 'fluency',
@@ -286,7 +287,7 @@ class EvaluationScoreComparison:
         # Get first treatment comparison item
         compare_item = comparison_data['compareItems'][0]
         treatment_summary = compare_item['treatmentRunSummary']
-        
+
         # Map treatment effect from API format to our format
         treatment_effect_map = {
             'TooFewSamples': 'Too few samples',
@@ -300,7 +301,7 @@ class EvaluationScoreComparison:
             compare_item.get('treatmentEffect'),
             None
         )
-        
+
         return cls(
             score=score,
             control_variant=control_variant,
@@ -326,13 +327,13 @@ class EvaluationScoreComparison:
         "Degraded",
     ]:
         """Treatment effect based on the p-value and desired direction.
-        
+
         Returns pre-computed result if available, otherwise computes from statistics.
         """
         # Return pre-computed result if available
         if self._treatment_effect_result:
             return self._treatment_effect_result
-        
+
         # Otherwise compute from statistics
         if self.count == 0:
             return "Zero samples"

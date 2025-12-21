@@ -12,7 +12,7 @@ from .analysis import (
     EvaluationScoreComparison,
     EvaluationScoreDataType,
 )
-from .constants import SS_THRESHOLD, HSS_THRESHOLD
+from .constants import HSS_THRESHOLD, SS_THRESHOLD
 
 DARK_GREEN = "157e3b"
 PALE_GREEN = "a1d99b"
@@ -180,12 +180,12 @@ def fmt_table_compare(
     baseline_name: str,
 ) -> str:
     """Render a table comparing evaluation results from multiple agent variants.
-    
+
     Args:
         comparisons_by_evaluator: Dictionary mapping evaluator names to lists of
             EvaluationScoreComparison objects (one per treatment agent)
         baseline_name: Name of the baseline agent
-        
+
     Returns:
         Markdown formatted comparison table
     """
@@ -198,9 +198,9 @@ def fmt_table_compare(
             # The key is already formatted properly from processing.py
             # It's either "evaluator" or "evaluator:metric" for multiple metrics
             first_comp = comparisons[0] if comparisons else None
-            
+
             row = {"Evaluation metric": score_key}
-            
+
             # Create a control badge using first comparison (same baseline for all)
             if first_comp:
                 # Create a self-comparison for the baseline
@@ -216,11 +216,11 @@ def fmt_table_compare(
                     treatment_effect_result="Inconclusive"
                 )
                 row[baseline_name] = fmt_control_badge(baseline_comp)
-                
+
                 # Add treatment badges for each comparison
                 for comp in comparisons:
                     row[comp.treatment_variant] = fmt_treatment_badge(comp)
-            
+
             records.append(row)
 
         except (ValueError, KeyError) as e:
@@ -232,11 +232,11 @@ def fmt_table_compare(
 
 def fmt_table_ci(evaluation_scores: dict[str, any], agent_name: str) -> str:
     """Render a table of confidence intervals for the evaluation scores
-    
+
     Args:
         evaluation_scores: Dictionary mapping evaluator names to EvaluationScoreCI objects
         agent_name: Name of the agent being evaluated
-        
+
     Returns:
         Markdown formatted table string
     """
@@ -249,15 +249,19 @@ def fmt_table_ci(evaluation_scores: dict[str, any], agent_name: str) -> str:
             # The key is already formatted properly from processing.py
             # It's either "evaluator" or "evaluator:metric" for multiple metrics
             eval_score_label = score_key
-            
+
             records.append(
                 {
                     "Evaluation metric": eval_score_label,
-                    "Pass Rate": f"{score_ci.item_summary['pass_rate']:.1%}" if score_ci.item_summary else "N/A",
-                    "Score": fmt_metric_value(
-                        score_ci.mean, score_ci.score.data_type
-                    ) if score_ci.mean is not None else "N/A",
-                    "95% Confidence Interval": fmt_ci(score_ci),                    
+                    "Pass Rate": (
+                        f"{score_ci.item_summary['pass_rate']:.1%}"
+                        if score_ci.item_summary else "N/A"
+                    ),
+                    "Score": (
+                        fmt_metric_value(score_ci.mean, score_ci.score.data_type)
+                        if score_ci.mean is not None else "N/A"
+                    ),
+                    "95% Confidence Interval": fmt_ci(score_ci),
                 }
             )
         except (ValueError, KeyError) as e:
