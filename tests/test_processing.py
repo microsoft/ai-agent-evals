@@ -7,8 +7,7 @@ from pathlib import Path
 from azure.ai.projects.models import EvaluatorMetricDirection, EvaluatorMetricType
 
 from analysis.analysis import DesiredDirection, EvaluationScoreDataType
-from analysis.processing import (_convert_sdk_enums_to_analysis,
-                                 convert_json_to_jsonl)
+from analysis.processing import _convert_sdk_enums_to_analysis, convert_json_to_jsonl
 
 
 def test_convert_json_to_jsonl():

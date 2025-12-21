@@ -7,8 +7,11 @@ from urllib.parse import quote
 
 import pandas as pd
 
-from .analysis import (EvaluationScoreCI, EvaluationScoreComparison,
-                       EvaluationScoreDataType)
+from .analysis import (
+    EvaluationScoreCI,
+    EvaluationScoreComparison,
+    EvaluationScoreDataType,
+)
 from .constants import HSS_THRESHOLD, SS_THRESHOLD
 
 DARK_GREEN = "157e3b"
@@ -227,7 +230,9 @@ def fmt_table_compare(
     return df_summary.to_markdown(index=False)
 
 
-def fmt_table_ci(evaluation_scores: dict[str, EvaluationScoreCI], agent_name: str) -> str:
+def fmt_table_ci(
+    evaluation_scores: dict[str, EvaluationScoreCI], agent_name: str
+) -> str:
     """Render a table of confidence intervals for the evaluation scores
 
     Args:

@@ -6,8 +6,7 @@
 import json
 from pathlib import Path
 
-from azure.ai.projects.models import (EvaluatorMetricDirection,
-                                      EvaluatorMetricType)
+from azure.ai.projects.models import EvaluatorMetricDirection, EvaluatorMetricType
 from azure.ai.projects.models._enums import OperationState
 
 from . import analysis

@@ -1,8 +1,12 @@
 """Tests for summary module."""
 
-from analysis.analysis import (DesiredDirection, EvaluationScore,
-                               EvaluationScoreCI, EvaluationScoreComparison,
-                               EvaluationScoreDataType)
+from analysis.analysis import (
+    DesiredDirection,
+    EvaluationScore,
+    EvaluationScoreCI,
+    EvaluationScoreComparison,
+    EvaluationScoreDataType,
+)
 from analysis.summary import summarize
 
 

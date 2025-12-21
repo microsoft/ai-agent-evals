@@ -4,9 +4,13 @@ import numpy as np
 import pytest
 from scipy import stats
 
-from analysis.analysis import (DesiredDirection, EvaluationScore,
-                               EvaluationScoreCI, EvaluationScoreComparison,
-                               EvaluationScoreDataType)
+from analysis.analysis import (
+    DesiredDirection,
+    EvaluationScore,
+    EvaluationScoreCI,
+    EvaluationScoreComparison,
+    EvaluationScoreDataType,
+)
 
 
 def compute_comparison_stats(

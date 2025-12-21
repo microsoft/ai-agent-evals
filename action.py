@@ -9,16 +9,18 @@ import time
 from pathlib import Path
 
 from azure.ai.projects import AIProjectClient
-from azure.ai.projects.models import (EvaluatorMetricDirection,
-                                      EvaluatorMetricType)
+from azure.ai.projects.models import EvaluatorMetricDirection, EvaluatorMetricType
 from azure.ai.projects.models._enums import OperationState
-from azure.ai.projects.models._models import (EvaluationComparisonRequest,
-                                              Insight)
+from azure.ai.projects.models._models import EvaluationComparisonRequest, Insight
 from azure.identity import DefaultAzureCredential
 from openai.types.eval_create_params import DataSourceConfigCustom
 
-from analysis import (convert_insight_to_comparisons, convert_json_to_jsonl,
-                      process_evaluation_results, summarize)
+from analysis import (
+    convert_insight_to_comparisons,
+    convert_json_to_jsonl,
+    process_evaluation_results,
+    summarize,
+)
 from analysis.constants import DEFAULT_EVALUATOR_METADATA
 
 current_dir = Path(__file__).parent

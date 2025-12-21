@@ -2,9 +2,14 @@
 
 import pytest
 
-from action import (_build_base_data_mapping, _generate_data_mappings,
-                    _get_response_field, _validate_data_schema,
-                    _validate_init_parameters, create_testing_criteria)
+from action import (
+    _build_base_data_mapping,
+    _generate_data_mappings,
+    _get_response_field,
+    _validate_data_schema,
+    _validate_init_parameters,
+    create_testing_criteria,
+)
 
 
 def test_generate_data_mappings_empty():
