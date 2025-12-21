@@ -51,14 +51,19 @@ def get_agents(project_client: AIProjectClient, agent_ids: list[str]) -> dict:
             agent_name = agent_name_version[0]
             agent_version = agent_name_version[1]
             agent = project_client.agents.get_version(
-                agent_name=agent_name, agent_version=agent_version)
+                agent_name=agent_name, agent_version=agent_version
+            )
             agents[agent_id] = agent
         else:
-            raise ValueError(f"Invalid agent ID format: {agent_id}. Expected 'name:version'")
+            raise ValueError(
+                f"Invalid agent ID format: {agent_id}. Expected 'name:version'"
+            )
     return agents
 
 
-def get_evaluator_metadata(project_client: AIProjectClient, evaluator_names: list[str]) -> dict:
+def get_evaluator_metadata(
+    project_client: AIProjectClient, evaluator_names: list[str]
+) -> dict:
     """Get metadata for specific evaluators.
 
     Args:
@@ -72,45 +77,54 @@ def get_evaluator_metadata(project_client: AIProjectClient, evaluator_names: lis
 
     for evaluator_name in evaluator_names:
         try:
-            evaluator = project_client.evaluators.get_version(name=evaluator_name, version="latest")
+            evaluator = project_client.evaluators.get_version(
+                name=evaluator_name, version="latest"
+            )
 
             # Get categories from evaluator
-            categories = getattr(evaluator, 'categories', [])
+            categories = getattr(evaluator, "categories", [])
 
             # Get metrics from the evaluator definition
-            if hasattr(evaluator, 'definition') and evaluator.definition:
+            if hasattr(evaluator, "definition") and evaluator.definition:
                 definition = evaluator.definition
 
                 # Extract init_parameters and data_schema from definition
-                init_parameters = getattr(definition, 'init_parameters', None)
-                data_schema = getattr(definition, 'data_schema', None)
+                init_parameters = getattr(definition, "init_parameters", None)
+                data_schema = getattr(definition, "data_schema", None)
 
-                if hasattr(definition, 'metrics') and definition.metrics:
+                if hasattr(definition, "metrics") and definition.metrics:
                     # Store all metrics for this evaluator
                     metrics_dict = {}
                     for metric_name, metric in definition.metrics.items():
-                        metric_type = metric.type if hasattr(
-                            metric, 'type') else EvaluatorMetricType.CONTINUOUS
-                        metric_direction = metric.desirable_direction if hasattr(
-                            metric, 'desirable_direction') else EvaluatorMetricDirection.INCREASE
+                        metric_type = (
+                            metric.type
+                            if hasattr(metric, "type")
+                            else EvaluatorMetricType.CONTINUOUS
+                        )
+                        metric_direction = (
+                            metric.desirable_direction
+                            if hasattr(metric, "desirable_direction")
+                            else EvaluatorMetricDirection.INCREASE
+                        )
 
                         metrics_dict[metric_name] = {
-                            'data_type': metric_type,
-                            'desired_direction': metric_direction,
-                            'field': metric_name
+                            "data_type": metric_type,
+                            "desired_direction": metric_direction,
+                            "field": metric_name,
                         }
                     evaluator_metadata[evaluator_name] = {
-                        'metrics': metrics_dict,
-                        'categories': categories,
-                        'init_parameters': init_parameters,
-                        'data_schema': data_schema
+                        "metrics": metrics_dict,
+                        "categories": categories,
+                        "init_parameters": init_parameters,
+                        "data_schema": data_schema,
                     }
                     continue
 
         except Exception as e:
             # Custom evaluator or error fetching metadata - use defaults
             print(
-                f"Could not fetch metadata for evaluator '{evaluator_name}': {e}. Using defaults.")
+                f"Could not fetch metadata for evaluator '{evaluator_name}': {e}. Using defaults."
+            )
 
         # Use default metadata (for errors or missing definitions)
         evaluator_metadata[evaluator_name] = DEFAULT_EVALUATOR_METADATA
@@ -170,16 +184,14 @@ def _build_base_data_mapping(response_field: str, user_data_mappings: dict) -> d
     evaluator_data_mapping = {
         "response": response_field,
         "tool_calls": "{{sample.tool_calls}}",
-        "tool_definitions": "{{sample.tool_definitions}}"
+        "tool_definitions": "{{sample.tool_definitions}}",
     }
     evaluator_data_mapping.update(user_data_mappings)
     return evaluator_data_mapping
 
 
 def _validate_init_parameters(
-    evaluator_name: str,
-    init_params_schema: dict,
-    initialization_parameters: dict
+    evaluator_name: str, init_params_schema: dict, initialization_parameters: dict
 ) -> None:
     """Validate that all required initialization parameters are provided.
 
@@ -191,22 +203,25 @@ def _validate_init_parameters(
     Raises:
         ValueError: If required parameters are missing
     """
-    if not init_params_schema or 'required' not in init_params_schema:
+    if not init_params_schema or "required" not in init_params_schema:
         return
 
-    required_params = init_params_schema['required']
+    required_params = init_params_schema["required"]
 
     # Add deployment_name if required and not present
-    if (DEPLOYMENT_NAME_PARAM in required_params and
-            DEPLOYMENT_NAME_PARAM not in initialization_parameters):
+    if (
+        DEPLOYMENT_NAME_PARAM in required_params
+        and DEPLOYMENT_NAME_PARAM not in initialization_parameters
+    ):
         initialization_parameters[DEPLOYMENT_NAME_PARAM] = DEPLOYMENT_NAME
 
     # Parameters to exclude from validation (auto-populated by system)
-    excluded_params = {DEPLOYMENT_NAME_PARAM, 'azure_ai_project'}
+    excluded_params = {DEPLOYMENT_NAME_PARAM, "azure_ai_project"}
 
     # Validate all other required parameters are provided
     missing_params = [
-        param for param in required_params
+        param
+        for param in required_params
         if param not in excluded_params and param not in initialization_parameters
     ]
 
@@ -219,9 +234,7 @@ def _validate_init_parameters(
 
 
 def _validate_data_schema(
-    evaluator_name: str,
-    data_schema: dict,
-    evaluator_data_mapping: dict
+    evaluator_name: str, data_schema: dict, evaluator_data_mapping: dict
 ) -> None:
     """Validate that data mapping satisfies the required data schema.
 
@@ -237,15 +250,16 @@ def _validate_data_schema(
         return
 
     # Check if schema has anyOf (multiple acceptable combinations)
-    if 'anyOf' in data_schema:
+    if "anyOf" in data_schema:
         any_combination_satisfied = False
         all_missing_combinations = []
 
-        for schema_option in data_schema['anyOf']:
-            if 'required' in schema_option:
-                required_fields = schema_option['required']
+        for schema_option in data_schema["anyOf"]:
+            if "required" in schema_option:
+                required_fields = schema_option["required"]
                 missing_fields = [
-                    field for field in required_fields
+                    field
+                    for field in required_fields
                     if field not in evaluator_data_mapping
                 ]
 
@@ -266,10 +280,11 @@ def _validate_data_schema(
             )
 
     # Check if schema has simple required list
-    elif 'required' in data_schema:
-        required_data_fields = data_schema['required']
+    elif "required" in data_schema:
+        required_data_fields = data_schema["required"]
         missing_data_fields = [
-            field for field in required_data_fields
+            field
+            for field in required_data_fields
             if field not in evaluator_data_mapping
         ]
 
@@ -286,7 +301,7 @@ def create_testing_criteria(
     evaluators: list[str],
     evaluator_metadata: dict,
     input_data: dict = None,
-    evaluator_parameters: dict = None
+    evaluator_parameters: dict = None,
 ) -> list[dict]:
     """Build testing criteria dynamically from evaluator names.
 
@@ -304,34 +319,41 @@ def create_testing_criteria(
 
     testing_criteria = []
     for evaluator_name in evaluators:
-        evaluator_display_name = evaluator_name.split(
-            '.')[-1] if '.' in evaluator_name else evaluator_name
+        evaluator_display_name = (
+            evaluator_name.split(".")[-1] if "." in evaluator_name else evaluator_name
+        )
 
         # Get metadata for this evaluator
         metadata = evaluator_metadata.get(evaluator_name, {})
-        categories = metadata.get('categories', [])
-        init_params_schema = metadata.get('init_parameters', {})
-        data_schema = metadata.get('data_schema', {})
+        categories = metadata.get("categories", [])
+        init_params_schema = metadata.get("init_parameters", {})
+        data_schema = metadata.get("data_schema", {})
 
         # Determine response field and build data mapping
         response_field = _get_response_field(evaluator_name, categories)
-        evaluator_data_mapping = _build_base_data_mapping(response_field, user_data_mappings)
+        evaluator_data_mapping = _build_base_data_mapping(
+            response_field, user_data_mappings
+        )
 
         # Get and validate initialization parameters
         initialization_parameters = {}
         if evaluator_parameters and evaluator_name in evaluator_parameters:
             initialization_parameters = evaluator_parameters[evaluator_name].copy()
 
-        _validate_init_parameters(evaluator_name, init_params_schema, initialization_parameters)
+        _validate_init_parameters(
+            evaluator_name, init_params_schema, initialization_parameters
+        )
         _validate_data_schema(evaluator_name, data_schema, evaluator_data_mapping)
 
-        testing_criteria.append({
-            "type": "azure_ai_evaluator",
-            "name": evaluator_display_name,
-            "evaluator_name": evaluator_name,
-            "initialization_parameters": initialization_parameters,
-            "data_mapping": evaluator_data_mapping,
-        })
+        testing_criteria.append(
+            {
+                "type": "azure_ai_evaluator",
+                "name": evaluator_display_name,
+                "evaluator_name": evaluator_name,
+                "initialization_parameters": initialization_parameters,
+                "data_mapping": evaluator_data_mapping,
+            }
+        )
 
     return testing_criteria
 
@@ -362,7 +384,7 @@ def create_evaluation_runs(openai_client, eval_object, dataset, agents: dict) ->
         agent_eval_run = openai_client.evals.runs.create(
             eval_id=eval_object.id,
             name=f"Agent {agent_id}",
-            data_source=data_source  # type: ignore
+            data_source=data_source,  # type: ignore
         )
         agent_eval_runs[agent_id] = agent_eval_run
 
@@ -378,7 +400,8 @@ def wait_for_evaluation_runs(openai_client, eval_object, agent_eval_runs: dict):
         for agent_id, eval_run in agent_eval_runs.items():
             if eval_run.status not in ["completed", "failed"]:
                 eval_run = openai_client.evals.runs.retrieve(
-                    run_id=eval_run.id, eval_id=eval_object.id)
+                    run_id=eval_run.id, eval_id=eval_object.id
+                )
                 agent_eval_runs[agent_id] = eval_run
                 if eval_run.status not in ["completed", "failed"]:
                     all_completed = False
@@ -392,8 +415,8 @@ def wait_for_evaluation_runs(openai_client, eval_object, agent_eval_runs: dict):
 
 def print_agent_results(agent_results: dict):
     """Print evaluation results for an agent."""
-    agent = agent_results['agent']
-    evaluator_count = len(agent_results['evaluation_scores'])
+    agent = agent_results["agent"]
+    evaluator_count = len(agent_results["evaluation_scores"])
     print(f"Processed results for {agent.name} ({evaluator_count} evaluators)")
 
 
@@ -403,7 +426,7 @@ def generate_comparison_insight(
     baseline_run_id: str,
     treatment_run_ids: list[str],
     baseline_agent_id: str,
-    treatment_agent_ids: list[str]
+    treatment_agent_ids: list[str],
 ) -> Insight | None:
     """Generate comparison insights between baseline and treatment evaluation runs."""
     print(
@@ -417,13 +440,16 @@ def generate_comparison_insight(
             request=EvaluationComparisonRequest(
                 eval_id=eval_object.id,
                 baseline_run_id=baseline_run_id,
-                treatment_run_ids=treatment_run_ids
+                treatment_run_ids=treatment_run_ids,
             ),
         )
     )
 
     # Wait for insight generation to complete
-    while compare_insight.state not in [OperationState.SUCCEEDED, OperationState.FAILED]:
+    while compare_insight.state not in [
+        OperationState.SUCCEEDED,
+        OperationState.FAILED,
+    ]:
         compare_insight = project_client.insights.get(id=compare_insight.id)
         time.sleep(POLLING_INTERVAL_SECONDS)
 
@@ -440,7 +466,7 @@ def create_evaluation_and_dataset(
     project_client,
     input_data_path: Path,
     input_data: dict,
-    evaluator_metadata: dict
+    evaluator_metadata: dict,
 ) -> tuple:
     """Create evaluation object and upload dataset.
 
@@ -456,8 +482,11 @@ def create_evaluation_and_dataset(
     """
     data_source_config = DataSourceConfigCustom(
         type="custom",
-        item_schema={"type": "object", "properties": {
-            "query": {"type": "string"}}, "required": ["query"]},
+        item_schema={
+            "type": "object",
+            "properties": {"query": {"type": "string"}},
+            "required": ["query"],
+        },
         include_sample_schema=True,
     )
 
@@ -469,7 +498,7 @@ def create_evaluation_and_dataset(
         input_data.get("evaluators", []),
         evaluator_metadata,
         input_data,
-        evaluator_parameters
+        evaluator_parameters,
     )
 
     eval_object = openai_client.evals.create(
@@ -499,7 +528,7 @@ def generate_and_print_comparisons(
     baseline_agent_id: str | None,
     agent_eval_runs: dict,
     evaluator_names: list[str],
-    evaluator_metadata: dict
+    evaluator_metadata: dict,
 ) -> tuple[dict, Insight | None]:
     """Generate comparison insights for multiple agents.
 
@@ -523,7 +552,7 @@ def generate_and_print_comparisons(
         baseline_run_id,
         treatment_run_ids,
         baseline_id,
-        treatment_ids
+        treatment_ids,
     )
 
     if not comparison_insight:
@@ -536,7 +565,7 @@ def generate_and_print_comparisons(
         baseline_id,
         treatment_agent_ids,
         evaluator_names,
-        evaluator_metadata
+        evaluator_metadata,
     )
 
     return comparisons_by_evaluator, comparison_insight
@@ -571,23 +600,29 @@ def main(
 
         # Create evaluation and prepare dataset
         eval_object, dataset = create_evaluation_and_dataset(
-            openai_client, project_client, input_data_path, input_data, evaluator_metadata
+            openai_client,
+            project_client,
+            input_data_path,
+            input_data,
+            evaluator_metadata,
         )
 
         # Execute evaluation runs for all agents
-        agent_eval_runs = create_evaluation_runs(openai_client, eval_object, dataset, agents)
+        agent_eval_runs = create_evaluation_runs(
+            openai_client, eval_object, dataset, agents
+        )
         wait_for_evaluation_runs(openai_client, eval_object, agent_eval_runs)
 
         # Extract report URLs from all completed eval runs
         report_urls = {}
         eval_base_url = None
         for agent_id, eval_run in agent_eval_runs.items():
-            report_url = getattr(eval_run, 'report_url', None)
+            report_url = getattr(eval_run, "report_url", None)
             if report_url:
                 report_urls[agent_id] = report_url
                 # Extract evaluation base URL (remove last 2 path segments)
                 if not eval_base_url:
-                    parts = report_url.rsplit('/', 2)
+                    parts = report_url.rsplit("/", 2)
                     eval_base_url = parts[0] if len(parts) > 2 else report_url
         print(f"Collected {len(report_urls)} evaluation report URL(s)")
 
@@ -598,8 +633,11 @@ def main(
 
         # Process baseline agent results (needed for summary in all cases)
         baseline_results = process_evaluation_results(
-            openai_client, eval_object, baseline_eval_run, baseline_agent,
-            evaluator_metadata
+            openai_client,
+            eval_object,
+            baseline_eval_run,
+            baseline_agent,
+            evaluator_metadata,
         )
         print_agent_results(baseline_results)
 
@@ -608,9 +646,16 @@ def main(
         comparisons_by_evaluator = {}
         compare_url = None
         if len(agent_ids) > 1:
-            comparisons_by_evaluator, comparison_insight = generate_and_print_comparisons(
-                project_client, eval_object, agent_ids, baseline_agent_id,
-                agent_eval_runs, evaluator_names, evaluator_metadata
+            comparisons_by_evaluator, comparison_insight = (
+                generate_and_print_comparisons(
+                    project_client,
+                    eval_object,
+                    agent_ids,
+                    baseline_agent_id,
+                    agent_eval_runs,
+                    evaluator_names,
+                    evaluator_metadata,
+                )
             )
             # Build compare URL if insight available
             if comparison_insight and eval_base_url:
@@ -620,7 +665,9 @@ def main(
         # Generate and return summary markdown
         return summarize(
             baseline_results=baseline_results,
-            comparisons_by_evaluator=comparisons_by_evaluator if len(agent_ids) > 1 else None,
+            comparisons_by_evaluator=(
+                comparisons_by_evaluator if len(agent_ids) > 1 else None
+            ),
             report_urls=report_urls,
             eval_url=eval_base_url,
             compare_url=compare_url,

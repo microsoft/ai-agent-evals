@@ -37,19 +37,19 @@ def _convert_sdk_enums_to_analysis(metadata: dict) -> dict:
     }
 
     return {
-        'data_type': type_map.get(
-            metadata['data_type'],
-            analysis.EvaluationScoreDataType.CONTINUOUS
+        "data_type": type_map.get(
+            metadata["data_type"], analysis.EvaluationScoreDataType.CONTINUOUS
         ),
-        'desired_direction': direction_map.get(
-            metadata['desired_direction'],
-            analysis.DesiredDirection.INCREASE
+        "desired_direction": direction_map.get(
+            metadata["desired_direction"], analysis.DesiredDirection.INCREASE
         ),
-        'field': metadata['field']
+        "field": metadata["field"],
     }
 
 
-def convert_json_to_jsonl(input_json_path: Path, output_jsonl_path: Path | None = None) -> Path:
+def convert_json_to_jsonl(
+    input_json_path: Path, output_jsonl_path: Path | None = None
+) -> Path:
     """
     Convert input JSON file to JSONL format.
 
@@ -82,11 +82,7 @@ def convert_json_to_jsonl(input_json_path: Path, output_jsonl_path: Path | None 
 
 
 def process_evaluation_results(
-    openai_client,
-    eval_object,
-    eval_run,
-    agent,
-    evaluator_metadata: dict
+    openai_client, eval_object, eval_run, agent, evaluator_metadata: dict
 ) -> dict:
     """Process evaluation results for a single agent.
 
@@ -108,10 +104,7 @@ def process_evaluation_results(
     after = None
     while True:
         output_items = openai_client.evals.runs.output_items.list(
-            eval_run.id,
-            eval_id=eval_object.id,
-            limit=100,
-            after=after
+            eval_run.id, eval_id=eval_object.id, limit=100, after=after
         )
         all_output_items.extend(output_items.data)
 
@@ -128,13 +121,13 @@ def process_evaluation_results(
         for result in output_item.results:
             total_results += 1
             evaluator_name = result.name
-            metric_name = result.metric if result.metric else 'score'
+            metric_name = result.metric if result.metric else "score"
 
             # Convert result to dict format
             result_dict = {
-                'passed': result.passed,
-                'score': result.score,
-                'reason': result.reason
+                "passed": result.passed,
+                "score": result.score,
+                "reason": result.reason,
             }
 
             # Group by evaluator:metric
@@ -156,17 +149,25 @@ def process_evaluation_results(
 
     for evaluator_name, metrics_dict in evaluator_metric_results.items():
         # Get evaluator metadata (now has 'metrics' and 'categories' keys)
-        evaluator_entry = evaluator_metadata.get(evaluator_name, DEFAULT_EVALUATOR_METADATA)
+        evaluator_entry = evaluator_metadata.get(
+            evaluator_name, DEFAULT_EVALUATOR_METADATA
+        )
         # Handle old format for backward compat
-        evaluator_meta = evaluator_entry.get('metrics', evaluator_entry)
+        evaluator_meta = evaluator_entry.get("metrics", evaluator_entry)
 
         for metric_name, results in metrics_dict.items():
             # Get metadata for this specific metric
-            sdk_metadata = evaluator_meta.get(metric_name, evaluator_meta.get('score', {
-                'data_type': EvaluatorMetricType.CONTINUOUS,
-                'desired_direction': EvaluatorMetricDirection.INCREASE,
-                'field': metric_name
-            }))
+            sdk_metadata = evaluator_meta.get(
+                metric_name,
+                evaluator_meta.get(
+                    "score",
+                    {
+                        "data_type": EvaluatorMetricType.CONTINUOUS,
+                        "desired_direction": EvaluatorMetricDirection.INCREASE,
+                        "field": metric_name,
+                    },
+                ),
+            )
 
             # Convert SDK enums to analysis enums
             metadata = _convert_sdk_enums_to_analysis(sdk_metadata)
@@ -174,15 +175,13 @@ def process_evaluation_results(
             score_metadata = analysis.EvaluationScore(
                 name=evaluator_name,
                 evaluator=evaluator_name,
-                field=metadata['field'],
-                data_type=metadata['data_type'],
-                desired_direction=metadata['desired_direction']
+                field=metadata["field"],
+                data_type=metadata["data_type"],
+                desired_direction=metadata["desired_direction"],
             )
 
             score_ci = analysis.EvaluationScoreCI(
-                variant=agent.name,
-                score=score_metadata,
-                result_items=results
+                variant=agent.name, score=score_metadata, result_items=results
             )
 
             # Use composite key for multiple metrics:
@@ -203,9 +202,9 @@ def process_evaluation_results(
     )
 
     return {
-        'agent': agent,
-        'evaluation_scores': evaluation_scores,
-        'evaluator_names': evaluator_names
+        "agent": agent,
+        "evaluation_scores": evaluation_scores,
+        "evaluator_names": evaluator_names,
     }
 
 
@@ -214,7 +213,7 @@ def convert_insight_to_comparisons(
     baseline_agent_id: str,
     treatment_agent_ids: list[str],
     evaluator_names: list[str],
-    evaluator_metadata: dict
+    evaluator_metadata: dict,
 ) -> dict:
     """Convert comparison insight result to EvaluationScoreComparison objects.
 
@@ -233,16 +232,16 @@ def convert_insight_to_comparisons(
         return {}
 
     result = insight.result
-    if not result or 'comparisons' not in result:
+    if not result or "comparisons" not in result:
         return {}
 
     comparisons_by_evaluator = {}
 
     # Group comparisons by evaluator to detect multiple metrics
     evaluator_comparisons_temp = {}
-    for comparison_data in result['comparisons']:
-        evaluator_name = comparison_data['evaluator']
-        metric_name = comparison_data.get('metric', 'score')
+    for comparison_data in result["comparisons"]:
+        evaluator_name = comparison_data["evaluator"]
+        metric_name = comparison_data.get("metric", "score")
 
         if evaluator_name not in evaluator_comparisons_temp:
             evaluator_comparisons_temp[evaluator_name] = {}
@@ -255,16 +254,24 @@ def convert_insight_to_comparisons(
     for evaluator_name, metrics_dict in evaluator_comparisons_temp.items():
         for metric_name, comparison_data_list in metrics_dict.items():
             # Get evaluator metadata (now has 'metrics' and 'categories' keys)
-            evaluator_entry = evaluator_metadata.get(evaluator_name, DEFAULT_EVALUATOR_METADATA)
+            evaluator_entry = evaluator_metadata.get(
+                evaluator_name, DEFAULT_EVALUATOR_METADATA
+            )
             # Handle old format for backward compat
-            evaluator_meta = evaluator_entry.get('metrics', evaluator_entry)
+            evaluator_meta = evaluator_entry.get("metrics", evaluator_entry)
 
             # Get metadata for this specific metric
-            sdk_metadata = evaluator_meta.get(metric_name, evaluator_meta.get('score', {
-                'data_type': EvaluatorMetricType.CONTINUOUS,
-                'desired_direction': EvaluatorMetricDirection.INCREASE,
-                'field': metric_name
-            }))
+            sdk_metadata = evaluator_meta.get(
+                metric_name,
+                evaluator_meta.get(
+                    "score",
+                    {
+                        "data_type": EvaluatorMetricType.CONTINUOUS,
+                        "desired_direction": EvaluatorMetricDirection.INCREASE,
+                        "field": metric_name,
+                    },
+                ),
+            )
 
             # Convert SDK enums to analysis enums
             metadata = _convert_sdk_enums_to_analysis(sdk_metadata)
@@ -273,26 +280,33 @@ def convert_insight_to_comparisons(
             score_metadata = analysis.EvaluationScore(
                 name=evaluator_name,
                 evaluator=evaluator_name,
-                field=metadata['field'],
-                data_type=metadata['data_type'],
-                desired_direction=metadata['desired_direction']
+                field=metadata["field"],
+                data_type=metadata["data_type"],
+                desired_direction=metadata["desired_direction"],
             )
 
             # Create comparison for each treatment agent
             comparisons = []
             for comparison_data in comparison_data_list:
-                for i, compare_item_data in enumerate(comparison_data.get('compareItems', [])):
-                    treatment_id = treatment_agent_ids[i] if i < len(
-                        treatment_agent_ids) else f"Treatment {i+1}"
+                for i, compare_item_data in enumerate(
+                    comparison_data.get("compareItems", [])
+                ):
+                    treatment_id = (
+                        treatment_agent_ids[i]
+                        if i < len(treatment_agent_ids)
+                        else f"Treatment {i+1}"
+                    )
 
-                    comparison = analysis.EvaluationScoreComparison.from_insight_comparison(
-                        comparison_data={
-                            **comparison_data,
-                            'compareItems': [compare_item_data]  # Pass single item
-                        },
-                        control_variant=baseline_agent_id,
-                        treatment_variant=treatment_id,
-                        score=score_metadata
+                    comparison = (
+                        analysis.EvaluationScoreComparison.from_insight_comparison(
+                            comparison_data={
+                                **comparison_data,
+                                "compareItems": [compare_item_data],  # Pass single item
+                            },
+                            control_variant=baseline_agent_id,
+                            treatment_variant=treatment_id,
+                            score=score_metadata,
+                        )
                     )
                     comparisons.append(comparison)
 

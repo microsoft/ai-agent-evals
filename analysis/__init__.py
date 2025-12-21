@@ -16,7 +16,6 @@ The module exposes key classes and functions for working with evaluation data.
 # flake8: noqa: F401
 from .analysis import (
     DesiredDirection,
-    EvaluationResultView,
     EvaluationScore,
     EvaluationScoreCI,
     EvaluationScoreComparison,

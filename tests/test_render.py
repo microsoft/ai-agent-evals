@@ -111,9 +111,9 @@ def test_fmt_treatment_badge_strong_improvement():
         evaluator="fluency",
         field="score",
         data_type=EvaluationScoreDataType.CONTINUOUS,
-        desired_direction=DesiredDirection.INCREASE
+        desired_direction=DesiredDirection.INCREASE,
     )
-    
+
     comparison = EvaluationScoreComparison(
         score=score,
         control_variant="control",
@@ -122,11 +122,11 @@ def test_fmt_treatment_badge_strong_improvement():
         control_mean=0.7,
         treatment_mean=0.9,
         delta_estimate=0.2,
-        p_value=0.0001  # Highly significant
+        p_value=0.0001,  # Highly significant
     )
-    
+
     badge = fmt_treatment_badge(comparison)
-    
+
     # Should indicate strong improvement
     assert "improved" in badge.lower() or "green" in badge.lower()
 
@@ -138,9 +138,9 @@ def test_fmt_treatment_badge_degradation():
         evaluator="fluency",
         field="score",
         data_type=EvaluationScoreDataType.CONTINUOUS,
-        desired_direction=DesiredDirection.INCREASE
+        desired_direction=DesiredDirection.INCREASE,
     )
-    
+
     comparison = EvaluationScoreComparison(
         score=score,
         control_variant="control",
@@ -149,11 +149,11 @@ def test_fmt_treatment_badge_degradation():
         control_mean=0.9,
         treatment_mean=0.7,
         delta_estimate=-0.2,
-        p_value=0.001
+        p_value=0.001,
     )
-    
+
     badge = fmt_treatment_badge(comparison)
-    
+
     # Should indicate degradation
     assert "degraded" in badge.lower() or "red" in badge.lower()
 
@@ -165,9 +165,9 @@ def test_fmt_control_badge():
         evaluator="fluency",
         field="score",
         data_type=EvaluationScoreDataType.CONTINUOUS,
-        desired_direction=DesiredDirection.INCREASE
+        desired_direction=DesiredDirection.INCREASE,
     )
-    
+
     comparison = EvaluationScoreComparison(
         score=score,
         control_variant="control",
@@ -176,11 +176,11 @@ def test_fmt_control_badge():
         control_mean=0.8,
         treatment_mean=0.85,
         delta_estimate=0.05,
-        p_value=0.1
+        p_value=0.1,
     )
-    
+
     badge = fmt_control_badge(comparison)
-    
+
     # Should be a badge with control label
     assert "badge" in badge.lower() or "control" in badge.lower()
 
@@ -192,27 +192,23 @@ def test_fmt_ci():
         evaluator="fluency",
         field="score",
         data_type=EvaluationScoreDataType.CONTINUOUS,
-        desired_direction=DesiredDirection.INCREASE
+        desired_direction=DesiredDirection.INCREASE,
     )
-    
+
     result_items = [
         {"score": 0.8},
         {"score": 0.9},
         {"score": 0.85},
         {"score": 0.87},
-        {"score": 0.83}
+        {"score": 0.83},
     ]
-    
+
     score_ci = EvaluationScoreCI(
-        variant="agent1",
-        score=score,
-        result_items=result_items
+        variant="agent1", score=score, result_items=result_items
     )
-    
+
     ci_output = fmt_ci(score_ci)
-    
+
     # Should contain mean and confidence interval
     assert isinstance(ci_output, str)
     assert len(ci_output) > 0
-
-

@@ -4,4 +4,6 @@
 
 import pytest
 
-pytestmark = pytest.mark.skip(reason="Tests deprecated v1 functions - needs complete rewrite for v2")
+pytestmark = pytest.mark.skip(
+    reason="Tests deprecated v1 functions - needs complete rewrite for v2"
+)

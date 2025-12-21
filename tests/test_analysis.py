@@ -13,24 +13,28 @@ from analysis.analysis import (
 )
 
 
-def compute_comparison_stats(control_values: list, treatment_values: list, data_type: EvaluationScoreDataType) -> tuple:
+def compute_comparison_stats(
+    control_values: list, treatment_values: list, data_type: EvaluationScoreDataType
+) -> tuple:
     """Helper function to compute comparison statistics for testing."""
     control_arr = np.array(control_values)
     treatment_arr = np.array(treatment_values)
-    
+
     count = len(control_values)
     control_mean = float(np.mean(control_arr))
     treatment_mean = float(np.mean(treatment_arr))
     delta_estimate = treatment_mean - control_mean
-    
+
     # Compute p-value based on data type
     if data_type == EvaluationScoreDataType.BOOLEAN:
-        _, p_value = stats.ttest_rel(treatment_arr.astype(float), control_arr.astype(float))
+        _, p_value = stats.ttest_rel(
+            treatment_arr.astype(float), control_arr.astype(float)
+        )
     elif data_type == EvaluationScoreDataType.ORDINAL:
         _, p_value = stats.wilcoxon(treatment_arr, control_arr)
     else:
         _, p_value = stats.ttest_rel(treatment_arr, control_arr)
-    
+
     return count, control_mean, treatment_mean, delta_estimate, float(p_value)
 
 
@@ -43,7 +47,7 @@ def test_create_score():
         data_type=EvaluationScoreDataType.CONTINUOUS,
         desired_direction=DesiredDirection.INCREASE,
     )
-    
+
     assert score.name == "fluency"
     assert score.evaluator == "fluency"
     assert score.field == "score"
@@ -65,9 +69,11 @@ def test_evaluation_score_ci():
         data_type=EvaluationScoreDataType.CONTINUOUS,
         desired_direction=DesiredDirection.INCREASE,
     )
-    
-    ci = EvaluationScoreCI(variant="test_variant", score=score, result_items=result_items)
-    
+
+    ci = EvaluationScoreCI(
+        variant="test_variant", score=score, result_items=result_items
+    )
+
     assert ci.variant == "test_variant"
     assert ci.count == 3
     assert ci.mean == pytest.approx(0.85, rel=1e-2)
@@ -77,7 +83,7 @@ def test_evaluation_score_comparison_continuous():
     """Test comparing two variants with continuous scores."""
     control_values = [0.8, 0.9, 0.85]
     treatment_values = [0.6, 0.5, 0.75]
-    
+
     score = EvaluationScore(
         name="fluency",
         evaluator="fluency",
@@ -86,10 +92,12 @@ def test_evaluation_score_comparison_continuous():
         desired_direction=DesiredDirection.INCREASE,
     )
 
-    count, control_mean, treatment_mean, delta_estimate, p_value = compute_comparison_stats(
-        control_values, treatment_values, EvaluationScoreDataType.CONTINUOUS
+    count, control_mean, treatment_mean, delta_estimate, p_value = (
+        compute_comparison_stats(
+            control_values, treatment_values, EvaluationScoreDataType.CONTINUOUS
+        )
     )
-    
+
     comparison = EvaluationScoreComparison(
         score=score,
         control_variant="baseline",
@@ -124,10 +132,12 @@ def test_evaluation_score_comparison_ordinal():
         desired_direction=DesiredDirection.INCREASE,
     )
 
-    count, control_mean, treatment_mean, delta_estimate, p_value = compute_comparison_stats(
-        control_values, treatment_values, EvaluationScoreDataType.ORDINAL
+    count, control_mean, treatment_mean, delta_estimate, p_value = (
+        compute_comparison_stats(
+            control_values, treatment_values, EvaluationScoreDataType.ORDINAL
+        )
     )
-    
+
     comparison = EvaluationScoreComparison(
         score=score,
         control_variant="baseline",
@@ -159,10 +169,12 @@ def test_evaluation_score_comparison_boolean():
         desired_direction=DesiredDirection.INCREASE,
     )
 
-    count, control_mean, treatment_mean, delta_estimate, p_value = compute_comparison_stats(
-        control_values, treatment_values, EvaluationScoreDataType.BOOLEAN
+    count, control_mean, treatment_mean, delta_estimate, p_value = (
+        compute_comparison_stats(
+            control_values, treatment_values, EvaluationScoreDataType.BOOLEAN
+        )
     )
-    
+
     comparison = EvaluationScoreComparison(
         score=score,
         control_variant="baseline",
@@ -194,10 +206,12 @@ def test_evaluation_score_comparison_boolean_statistically_significant():
         desired_direction=DesiredDirection.INCREASE,
     )
 
-    count, control_mean, treatment_mean, delta_estimate, p_value = compute_comparison_stats(
-        control_values, treatment_values, EvaluationScoreDataType.BOOLEAN
+    count, control_mean, treatment_mean, delta_estimate, p_value = (
+        compute_comparison_stats(
+            control_values, treatment_values, EvaluationScoreDataType.BOOLEAN
+        )
     )
-    
+
     comparison = EvaluationScoreComparison(
         score=score,
         control_variant="baseline",

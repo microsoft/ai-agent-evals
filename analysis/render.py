@@ -213,7 +213,7 @@ def fmt_table_compare(
                     treatment_mean=first_comp.control_mean,
                     delta_estimate=0.0,
                     p_value=1.0,
-                    treatment_effect_result="Inconclusive"
+                    treatment_effect_result="Inconclusive",
                 )
                 row[baseline_name] = fmt_control_badge(baseline_comp)
 
@@ -255,11 +255,13 @@ def fmt_table_ci(evaluation_scores: dict[str, any], agent_name: str) -> str:
                     "Evaluation metric": eval_score_label,
                     "Pass Rate": (
                         f"{score_ci.item_summary['pass_rate']:.1%}"
-                        if score_ci.item_summary else "N/A"
+                        if score_ci.item_summary
+                        else "N/A"
                     ),
                     "Score": (
                         fmt_metric_value(score_ci.mean, score_ci.score.data_type)
-                        if score_ci.mean is not None else "N/A"
+                        if score_ci.mean is not None
+                        else "N/A"
                     ),
                     "95% Confidence Interval": fmt_ci(score_ci),
                 }

@@ -14,18 +14,6 @@ from scipy.stats import binomtest, t
 from .constants import SAMPLE_SIZE_THRESHOLD
 
 
-class EvaluationResultView(Enum):
-    """Different views for displaying evaluation results
-
-    Controls how evaluation results are presented to users,
-    with options for different levels of detail.
-    """
-
-    DEFAULT = "default"  # Default view, showing only passing/defect rate
-    ALL = "all-scores"  # All scores view, showing all evaluation scores
-    RAW_SCORES = "raw-scores-only"  # Raw scores view, showing only raw metrics
-
-
 class EvaluationScoreDataType(Enum):
     """Data type of the evaluation score"""
 
@@ -97,22 +85,24 @@ class EvaluationScoreCI:
         scores = []
         for item in self.result_items:
             # Try to get the score based on the field name
-            if self.score.field == 'score' and 'score' in item:
-                scores.append(item['score'])
-            elif self.score.field == 'passed' and 'passed' in item:
-                scores.append(item['passed'])
+            if self.score.field == "score" and "score" in item:
+                scores.append(item["score"])
+            elif self.score.field == "passed" and "passed" in item:
+                scores.append(item["passed"])
             elif self.score.field in item:
                 scores.append(item[self.score.field])
             else:
                 # Default to score field if field not found
-                scores.append(item.get('score'))
+                scores.append(item.get("score"))
 
         return pd.Series(scores)
 
     def _validate_numeric_data(self, data: pd.Series) -> bool:
         """Check if data is numeric. Return False and set mean/CI to None if not."""
         if not pd.api.types.is_numeric_dtype(data):
-            print(f"Warning: Data for {self.score.name} is not numeric, skipping calculation")
+            print(
+                f"Warning: Data for {self.score.name} is not numeric, skipping calculation"
+            )
             self.mean = None
             self.ci_lower = None
             self.ci_upper = None
@@ -152,7 +142,7 @@ class EvaluationScoreCI:
 
             mean = data.mean()
             if len(data) > 1:
-                stderr = data.std() / (len(data)**0.5)
+                stderr = data.std() / (len(data) ** 0.5)
                 z_ao2 = t.ppf(1 - (1 - confidence_level) / 2, df=len(data) - 1)
                 ci_lower = mean - z_ao2 * stderr
                 ci_upper = mean + z_ao2 * stderr
@@ -177,10 +167,14 @@ class EvaluationScoreCI:
             return
 
         # Extract key metrics from result items
-        passed_count = sum(1 for item in self.result_items if item.get('passed', False))
+        passed_count = sum(1 for item in self.result_items if item.get("passed", False))
         failed_count = len(self.result_items) - passed_count
 
-        scores = [item.get('score') for item in self.result_items if item.get('score') is not None]
+        scores = [
+            item.get("score")
+            for item in self.result_items
+            if item.get("score") is not None
+        ]
         avg_score = None
         if scores:
             scores_series = pd.Series(scores)
@@ -188,16 +182,21 @@ class EvaluationScoreCI:
                 avg_score = sum(scores) / len(scores)
 
         # Collect reasons for failures
-        fail_reasons = [item.get('reason', '')
-                        for item in self.result_items if not item.get('passed', False)]
+        fail_reasons = [
+            item.get("reason", "")
+            for item in self.result_items
+            if not item.get("passed", False)
+        ]
 
         self.item_summary = {
-            'total_items': len(self.result_items),
-            'passed_count': passed_count,
-            'failed_count': failed_count,
-            'pass_rate': passed_count / len(self.result_items) if self.result_items else 0,
-            'average_score': avg_score,
-            'fail_reasons': fail_reasons
+            "total_items": len(self.result_items),
+            "passed_count": passed_count,
+            "failed_count": failed_count,
+            "pass_rate": (
+                passed_count / len(self.result_items) if self.result_items else 0
+            ),
+            "average_score": avg_score,
+            "fail_reasons": fail_reasons,
         }
 
 
@@ -283,34 +282,33 @@ class EvaluationScoreComparison:
                 }]
             }
         """
-        baseline_summary = comparison_data['baselineRunSummary']
+        baseline_summary = comparison_data["baselineRunSummary"]
         # Get first treatment comparison item
-        compare_item = comparison_data['compareItems'][0]
-        treatment_summary = compare_item['treatmentRunSummary']
+        compare_item = comparison_data["compareItems"][0]
+        treatment_summary = compare_item["treatmentRunSummary"]
 
         # Map treatment effect from API format to our format
         treatment_effect_map = {
-            'TooFewSamples': 'Too few samples',
-            'ZeroSamples': 'Zero samples',
-            'Inconclusive': 'Inconclusive',
-            'Changed': 'Changed',
-            'Improved': 'Improved',
-            'Degraded': 'Degraded',
+            "TooFewSamples": "Too few samples",
+            "ZeroSamples": "Zero samples",
+            "Inconclusive": "Inconclusive",
+            "Changed": "Changed",
+            "Improved": "Improved",
+            "Degraded": "Degraded",
         }
         treatment_effect = treatment_effect_map.get(
-            compare_item.get('treatmentEffect'),
-            None
+            compare_item.get("treatmentEffect"), None
         )
 
         return cls(
             score=score,
             control_variant=control_variant,
             treatment_variant=treatment_variant,
-            count=int(baseline_summary['sampleCount']),
-            control_mean=float(baseline_summary['average']),
-            treatment_mean=float(treatment_summary['average']),
-            delta_estimate=float(compare_item['deltaEstimate']),
-            p_value=float(compare_item['pValue']),
+            count=int(baseline_summary["sampleCount"]),
+            control_mean=float(baseline_summary["average"]),
+            treatment_mean=float(treatment_summary["average"]),
+            delta_estimate=float(compare_item["deltaEstimate"]),
+            p_value=float(compare_item["pValue"]),
             treatment_effect_result=treatment_effect,
         )
 
