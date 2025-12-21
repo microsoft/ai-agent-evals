@@ -8,6 +8,7 @@ from analysis.analysis import (
     EvaluationScoreDataType,
 )
 from analysis.summary import summarize
+from tests.conftest import create_fluency_score
 
 
 class MockAgent:  # pylint: disable=too-few-public-methods
@@ -18,21 +19,10 @@ class MockAgent:  # pylint: disable=too-few-public-methods
         self.version = version
 
 
-def _create_fluency_score() -> EvaluationScore:
-    """Create a fluency score for testing (reduces duplicate code)."""
-    return EvaluationScore(
-        name="fluency",
-        evaluator="fluency",
-        field="score",
-        data_type=EvaluationScoreDataType.CONTINUOUS,
-        desired_direction=DesiredDirection.INCREASE,
-    )
-
-
 def test_summarize_single_variant():
     """Test summarize with single variant (no comparisons)."""
     # Create baseline results
-    score = _create_fluency_score()
+    score = create_fluency_score()
 
     result_items = [{"score": 0.8}, {"score": 0.9}, {"score": 0.85}]
 
@@ -58,7 +48,7 @@ def test_summarize_single_variant():
 def test_summarize_with_comparisons():
     """Test summarize with variant comparisons."""
     # Create baseline results
-    score = _create_fluency_score()
+    score = create_fluency_score()
 
     control_items = [{"score": 0.7}, {"score": 0.75}, {"score": 0.72}]
 
@@ -133,7 +123,7 @@ def test_summarize_with_report_urls():
 def test_summarize_multiple_evaluators():
     """Test summarize with multiple evaluators."""
     # Create scores for multiple evaluators
-    fluency_score = _create_fluency_score()
+    fluency_score = create_fluency_score()
 
     relevance_score = EvaluationScore(
         name="relevance",

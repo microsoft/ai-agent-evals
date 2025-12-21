@@ -62,4 +62,3 @@ runs:
         DATA_PATH: ${{ inputs.data-path }}
         AGENT_IDS: ${{ inputs.agent-ids }}
         BASELINE_AGENT_ID: ${{ inputs.baseline-agent-id }}
-        

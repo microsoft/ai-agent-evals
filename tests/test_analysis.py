@@ -11,6 +11,7 @@ from analysis.analysis import (
     EvaluationScoreComparison,
     EvaluationScoreDataType,
 )
+from tests.conftest import create_fluency_score
 
 
 def compute_comparison_stats(
@@ -40,13 +41,7 @@ def compute_comparison_stats(
 
 def test_create_score():
     """Test creating an evaluation score with all required fields."""
-    score = EvaluationScore(
-        name="fluency",
-        evaluator="fluency",
-        field="score",
-        data_type=EvaluationScoreDataType.CONTINUOUS,
-        desired_direction=DesiredDirection.INCREASE,
-    )
+    score = create_fluency_score()
 
     assert score.name == "fluency"
     assert score.evaluator == "fluency"
@@ -62,13 +57,7 @@ def test_evaluation_score_ci():
         {"score": 0.9},
         {"score": 0.85},
     ]
-    score = EvaluationScore(
-        name="fluency",
-        evaluator="fluency",
-        field="score",
-        data_type=EvaluationScoreDataType.CONTINUOUS,
-        desired_direction=DesiredDirection.INCREASE,
-    )
+    score = create_fluency_score()
 
     ci = EvaluationScoreCI(
         variant="test_variant", score=score, result_items=result_items
@@ -84,13 +73,7 @@ def test_evaluation_score_comparison_continuous():
     control_values = [0.8, 0.9, 0.85]
     treatment_values = [0.6, 0.5, 0.75]
 
-    score = EvaluationScore(
-        name="fluency",
-        evaluator="fluency",
-        field="score",
-        data_type=EvaluationScoreDataType.CONTINUOUS,
-        desired_direction=DesiredDirection.INCREASE,
-    )
+    score = create_fluency_score()
 
     count, control_mean, treatment_mean, delta_estimate, p_value = (
         compute_comparison_stats(

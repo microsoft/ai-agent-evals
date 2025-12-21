@@ -21,6 +21,7 @@ from analysis.render import (
     fmt_pvalue,
     fmt_treatment_badge,
 )
+from tests.conftest import create_fluency_score
 
 
 def test_fmt_metric_value():
@@ -101,25 +102,19 @@ def test_fmt_badge(test_case, label, message, color, tooltip, snapshot):
     snapshot.assert_match(output, f"{test_case}.md")
 
 
-def test_fmt_treatment_badge_strong_improvement():
-    """Test treatment badge for strong improvement."""
-    score = EvaluationScore(
-        name="fluency",
-        evaluator="fluency",
-        field="score",
-        data_type=EvaluationScoreDataType.CONTINUOUS,
-        desired_direction=DesiredDirection.INCREASE,
-    )
+def test_fmt_treatment_badge_weak_improvement():
+    """Test treatment badge for weak improvement."""
+    score = create_fluency_score()
 
     comparison = EvaluationScoreComparison(
         score=score,
-        control_variant="control",
+        control_variant="baseline",
         treatment_variant="treatment",
         count=10,
-        control_mean=0.7,
-        treatment_mean=0.9,
-        delta_estimate=0.2,
-        p_value=0.0001,  # Highly significant
+        control_mean=0.8,
+        treatment_mean=0.85,
+        delta_estimate=0.05,
+        p_value=0.001,  # Significant
     )
 
     badge = fmt_treatment_badge(comparison)
@@ -128,15 +123,9 @@ def test_fmt_treatment_badge_strong_improvement():
     assert "improved" in badge.lower() or "green" in badge.lower()
 
 
-def test_fmt_treatment_badge_degradation():
-    """Test treatment badge for degradation."""
-    score = EvaluationScore(
-        name="fluency",
-        evaluator="fluency",
-        field="score",
-        data_type=EvaluationScoreDataType.CONTINUOUS,
-        desired_direction=DesiredDirection.INCREASE,
-    )
+def test_fmt_treatment_badge_weak_degradation():
+    """Test treatment badge for weak degradation."""
+    score = create_fluency_score()
 
     comparison = EvaluationScoreComparison(
         score=score,

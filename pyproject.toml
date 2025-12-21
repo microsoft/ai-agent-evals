@@ -32,3 +32,6 @@ dev = [
 
 [tool.setuptools.packages.find]
 where = ["analysis"]
+
+[tool.isort]
+profile = "black"

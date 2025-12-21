@@ -45,4 +45,3 @@ jobs:
           deployment-name: "gpt-4o-mini"
           data-path: ${{ github.workspace }}/samples/data/${{ github.event.inputs.data_file || 'dataset-tiny.json' }}
           agent-ids: ${{ github.event.inputs.compare_view == 'true' && 'agentv2test:12,agentv2test:13,agentv2test:14' || 'agentv2test:14' }}
-
