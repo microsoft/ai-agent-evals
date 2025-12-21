@@ -10,6 +10,7 @@ from azure.ai.projects.models import EvaluatorMetricType, EvaluatorMetricDirecti
 from azure.ai.projects.models._enums import OperationState
 
 from . import analysis
+from .constants import DEFAULT_EVALUATOR_METADATA
 
 
 def _convert_sdk_enums_to_analysis(metadata: dict) -> dict:
@@ -142,16 +143,7 @@ def process_evaluation_results(openai_client, eval_object, eval_run, agent, eval
     
     for evaluator_name, metrics_dict in evaluator_metric_results.items():
         # Get evaluator metadata (now has 'metrics' and 'categories' keys)
-        evaluator_entry = evaluator_metadata.get(evaluator_name, {
-            'metrics': {
-                'score': {
-                    'data_type': EvaluatorMetricType.CONTINUOUS,
-                    'desired_direction': EvaluatorMetricDirection.INCREASE,
-                    'field': 'score'
-                }
-            },
-            'categories': []
-        })
+        evaluator_entry = evaluator_metadata.get(evaluator_name, DEFAULT_EVALUATOR_METADATA)
         evaluator_meta = evaluator_entry.get('metrics', evaluator_entry)  # Handle old format for backward compat
         
         for metric_name, results in metrics_dict.items():
@@ -245,16 +237,7 @@ def convert_insight_to_comparisons(
     for evaluator_name, metrics_dict in evaluator_comparisons_temp.items():
         for metric_name, comparison_data_list in metrics_dict.items():
             # Get evaluator metadata (now has 'metrics' and 'categories' keys)
-            evaluator_entry = evaluator_metadata.get(evaluator_name, {
-                'metrics': {
-                    'score': {
-                        'data_type': EvaluatorMetricType.CONTINUOUS,
-                        'desired_direction': EvaluatorMetricDirection.INCREASE,
-                        'field': 'score'
-                    }
-                },
-                'categories': []
-            })
+            evaluator_entry = evaluator_metadata.get(evaluator_name, DEFAULT_EVALUATOR_METADATA)
             evaluator_meta = evaluator_entry.get('metrics', evaluator_entry)  # Handle old format for backward compat
             
             # Get metadata for this specific metric

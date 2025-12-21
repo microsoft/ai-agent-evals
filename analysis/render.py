@@ -12,9 +12,7 @@ from .analysis import (
     EvaluationScoreComparison,
     EvaluationScoreDataType,
 )
-
-SS_THRESHOLD = 0.05
-HSS_THRESHOLD = 0.001
+from .constants import SS_THRESHOLD, HSS_THRESHOLD
 
 DARK_GREEN = "157e3b"
 PALE_GREEN = "a1d99b"

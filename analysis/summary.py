@@ -52,41 +52,41 @@ def summarize(
     md = []
     md.append("## Azure AI Evaluation\n")
     
-    if eval_url:
-        eval_link = fmt_hyperlink("Link to evaluation", eval_url)        
+    # Create eval link if URL available
+    eval_link = fmt_hyperlink("View evaluation", eval_url) if eval_url else None
 
     # Show agents section - list all agents if comparisons available
     if comparisons_by_evaluator and treatment_agent_names:
         md.append("### Agents\n")
-        if eval_url:
+        if eval_link:
             md.append(f"{eval_link}\n")
         md.append("| Agent ID | Role | Evaluation results |")
         md.append("|:---------|:-----|:-------------------|")
         
         # Use per-agent URLs from report_urls dictionary
         baseline_url = report_urls.get(agent_name) if report_urls else None
-        baseline_link = fmt_hyperlink("Click here", baseline_url) if baseline_url else ""
+        baseline_link = fmt_hyperlink("View results", baseline_url) if baseline_url else ""
         md.append(f"| {agent_name} | Baseline | {baseline_link} |")
         
         for treatment_name in treatment_agent_names:
             treatment_url = report_urls.get(treatment_name) if report_urls else None
-            treatment_link = fmt_hyperlink("Click here", treatment_url) if treatment_url else ""
+            treatment_link = fmt_hyperlink("View results", treatment_url) if treatment_url else ""
             md.append(f"| {treatment_name} | Treatment | {treatment_link} |")
     else:
         md.append("### Agent\n")
-        if eval_url:
+        if eval_link:
             md.append(f"{eval_link}\n")
         md.append("| Agent ID | Evaluation results |")
         md.append("|:---------|:-------------------|")
         agent_url = report_urls.get(agent_name) if report_urls else None
-        result_link = fmt_hyperlink("Click here", agent_url) if agent_url else ""
+        result_link = fmt_hyperlink("View results", agent_url) if agent_url else ""
         md.append(f"| {agent_name} | {result_link} |")
 
     md.append("\n### Evaluation results\n")
     
     # Add comparison link above the results table if available
     if compare_url:
-        compare_link = fmt_hyperlink("Link to compare report", compare_url)
+        compare_link = fmt_hyperlink("View comparison", compare_url)
         md.append(f"{compare_link}\n")
     
     # Generate comparison table if comparisons are available, otherwise show CI table

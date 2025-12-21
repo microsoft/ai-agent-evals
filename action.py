@@ -21,6 +21,7 @@ from analysis import (
     convert_insight_to_comparisons,
     summarize,
 )
+from analysis.constants import DEFAULT_EVALUATOR_METADATA
 
 current_dir = Path(__file__).parent
 env_path = current_dir / ".env"
@@ -67,20 +68,6 @@ def get_evaluator_metadata(project_client: AIProjectClient, evaluator_names: lis
     """
     evaluator_metadata = {}
     
-    # Default metadata for evaluators without definitions
-    default_metadata = {
-        'metrics': {
-            'score': {
-                'data_type': EvaluatorMetricType.CONTINUOUS,
-                'desired_direction': EvaluatorMetricDirection.INCREASE,
-                'field': 'score'
-            }
-        },
-        'categories': [],
-        'init_parameters': None,
-        'data_schema': None
-    }
-    
     for evaluator_name in evaluator_names:
         try:
             evaluator = project_client.evaluators.get_version(name=evaluator_name, version="latest")
@@ -121,7 +108,7 @@ def get_evaluator_metadata(project_client: AIProjectClient, evaluator_names: lis
             print(f"Could not fetch metadata for evaluator '{evaluator_name}': {e}. Using defaults.")
         
         # Use default metadata (for errors or missing definitions)
-        evaluator_metadata[evaluator_name] = default_metadata
+        evaluator_metadata[evaluator_name] = DEFAULT_EVALUATOR_METADATA
     
     print(f"Loaded metadata for {len(evaluator_metadata)} evaluators")
     return evaluator_metadata
@@ -261,12 +248,12 @@ def print_agent_results(agent_results: dict):
 
 def generate_comparison_insight(
     project_client: AIProjectClient, 
-    eval_object, 
+    eval_object,
     baseline_run_id: str, 
     treatment_run_ids: list[str],
     baseline_agent_id: str,
     treatment_agent_ids: list[str]
-):
+) -> Insight | None:
     """Generate comparison insights between baseline and treatment evaluation runs."""
     print(f"Generating comparison insight (baseline: {baseline_agent_id} vs {len(treatment_agent_ids)} treatment(s))...")
     
@@ -352,11 +339,11 @@ def generate_and_print_comparisons(
     agent_eval_runs: dict,
     evaluator_names: list[str],
     evaluator_metadata: dict
-) -> tuple[dict, object | None]:
+) -> tuple[dict, Insight | None]:
     """Generate comparison insights for multiple agents.
     
     Returns:
-        Tuple of (comparisons_by_evaluator dict, comparison_insight object)
+        Tuple of (comparisons_by_evaluator dict, comparison_insight Insight object or None)
     """
     if len(agent_ids) <= 1:
         return {}, None
@@ -400,7 +387,6 @@ def main(
     input_data: dict,
     agent_ids: list[str],
     baseline_agent_id: str | None = None,
-    working_dir: Path | None = None,
 ) -> str:
     """Main evaluation workflow.
     
@@ -442,7 +428,7 @@ def main(
                 if not eval_base_url:
                     parts = report_url.rsplit('/', 2)
                     eval_base_url = parts[0] if len(parts) > 2 else report_url
-        print(f"Collected {len(report_urls)} evaluation report URL(s))")
+        print(f"Collected {len(report_urls)} evaluation report URL(s)")
 
         # Determine baseline agent
         baseline_id = baseline_agent_id if baseline_agent_id else agent_ids[0]
@@ -510,7 +496,6 @@ if __name__ == "__main__":
         input_data=input_data,
         agent_ids=AGENT_IDS,
         baseline_agent_id=BASELINE_AGENT_ID,
-        working_dir=input_data_path.parent,
     )
 
     if STEP_SUMMARY:

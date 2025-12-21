@@ -11,7 +11,7 @@ from typing import Literal
 import pandas as pd
 from scipy.stats import binomtest, t
 
-SAMPLE_SIZE_THRESHOLD = 10
+from .constants import SAMPLE_SIZE_THRESHOLD
 
 
 class EvaluationResultView(Enum):
