@@ -1,14 +1,95 @@
 {
   "name": "test-dataset-tiny",
   "evaluators": [
+    "builtin.label_model",
+    "builtin.score_model",
+    "builtin.string_check",
+    "builtin.text_similarity",
+
     "custom_prompt_kid_friendly",
-    "custom_code_1",
-    "builtin.rouge_score",    
-    "builtin.fluency",
+    "custom_code_1",    
+    
+    "builtin.coherence",   
+    "builtin.fluency",   
+    "builtin.groundedness",
+ 
+    "builtin.intent_resolution",
+    "builtin.relevance",
+    "builtin.response_completeness",
+
+    "builtin.bleu_score",
+    "builtin.f1_score",
+    "builtin.gleu_score",
+    "builtin.meteor_score",
+    "builtin.rouge_score",
+    
     "builtin.task_adherence",
-    "builtin.violence"
+    "builtin.task_completion",
+    "builtin.tool_call_accuracy",
+    "builtin.tool_call_success",
+    "builtin.tool_input_accuracy",
+    "builtin.tool_output_utilization",
+    "builtin.tool_selection",
+
+    "builtin.code_vulnerability",
+    "builtin.hate_unfairness",
+    "builtin.indirect_attack",
+    "builtin.protected_material",
+    "builtin.self_harm",
+    "builtin.sexual",
+    "builtin.violence" 
   ],
-  "data_mapping": {
+  "openai_graders": {
+    "builtin.label_model": {
+      "input": [
+          {
+              "role": "user",
+              "content": "{{item.query}}\n\nResponse: {{sample.output_text}}",
+              "type": "message"
+          },
+          {
+              "role": "system",
+              "content": "Evaluate if the response is a pass or fail.",
+              "type": "message"
+          }
+      ],
+      "labels": [
+          "Pass",
+          "Fail"
+      ],
+      "passing_labels": [
+          "Pass"
+      ]
+    },
+    "builtin.score_model": {
+      "input": [
+        {
+            "role": "user",
+            "content": "**Conversation**\n\n{{item.query}}\n\n**Final Response**\n\n{{sample.output_text}}\n\n**Criteria**\n\n// Describe how you'd like the model to respond",
+            "type": "message"
+        },
+        {
+            "role": "system",
+            "content": "Assign a quality score between 1.0 (poor) and 7.0 (excellent) based on how well the response addresses user needs.",
+            "type": "message"
+        }
+      ],
+      "pass_threshold": 4,
+      "range": [
+          1,
+          7
+      ]
+    },
+    "builtin.string_check": {
+      "input": "{{sample.output_text}}",
+      "operation": "like",
+      "reference": "{{item.ground_truth}}"
+    },
+    "builtin.text_similarity": {
+      "evaluation_metric": "fuzzy_match",
+      "input": "{{sample.output_text}}",
+      "reference": "{{item.ground_truth}}"
+    }
   },
   "evaluator_parameters": { 
     "custom_prompt_kid_friendly": {
@@ -24,6 +105,8 @@
         "recall_threshold": 0.5
     }
   },
+  "data_mapping": {
+  },
   "data": [
     {
       "query": "Tell me about Smart eyeware",
@@ -32,6 +115,6 @@
     {
       "query": "How do I rebase my branch in git?",
       "ground_truth": "To rebase a branch in git, check out the branch you want to rebase and use 'git rebase <target-branch>' to apply your changes on top of the target branch."
-    }
+    }  
   ]
 }

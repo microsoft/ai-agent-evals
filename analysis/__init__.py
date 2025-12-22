@@ -5,7 +5,6 @@ This package provides tools and utilities for analyzing and summarizing evaluati
 results from AI agent performance tests. It includes functionality for:
 
 - Processing evaluation results with confidence intervals
-- Custom evaluators for operational metrics
 - Summarization of evaluation findings
 - Visualization and reporting capabilities
 
@@ -21,7 +20,6 @@ from .analysis import (
     EvaluationScoreComparison,
     EvaluationScoreDataType,
 )
-from .custom_eval import OperationalMetricsEvaluator
 from .processing import (
     convert_insight_to_comparisons,
     convert_json_to_jsonl,

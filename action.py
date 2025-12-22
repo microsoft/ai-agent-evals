@@ -30,10 +30,15 @@ if env_path.exists():
 
     load_dotenv(dotenv_path=env_path)
 
-USER_AGENT = "ai-agent-evals/v2-beta (+https://github.com/microsoft/ai-agent-evals)"
+# Configuration constants
+class EvaluationConfig:
+    """Evaluation configuration constants."""
+    DEPLOYMENT_NAME_PARAM = "deployment_name"
+    POLLING_INTERVAL_SECONDS = 5
+    USER_AGENT = "ai-agent-evals/v2-beta (+https://github.com/microsoft/ai-agent-evals)"
+
+
 STEP_SUMMARY = os.getenv("GITHUB_STEP_SUMMARY") or os.getenv("ADO_STEP_SUMMARY")
-POLLING_INTERVAL_SECONDS = 5
-DEPLOYMENT_NAME_PARAM = "deployment_name"
 
 AZURE_AI_PROJECT_ENDPOINT = os.getenv("AZURE_AI_PROJECT_ENDPOINT")
 DEPLOYMENT_NAME = os.getenv("DEPLOYMENT_NAME")
@@ -61,6 +66,36 @@ def get_agents(project_client: AIProjectClient, agent_ids: list[str]) -> dict:
     return agents
 
 
+def _build_metrics_dict(definition) -> dict:
+    """Build metrics dictionary from evaluator definition.
+
+    Args:
+        definition: Evaluator definition object
+
+    Returns:
+        Dictionary mapping metric names to metric metadata
+    """
+    metrics_dict = {}
+    if hasattr(definition, "metrics") and definition.metrics:
+        for metric_name, metric in definition.metrics.items():
+            metric_type = (
+                metric.type
+                if hasattr(metric, "type")
+                else EvaluatorMetricType.CONTINUOUS
+            )
+            metric_direction = (
+                metric.desirable_direction
+                if hasattr(metric, "desirable_direction")
+                else EvaluatorMetricDirection.INCREASE
+            )
+            metrics_dict[metric_name] = {
+                "data_type": metric_type,
+                "desired_direction": metric_direction,
+                "field": metric_name,
+            }
+    return metrics_dict
+
+
 def get_evaluator_metadata(
     project_client: AIProjectClient, evaluator_names: list[str]
 ) -> dict:
@@ -76,6 +111,8 @@ def get_evaluator_metadata(
     evaluator_metadata = {}
 
     for evaluator_name in evaluator_names:
+        is_openai_type = False
+        is_custom_code = False
         try:
             evaluator = project_client.evaluators.get_version(
                 name=evaluator_name, version="latest"
@@ -87,39 +124,30 @@ def get_evaluator_metadata(
             # Get metrics from the evaluator definition
             if hasattr(evaluator, "definition") and evaluator.definition:
                 definition = evaluator.definition
+                evaluator_type = getattr(definition, "type", "")
 
-                # Extract init_parameters and data_schema from definition
+                # Check if this is an OpenAI-type evaluator
+                is_openai_type = evaluator_type == "openai_graders"
+                
+                # Check if custom code evaluator (type="code" without "builtin." prefix)
+                is_custom_code = (
+                    evaluator_type == "code" and not evaluator_name.startswith("builtin.")
+                )
+
+                # Extract init_parameters and metrics from definition
                 init_parameters = getattr(definition, "init_parameters", None)
-                data_schema = getattr(definition, "data_schema", None)
+                metrics_dict = _build_metrics_dict(definition)
 
-                if hasattr(definition, "metrics") and definition.metrics:
-                    # Store all metrics for this evaluator
-                    metrics_dict = {}
-                    for metric_name, metric in definition.metrics.items():
-                        metric_type = (
-                            metric.type
-                            if hasattr(metric, "type")
-                            else EvaluatorMetricType.CONTINUOUS
-                        )
-                        metric_direction = (
-                            metric.desirable_direction
-                            if hasattr(metric, "desirable_direction")
-                            else EvaluatorMetricDirection.INCREASE
-                        )
-
-                        metrics_dict[metric_name] = {
-                            "data_type": metric_type,
-                            "desired_direction": metric_direction,
-                            "field": metric_name,
-                        }
-                    evaluator_metadata[evaluator_name] = {
-                        "metrics": metrics_dict,
-                        "categories": categories,
-                        "init_parameters": init_parameters,
-                        "data_schema": data_schema,
-                        "version": getattr(evaluator, "version", "1"),
-                    }
-                    continue
+                evaluator_metadata[evaluator_name] = {
+                    "metrics": metrics_dict,
+                    "categories": categories,
+                    "init_parameters": init_parameters,
+                    "data_schema": getattr(definition, "data_schema", {}),
+                    "version": getattr(evaluator, "version", "1"),
+                    "is_openai_type": is_openai_type,
+                    "is_custom_code": is_custom_code,
+                }
+                continue
 
         except (  # pylint: disable=broad-exception-caught
             KeyError,
@@ -135,9 +163,41 @@ def get_evaluator_metadata(
 
         # Use default metadata (for errors or missing definitions)
         evaluator_metadata[evaluator_name] = DEFAULT_EVALUATOR_METADATA
+        evaluator_metadata[evaluator_name]["is_openai_type"] = is_openai_type
+        evaluator_metadata[evaluator_name]["is_custom_code"] = is_custom_code
 
     print(f"Loaded metadata for {len(evaluator_metadata)} evaluators")
     return evaluator_metadata
+
+
+def _build_openai_evaluator_criteria(
+    evaluator_display_name: str, grader_config: dict
+) -> dict:
+    """Build testing criteria for OpenAI evaluators.
+
+    Args:
+        evaluator_display_name: Display name (evaluator name without prefix)
+        grader_config: Configuration from openai_graders field containing
+                       evaluation_metric, input, reference, etc.
+
+    Returns:
+        Testing criteria dictionary for OpenAI evaluator
+    """
+    criteria = {
+        "type": evaluator_display_name,
+        "name": evaluator_display_name,
+    }
+
+    # Add grader-specific properties (evaluation_metric, input, reference, etc.)
+    for key, value in grader_config.items():
+        if key not in {"type", "id", "name"}:
+            criteria[key] = value
+
+    # Use DEPLOYMENT_NAME if model field is not provided
+    if "model" not in criteria and DEPLOYMENT_NAME:
+        criteria["model"] = DEPLOYMENT_NAME
+
+    return criteria
 
 
 def _generate_data_mappings(input_data: dict | None) -> dict:
@@ -163,16 +223,20 @@ def _generate_data_mappings(input_data: dict | None) -> dict:
     return user_data_mappings or {}
 
 
-def _get_response_field(evaluator_name: str, categories: list) -> str:
+def _get_response_field(evaluator_name: str, categories: list, is_custom_code: bool = False) -> str:
     """Determine the response field based on evaluator name and categories.
 
     Args:
         evaluator_name: Name of the evaluator
         categories: List of evaluator categories
+        is_custom_code: Whether this is a custom code evaluator
 
     Returns:
         Response field template string
     """
+    # Custom code evaluators always use item.sample.output_text because of an OpenAI limitation
+    if is_custom_code:
+        return "{{item.sample.output_text}}"
     if evaluator_name == "builtin.groundedness" or categories == ["agents"]:
         return "{{sample.output_items}}"
     return "{{sample.output_text}}"
@@ -197,6 +261,55 @@ def _build_base_data_mapping(response_field: str, user_data_mappings: dict) -> d
     return evaluator_data_mapping
 
 
+def _build_azure_evaluator_criteria(
+    evaluator_name: str,
+    evaluator_display_name: str,
+    metadata: dict,
+    user_data_mappings: dict,
+    evaluator_parameters: dict | None = None,
+) -> dict:
+    """Build testing criteria for Azure AI evaluators.
+
+    Args:
+        evaluator_name: Full evaluator name (e.g., 'builtin.coherence')
+        evaluator_display_name: Display name (e.g., 'coherence')
+        metadata: Evaluator metadata including categories and schemas
+        user_data_mappings: User-provided data mappings from input data
+        evaluator_parameters: Optional evaluator-specific parameters
+
+    Returns:
+        Testing criteria dictionary for Azure AI evaluator
+    """
+    categories = metadata.get("categories", [])
+    init_params_schema = metadata.get("init_parameters", {})
+    data_schema = metadata.get("data_schema", {})
+    is_custom_code = metadata.get("is_custom_code", False)
+
+    # Determine response field and build data mapping
+    response_field = _get_response_field(evaluator_name, categories, is_custom_code)
+    evaluator_data_mapping = _build_base_data_mapping(
+        response_field, user_data_mappings
+    )
+
+    # Get and validate initialization parameters
+    initialization_parameters = {}
+    if evaluator_parameters and evaluator_name in evaluator_parameters:
+        initialization_parameters = evaluator_parameters[evaluator_name].copy()
+
+    _validate_init_parameters(
+        evaluator_name, init_params_schema, initialization_parameters
+    )
+    _validate_data_schema(evaluator_name, data_schema, evaluator_data_mapping)
+
+    return {
+        "type": "azure_ai_evaluator",
+        "name": evaluator_display_name,
+        "evaluator_name": evaluator_name,
+        "initialization_parameters": initialization_parameters,
+        "data_mapping": evaluator_data_mapping,
+    }
+
+
 def _validate_init_parameters(
     evaluator_name: str, init_params_schema: dict, initialization_parameters: dict
 ) -> None:
@@ -217,13 +330,13 @@ def _validate_init_parameters(
 
     # Add deployment_name if required and not present
     if (
-        DEPLOYMENT_NAME_PARAM in required_params
-        and DEPLOYMENT_NAME_PARAM not in initialization_parameters
+        EvaluationConfig.DEPLOYMENT_NAME_PARAM in required_params
+        and EvaluationConfig.DEPLOYMENT_NAME_PARAM not in initialization_parameters
     ):
-        initialization_parameters[DEPLOYMENT_NAME_PARAM] = DEPLOYMENT_NAME
+        initialization_parameters[EvaluationConfig.DEPLOYMENT_NAME_PARAM] = DEPLOYMENT_NAME
 
     # Parameters to exclude from validation (auto-populated by system)
-    excluded_params = {DEPLOYMENT_NAME_PARAM, "azure_ai_project"}
+    excluded_params = {EvaluationConfig.DEPLOYMENT_NAME_PARAM, "azure_ai_project"}
 
     # Validate all other required parameters are provided
     missing_params = [
@@ -325,6 +438,9 @@ def create_testing_criteria(
     # Generate data mappings from input data
     user_data_mappings = _generate_data_mappings(input_data)
 
+    # Get openai_graders definitions from input data (for custom evaluator types)
+    openai_graders = input_data.get("openai_graders", {}) if input_data else {}
+
     testing_criteria = []
     display_name_to_evaluator_name = {}
     for evaluator_name in evaluators:
@@ -337,35 +453,31 @@ def create_testing_criteria(
 
         # Get metadata for this evaluator
         metadata = evaluator_metadata.get(evaluator_name, {})
-        categories = metadata.get("categories", [])
-        init_params_schema = metadata.get("init_parameters", {})
-        data_schema = metadata.get("data_schema", {})
+        is_openai_type = metadata.get("is_openai_type", False)
 
-        # Determine response field and build data mapping
-        response_field = _get_response_field(evaluator_name, categories)
-        evaluator_data_mapping = _build_base_data_mapping(
-            response_field, user_data_mappings
-        )
+        # Check if this is an OpenAI-type evaluator or has config in openai_graders
+        if is_openai_type or evaluator_name in openai_graders:
+            # Build custom evaluator criteria with grader-specific properties
+            grader_config = openai_graders.get(evaluator_name, {})
+            if not grader_config:
+                raise ValueError(
+                    f"OpenAI-type evaluator '{evaluator_name}' requires "
+                    f"configuration in 'openai_graders' field of input data."
+                )
+            criteria = _build_openai_evaluator_criteria(
+                evaluator_display_name, grader_config
+            )
+        else:
+            # Build standard Azure AI evaluator criteria
+            criteria = _build_azure_evaluator_criteria(
+                evaluator_name,
+                evaluator_display_name,
+                metadata,
+                user_data_mappings,
+                evaluator_parameters,
+            )
 
-        # Get and validate initialization parameters
-        initialization_parameters = {}
-        if evaluator_parameters and evaluator_name in evaluator_parameters:
-            initialization_parameters = evaluator_parameters[evaluator_name].copy()
-
-        _validate_init_parameters(
-            evaluator_name, init_params_schema, initialization_parameters
-        )
-        _validate_data_schema(evaluator_name, data_schema, evaluator_data_mapping)
-
-        testing_criteria.append(
-            {
-                "type": "azure_ai_evaluator",
-                "name": evaluator_display_name,
-                "evaluator_name": evaluator_name,
-                "initialization_parameters": initialization_parameters,
-                "data_mapping": evaluator_data_mapping,
-            }
-        )
+        testing_criteria.append(criteria)
 
     return testing_criteria, display_name_to_evaluator_name
 
@@ -420,7 +532,7 @@ def wait_for_evaluation_runs(openai_client, eval_object, agent_eval_runs: dict):
 
         if all_completed:
             break
-        time.sleep(POLLING_INTERVAL_SECONDS)
+        time.sleep(EvaluationConfig.POLLING_INTERVAL_SECONDS)
 
     print(f"All {len(agent_eval_runs)} evaluation run(s) completed")
 
@@ -464,7 +576,7 @@ def generate_comparison_insight(
         OperationState.FAILED,
     ]:
         compare_insight = project_client.insights.get(id=compare_insight.id)
-        time.sleep(POLLING_INTERVAL_SECONDS)
+        time.sleep(EvaluationConfig.POLLING_INTERVAL_SECONDS)
 
     if compare_insight.state == OperationState.SUCCEEDED:
         print("Comparison insight generated successfully")
@@ -702,8 +814,15 @@ def main(
         )
 
 
-if __name__ == "__main__":
-    # Check required environment variables
+def _validate_environment_variables() -> dict:
+    """Validate and return required environment variables.
+
+    Returns:
+        Dictionary with validated environment variables
+
+    Raises:
+        ValueError: If any required environment variable is missing or invalid
+    """
     if not AZURE_AI_PROJECT_ENDPOINT:
         raise ValueError("AZURE_AI_PROJECT_ENDPOINT environment variable is not set")
     if not DEPLOYMENT_NAME:
@@ -719,20 +838,33 @@ if __name__ == "__main__":
             f"BASELINE_AGENT_ID '{BASELINE_AGENT_ID}' is not in AGENT_IDS '{AGENT_IDS}'"
         )
 
+    return {
+        "endpoint": AZURE_AI_PROJECT_ENDPOINT,
+        "deployment_name": DEPLOYMENT_NAME,
+        "data_path": DATA_PATH,
+        "agent_ids": AGENT_IDS,
+        "baseline_agent_id": BASELINE_AGENT_ID,
+    }
+
+
+if __name__ == "__main__":
+    # Validate environment variables
+    env_config = _validate_environment_variables()
+
     # Load input data
     try:
-        data_path = Path(DATA_PATH)
+        data_path = Path(env_config["data_path"])
         data = json.loads(data_path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
-        raise ValueError(f"Input data at {DATA_PATH} is not valid JSON") from exc
+        raise ValueError(f"Input data at {env_config['data_path']} is not valid JSON") from exc
 
     # Run evaluation and output summary
     SUMMARY_MD = main(
-        endpoint=AZURE_AI_PROJECT_ENDPOINT,
+        endpoint=env_config["endpoint"],
         input_data_path=data_path,
         input_data=data,
-        agent_ids=AGENT_IDS,
-        baseline_agent_id=BASELINE_AGENT_ID,
+        agent_ids=env_config["agent_ids"],
+        baseline_agent_id=env_config["baseline_agent_id"],
     )
 
     if STEP_SUMMARY:
