@@ -10,7 +10,7 @@ To use this action, all you need to provide is a data set with test queries and 
 - **Evaluators:** Leverage any evaluators from the Foundry evaluator catalog.
 - **Statistical Analysis:** Evaluation results include confidence intervals and test for statistical significance to determine if changes are meaningful and not due to random variation.
 
-### Evaluator Categories
+### Evaluator categories
 
 - **Agent evaluators**: Process and system-level evaluators for agent workflows
 - **RAG evaluators**: Evaluate end-to-end and retrieval processes in RAG systems
@@ -31,7 +31,7 @@ To use this action, all you need to provide is a data set with test queries and 
 | agent-ids                 |    Yes    | ID of the agent(s) to evaluate in format `agent-name:version` (e.g., `my-agent:1` or `my-agent:1,my-agent:2`). Multiple agents are comma-separated and compared with statistical test results |
 | baseline-agent-id         |    No     | ID of the baseline agent to compare against when evaluating multiple agents. If not provided, the first agent is used                                                                         |
 
-### Data File
+### Data file
 
 The input data file should be a JSON file with the following structure:
 
@@ -44,7 +44,7 @@ The input data file should be a JSON file with the following structure:
 | evaluator_parameters | object   |    No     | Evaluator-specific initialization parameters (e.g., thresholds, custom settings)                                                                                              |
 | data_mapping         | object   |    No     | Custom data field mappings (auto-generated from data if not provided)                                                                                                         |
 
-#### Basic Sample Data File
+#### Basic sample data file
 
 ```JSON
 {
@@ -65,11 +65,11 @@ The input data file should be a JSON file with the following structure:
 }
 ```
 
-#### Additional Sample Data Files
+#### Additional sample data files
 
 | Filename                                                                                     | Description                                                                                                             |
 | :------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------- |
-| [samples/data/dataset-tiny.json](samples/data/dataset-tiny.json)                             | Small dataset with small number of test queries and evaluators                                                          |
+| [samples/data/dataset-tiny.json](samples/data/dataset-tiny.json)                             | Dataset with small number of test queries and evaluators                                                          |
 | [samples/data/dataset.json](samples/data/dataset.json)                                       | Dataset with all supported evaluator types and enough queries for confidence interval calculation and statistical test. |
 | [samples/data/dataset-builtin-evaluators.json](samples/data/dataset-builtin-evaluators.json) | Built-in Foundry evaluators example (e.g., coherence, fluency, relevance, groundedness, metrics)                        |
 | [samples/data/dataset-openai-graders.json](samples/data/dataset-openai-graders.json)         | OpenAI-based graders example (label models, score models, text similarity, string checks)                               |
