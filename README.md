@@ -24,22 +24,22 @@ To use this action, all you need to provide is a data set with test queries and 
 ### Parameters
 
 | Name                      | Required? | Description                                                                                                                                                                                   |
-| :------------------------ | :-------: | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --- |
+| :------------------------ | :-------: | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | azure-ai-project-endpoint |    Yes    | Endpoint of your Microsoft Foundry Project                                                                                                                                                    |
 | deployment-name           |    Yes    | The name of the Azure AI model deployment to use for evaluation                                                                                                                               |
 | data-path                 |    Yes    | Path to the data file that contains the evaluators and input queries for evaluations                                                                                                          |
 | agent-ids                 |    Yes    | ID of the agent(s) to evaluate in format `agent-name:version` (e.g., `my-agent:1` or `my-agent:1,my-agent:2`). Multiple agents are comma-separated and compared with statistical test results |
-| baseline-agent-id         |    No     | ID of the baseline agent to compare against when evaluating multiple agents. If not provided, the first agent is used                                                                         |     |
+| baseline-agent-id         |    No     | ID of the baseline agent to compare against when evaluating multiple agents. If not provided, the first agent is used                                                                         |
 
 ### Data File
 
 The input data file should be a JSON file with the following structure:
 
 | Field                | Type     | Required? | Description                                                                                                                                                                   |
-| :------------------- | :------- | :-------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --- |
+| :------------------- | :------- | :-------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | name                 | string   |    Yes    | Name of the evaluation dataset                                                                                                                                                |
 | evaluators           | string[] |    Yes    | List of evaluator names to use. Check out the list of available evaluators in your project's evaluator catalog in Foundry portal: **Build > Evaluations > Evaluator catalog** |
-| data                 | object[] |    Yes    | Array of input objects with `query` and optional evaluator fields like `ground_truth`, `context`. Auto-mapped to evaluators; use `data_mapping` to override                   |     |
+| data                 | object[] |    Yes    | Array of input objects with `query` and optional evaluator fields like `ground_truth`, `context`. Auto-mapped to evaluators; use `data_mapping` to override                   |
 | openai_graders       | object   |    No     | Configuration for OpenAI-based evaluators (label_model, score_model, string_check, etc)                                                                                       |
 | evaluator_parameters | object   |    No     | Evaluator-specific initialization parameters (e.g., thresholds, custom settings)                                                                                              |
 | data_mapping         | object   |    No     | Custom data field mappings (auto-generated from data if not provided)                                                                                                         |

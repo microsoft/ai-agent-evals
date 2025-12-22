@@ -106,7 +106,7 @@ def test_summarize_with_report_urls():
         "evaluator_names": ["relevance"],
     }
 
-    report_urls = {"agent1_v1": "https://example.com/report/agent1_v1"}
+    report_urls = {"agent1:v1": "https://example.com/report/agent1:v1"}
 
     # Generate summary
     summary = summarize(
@@ -117,7 +117,7 @@ def test_summarize_with_report_urls():
     )
 
     # Verify summary contains the expected URLs
-    assert report_urls["agent1_v1"] in summary
+    assert report_urls["agent1:v1"] in summary
     assert "https://example.com/eval" in summary
     assert "https://example.com/compare" in summary
 
