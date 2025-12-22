@@ -3,6 +3,7 @@
 import numpy as np
 import pytest
 from scipy import stats
+from tests.conftest import create_fluency_score
 
 from analysis.analysis import (
     DesiredDirection,
@@ -11,7 +12,6 @@ from analysis.analysis import (
     EvaluationScoreComparison,
     EvaluationScoreDataType,
 )
-from tests.conftest import create_fluency_score
 
 
 def compute_comparison_stats(

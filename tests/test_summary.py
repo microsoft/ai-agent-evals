@@ -1,5 +1,7 @@
 """Tests for summary module."""
 
+from tests.conftest import create_fluency_score
+
 from analysis.analysis import (
     DesiredDirection,
     EvaluationScore,
@@ -8,7 +10,6 @@ from analysis.analysis import (
     EvaluationScoreDataType,
 )
 from analysis.summary import summarize
-from tests.conftest import create_fluency_score
 
 
 class MockAgent:  # pylint: disable=too-few-public-methods

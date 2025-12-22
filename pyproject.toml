@@ -35,3 +35,4 @@ where = ["analysis"]
 
 [tool.isort]
 profile = "black"
+known_first_party = ["analysis", "tests"]

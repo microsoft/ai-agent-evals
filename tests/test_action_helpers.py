@@ -1,7 +1,6 @@
 """Tests for action.py helper functions."""
 
 import pytest
-
 from action import (
     _build_base_data_mapping,
     _generate_data_mappings,

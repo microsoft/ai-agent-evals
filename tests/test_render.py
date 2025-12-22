@@ -3,6 +3,7 @@
 from pathlib import Path
 
 import pytest
+from tests.conftest import create_fluency_score
 
 from analysis.analysis import (
     DesiredDirection,
@@ -21,7 +22,6 @@ from analysis.render import (
     fmt_pvalue,
     fmt_treatment_badge,
 )
-from tests.conftest import create_fluency_score
 
 
 def test_fmt_metric_value():
