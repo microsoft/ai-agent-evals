@@ -167,13 +167,7 @@ def test_fmt_control_badge():
 
 def test_fmt_ci():
     """Test confidence interval formatting."""
-    score = EvaluationScore(
-        name="fluency",
-        evaluator="fluency",
-        field="score",
-        data_type=EvaluationScoreDataType.CONTINUOUS,
-        desired_direction=DesiredDirection.INCREASE,
-    )
+    score = create_fluency_score()
 
     result_items = [
         {"score": 0.8},
