@@ -250,14 +250,20 @@ def fmt_table_ci(evaluation_scores: dict[str, EvaluationScoreCI]) -> str:
             # It's either "evaluator" or "evaluator:metric" for multiple metrics
             eval_score_label = score_key
 
+            pass_rate_text = "N/A"
+            if score_ci.item_summary:
+                summary = score_ci.item_summary
+                pass_rate_text = f"{summary['pass_rate']:.1%}"
+                passed = summary.get("passed_count", 0)
+                failed = summary.get("failed_count", 0)
+                total = summary.get("total_items", 0)
+                tooltip = f"Passed: {passed}\nFailed: {failed}\nTotal: {total}"
+                pass_rate_text = fmt_hyperlink(pass_rate_text, "", tooltip)
+
             records.append(
                 {
                     "Evaluation metric": eval_score_label,
-                    "Pass Rate": (
-                        f"{score_ci.item_summary['pass_rate']:.1%}"
-                        if score_ci.item_summary
-                        else "N/A"
-                    ),
+                    "Pass Rate": pass_rate_text,
                     "Score": (
                         fmt_metric_value(score_ci.mean, score_ci.score.data_type)
                         if score_ci.mean is not None

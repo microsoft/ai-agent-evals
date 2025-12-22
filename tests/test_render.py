@@ -5,8 +5,6 @@ from pathlib import Path
 import pytest
 
 from analysis.analysis import (
-    DesiredDirection,
-    EvaluationScore,
     EvaluationScoreCI,
     EvaluationScoreComparison,
     EvaluationScoreDataType,
