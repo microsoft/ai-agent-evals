@@ -69,7 +69,7 @@ The input data file should be a JSON file with the following structure:
 
 | Filename                                                                                     | Description                                                                                                             |
 | :------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------- |
-| [samples/data/dataset-tiny.json](samples/data/dataset-tiny.json)                             | Dataset with small number of test queries and evaluators                                                          |
+| [samples/data/dataset-tiny.json](samples/data/dataset-tiny.json)                             | Dataset with small number of test queries and evaluators                                                                |
 | [samples/data/dataset.json](samples/data/dataset.json)                                       | Dataset with all supported evaluator types and enough queries for confidence interval calculation and statistical test. |
 | [samples/data/dataset-builtin-evaluators.json](samples/data/dataset-builtin-evaluators.json) | Built-in Foundry evaluators example (e.g., coherence, fluency, relevance, groundedness, metrics)                        |
 | [samples/data/dataset-openai-graders.json](samples/data/dataset-openai-graders.json)         | OpenAI-based graders example (label models, score models, text similarity, string checks)                               |
