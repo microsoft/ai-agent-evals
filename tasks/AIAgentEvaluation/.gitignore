@@ -5,6 +5,6 @@ node_modules
 dist
 
 # Latest version python files are copied from root directory
-V2/action.py 
-V2/analysis
-V2/pyproject.toml
+V3/action.py 
+V3/analysis
+V3/pyproject.toml
