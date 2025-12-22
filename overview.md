@@ -97,12 +97,6 @@ Evaluation results will appear in the Azure DevOps pipeline summary with detaile
 and comparisons between agents when multiple are evaluated.
 
 ![Sample evaluation results showing agent comparisons](sample-output.jpeg)
-<your-ai-project-endpoint>"
-      deployment-name: "<your-deployment-name>"
-      data-path: "$(System.DefaultWorkingDirectory)/path/to/your/data-file"
-      agent-ids: "<your-ai-agent-ids>"
-
-```
 
 ## Evaluation Outputs
 

@@ -112,7 +112,7 @@ async function installPythonDependencies(
 
 async function run() {
   try {
-    console.log("Starting AIAgentEvaluation v2 task");
+    console.log("Starting AIAgentEvaluation v3 task");
     const scriptDir = __dirname;
 
     // Find Python executable
