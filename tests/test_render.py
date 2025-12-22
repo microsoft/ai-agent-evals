@@ -3,7 +3,6 @@
 from pathlib import Path
 
 import pytest
-from tests.conftest import create_fluency_score
 
 from analysis.analysis import (
     DesiredDirection,
@@ -22,6 +21,7 @@ from analysis.render import (
     fmt_pvalue,
     fmt_treatment_badge,
 )
+from tests.conftest import create_fluency_score
 
 
 def test_fmt_metric_value():
@@ -146,13 +146,7 @@ def test_fmt_treatment_badge_weak_degradation():
 
 def test_fmt_control_badge():
     """Test control badge formatting."""
-    score = EvaluationScore(
-        name="fluency",
-        evaluator="fluency",
-        field="score",
-        data_type=EvaluationScoreDataType.CONTINUOUS,
-        desired_direction=DesiredDirection.INCREASE,
-    )
+    score = create_fluency_score()
 
     comparison = EvaluationScoreComparison(
         score=score,
