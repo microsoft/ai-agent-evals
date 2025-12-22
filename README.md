@@ -19,32 +19,30 @@ To use this action, all you need to provide is a data set with test queries and 
 - **OpenAI-based graders**: [Leverage OpenAI graders](https://learn.microsoft.com/en-us/azure/ai-foundry/concepts/evaluation-evaluators/azure-openai-graders?view=foundry) including string check, text simularity, score/label model
 - **Custom evaluators**: [Define your own custom evaluators](https://learn.microsoft.com/en-us/azure/ai-foundry/concepts/evaluation-evaluators/custom-evaluators?view=foundry) using Python code or LLM-as-a-judge patterns
 
-
-
 ## Inputs
 
 ### Parameters
 
-| Name                      | Required? | Description                                                                                                                                                                                                                                           |
-| :------------------------ | :-------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| azure-ai-project-endpoint |    Yes    | Endpoint of your Microsoft Foundry Project                                                                                                                                                                                                                     |
-| deployment-name           |    Yes    | The name of the Azure AI model deployment to use for evaluation                                                                                                                                                                                       |
+| Name                      | Required? | Description                                                                                                                                                                                   |
+| :------------------------ | :-------: | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --- |
+| azure-ai-project-endpoint |    Yes    | Endpoint of your Microsoft Foundry Project                                                                                                                                                    |
+| deployment-name           |    Yes    | The name of the Azure AI model deployment to use for evaluation                                                                                                                               |
 | data-path                 |    Yes    | Path to the data file that contains the evaluators and input queries for evaluations                                                                                                          |
-| agent-ids                 |    Yes    | ID of the agent(s) to evaluate in the format `agent-name:version` (e.g., `my-agent:1` or `my-agent:1,my-agent:2`). If multiple are provided, all agents should be comma-separated and will be evaluated and compared against the baseline with statistical test results                                                                  |
-| baseline-agent-id         |    No     | ID of the baseline agent to compare against when evaluating multiple agents. If not provided, the first agent is used                                                                                                                                 |                                                                                                                                                                                           |
+| agent-ids                 |    Yes    | ID of the agent(s) to evaluate in format `agent-name:version` (e.g., `my-agent:1` or `my-agent:1,my-agent:2`). Multiple agents are comma-separated and compared with statistical test results |
+| baseline-agent-id         |    No     | ID of the baseline agent to compare against when evaluating multiple agents. If not provided, the first agent is used                                                                         |     |
 
 ### Data File
 
 The input data file should be a JSON file with the following structure:
 
-| Field                        | Type     | Required? | Description                                                                              |
-| :--------------------------- | :------- | :-------: | :--------------------------------------------------------------------------------------- |
-| name                         | string   |    Yes    | Name of the evaluation dataset                                                                 |
-| evaluators                   | string[] |    Yes    | List of evaluator names to use. Check out the list of available evaluators in your project's evaluator catalog in Foundry portal: **Build > Evaluations > Evaluator catalog**                                                          |
-| data                         | object[] |    Yes    | Array of input objects. Data items can include additional columns beyond `query`, such as `ground_truth`, `context`, or any other fields needed by evaluators. These fields are automatically mapped to evaluators with matching names. Use the `data_mapping` field to override automatic mappings if needed.                                                                  |                                                               |
-| openai_graders               | object   |    No     | Configuration for OpenAI-based evaluators (label_model, score_model, string_check, etc) |
-| evaluator_parameters         | object   |    No     | Evaluator-specific initialization parameters (e.g., thresholds, custom settings)         |
-| data_mapping                 | object   |    No     | Custom data field mappings (auto-generated from data if not provided)                   |
+| Field                | Type     | Required? | Description                                                                                                                                                                   |
+| :------------------- | :------- | :-------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --- |
+| name                 | string   |    Yes    | Name of the evaluation dataset                                                                                                                                                |
+| evaluators           | string[] |    Yes    | List of evaluator names to use. Check out the list of available evaluators in your project's evaluator catalog in Foundry portal: **Build > Evaluations > Evaluator catalog** |
+| data                 | object[] |    Yes    | Array of input objects with `query` and optional evaluator fields like `ground_truth`, `context`. Auto-mapped to evaluators; use `data_mapping` to override                   |     |
+| openai_graders       | object   |    No     | Configuration for OpenAI-based evaluators (label_model, score_model, string_check, etc)                                                                                       |
+| evaluator_parameters | object   |    No     | Evaluator-specific initialization parameters (e.g., thresholds, custom settings)                                                                                              |
+| data_mapping         | object   |    No     | Custom data field mappings (auto-generated from data if not provided)                                                                                                         |
 
 #### Basic Sample Data File
 
@@ -69,17 +67,14 @@ The input data file should be a JSON file with the following structure:
 
 #### Additional Sample Data Files
 
-| Filename                                                           | Description                                                                                                        |
-| :----------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------- |
-| [samples/data/dataset-tiny.json](samples/data/dataset-tiny.json)   | Small dataset with small number of test queries and evaluators                                                             |
-| [samples/data/dataset.json](samples/data/dataset.json)             | Dataset with all supported evaluator types and enough queries for confidence interval calculation and statistical test. |
-| [samples/data/dataset-builtin-evaluators.json](samples/data/dataset-builtin-evaluators.json) | Built-in Foundry evaluators example (e.g., coherence, fluency, relevance, groundedness, metrics) |
-| [samples/data/dataset-openai-graders.json](samples/data/dataset-openai-graders.json) | OpenAI-based graders example (label models, score models, text similarity, string checks) |
-| [samples/data/dataset-custom-evaluators.json](samples/data/dataset-custom-evaluators.json) | Custom evaluators example with evaluator parameters |
-| [samples/data/dataset-data-mapping.json](samples/data/dataset-data-mapping.json) | Data mapping example showing how to override automatic field mappings with custom data column names |
-
-
-
+| Filename                                                                                     | Description                                                                                                             |
+| :------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------- |
+| [samples/data/dataset-tiny.json](samples/data/dataset-tiny.json)                             | Small dataset with small number of test queries and evaluators                                                          |
+| [samples/data/dataset.json](samples/data/dataset.json)                                       | Dataset with all supported evaluator types and enough queries for confidence interval calculation and statistical test. |
+| [samples/data/dataset-builtin-evaluators.json](samples/data/dataset-builtin-evaluators.json) | Built-in Foundry evaluators example (e.g., coherence, fluency, relevance, groundedness, metrics)                        |
+| [samples/data/dataset-openai-graders.json](samples/data/dataset-openai-graders.json)         | OpenAI-based graders example (label models, score models, text similarity, string checks)                               |
+| [samples/data/dataset-custom-evaluators.json](samples/data/dataset-custom-evaluators.json)   | Custom evaluators example with evaluator parameters                                                                     |
+| [samples/data/dataset-data-mapping.json](samples/data/dataset-data-mapping.json)             | Data mapping example showing how to override automatic field mappings with custom data column names                     |
 
 ## Sample workflow
 
@@ -133,6 +128,7 @@ Below is a sample report for comparing two agents.
 ## Learn More
 
 For more information about Foundry agent service and observability, see:
+
 - [Foundry Observability Concepts](https://learn.microsoft.com/en-us/azure/ai-foundry/concepts/observability?view=foundry)
 - [Foundry Agent Service Documentation](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/overview?view=foundry)
 
