@@ -1,0 +1,36 @@
+{
+  "name": "dataset-with-custom-mappings",
+  "evaluators": [
+    "builtin.groundedness",
+    "builtin.text_similarity"
+  ],
+  "openai_graders": {
+    "builtin.text_similarity": {
+      "evaluation_metric": "fuzzy_match",
+      "input": "{{sample.output_text}}",
+      "reference": "{{item.expected_answer}}"
+    }
+  },
+  "data_mapping": {
+    "query": "user_question",
+    "ground_truth": "expected_answer",
+    "context": "reference_material"
+  },
+  "data": [
+    {
+      "user_question": "What is machine learning?",
+      "expected_answer": "Machine learning is a branch of AI where systems learn patterns from data automatically.",
+      "reference_material": "ML is used in recommendation systems, image recognition, and natural language processing."
+    },
+    {
+      "user_question": "How do I create a Python virtual environment?",
+      "expected_answer": "Use 'python -m venv' command followed by activation from the Scripts or bin directory.",
+      "reference_material": "Virtual environments isolate project dependencies and prevent package conflicts between projects."
+    },
+    {
+      "user_question": "Explain the concept of recursion in programming",
+      "expected_answer": "Recursion is when a function calls itself, with a base case to stop the recursion.",
+      "reference_material": "Common examples include factorial calculation, tree traversal, and divide-and-conquer algorithms."
+    }
+  ]
+}

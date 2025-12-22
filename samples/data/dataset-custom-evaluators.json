@@ -1,0 +1,25 @@
+{
+  "name": "custom-evaluators-sample",
+  "evaluators": [
+    "custom_prompt_evaluator",
+    "custom_code_evaluator"
+  ],
+  "evaluator_parameters": {
+    "custom_prompt_evaluator": {
+      "threshold": 4
+    },
+    "custom_code_evaluator": {
+      "pass_threshold": 0.5
+    }
+  },
+  "data_mapping": {
+  },
+  "data": [
+    {
+      "query": "Explain Python functions"
+    },
+    {
+      "query": "What is object-oriented programming?"
+    }
+  ]
+}

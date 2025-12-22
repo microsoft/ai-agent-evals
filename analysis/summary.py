@@ -8,149 +8,119 @@ of evaluation results for AI agents. It includes functions to create
 tables comparing multiple agent variants or displaying confidence intervals
 for a single agent's performance metrics.
 """
-from pathlib import Path
-
-import yaml
-from azure.ai.agents.models import Agent
-
-from .analysis import (
-    EvaluationResult,
-    EvaluationResultView,
-    EvaluationScore,
-    EvaluationScoreDataType,
-)
 from .render import fmt_hyperlink, fmt_table_ci, fmt_table_compare
-
-
-def should_include_score(
-    score: dict, evaluator: dict, result_view: EvaluationResultView
-) -> bool:
-    """
-    Determines if a score should be included in the result view.
-
-    Args:
-        score: Score metadata from evaluator-scores.yaml
-        evaluator: Evaluator metadata from evaluator-scores.yaml
-        result_view: The current view mode for evaluation results
-
-    Returns:
-        True if the score should be included, False otherwise
-    """
-    # Always include operational metrics
-    if evaluator["class"] == "OperationalMetricsEvaluator":
-        return True
-
-    if result_view == EvaluationResultView.ALL:
-        return True
-
-    if score["type"] == EvaluationScoreDataType.BOOLEAN.value:
-        return result_view == EvaluationResultView.DEFAULT
-
-    return result_view == EvaluationResultView.RAW_SCORES
 
 
 # pylint: disable-next=too-many-locals, too-many-arguments, too-many-positional-arguments
 def summarize(
-    eval_results: dict[str, EvaluationResult],
-    agents: dict[str, Agent],
-    baseline: str,
-    evaluators: list[str],
-    agent_base_url: str | None,
-    result_view: EvaluationResultView,
+    baseline_results: dict,
+    comparisons_by_evaluator: dict[str, list] | None = None,
+    report_urls: dict[str, str] | None = None,
+    eval_url: str | None = None,
+    compare_url: str | None = None,
+    evaluator_metadata: dict | None = None,
+    evaluator_catalog_url: str | None = None,
 ) -> str:
     """Generate a markdown summary of evaluation results.
 
     Args:
-        eval_results: Dictionary mapping agent IDs to their evaluation results
-        agents: Dictionary mapping agent IDs to Agent objects
-        baseline: ID of the baseline agent for comparisons
-        evaluators: List of evaluator class names to include in the summary
-        agent_base_url: Base URL for agent links
-        result_view: The view mode to use for displaying evaluation results
+        baseline_results: Dictionary containing baseline agent results with keys:
+            - 'evaluation_scores': Dict mapping evaluator names to EvaluationScoreCI objects
+            - 'agent': Agent object
+            - 'evaluator_names': List of evaluator names
+        comparisons_by_evaluator: Optional dictionary of comparison results for multiple agents.
+            Each evaluator maps to a list of EvaluationScoreComparison objects.
+        report_urls: Optional dictionary mapping agent IDs to their report URLs
+        eval_url: Optional evaluation base URL
+        compare_url: Optional comparison report URL
+        evaluator_metadata: Optional dictionary with evaluator metadata including versions
+        evaluator_catalog_url: Optional evaluator catalog base URL for linking
 
     Returns:
         Formatted markdown string with evaluation summary
     """
+    # Extract fields from baseline_results
+    evaluation_scores = baseline_results["evaluation_scores"]
+    agent = baseline_results["agent"]
+    agent_name = f"{agent.name}:{agent.version}"
+
+    # Extract treatment agent names from comparisons if available
+    treatment_agent_names = None
+    if comparisons_by_evaluator:
+        # Get treatment names from first evaluator's comparisons
+        first_evaluator_comparisons = next(iter(comparisons_by_evaluator.values()), [])
+        if first_evaluator_comparisons:
+            treatment_agent_names = [
+                comp.treatment_variant for comp in first_evaluator_comparisons
+            ]
+
     md = []
-    view_label = (
-        "" if result_view == EvaluationResultView.DEFAULT else f"({result_view.value})"
-    )
-    md.append(f"## Azure AI Evaluation {view_label}\n")
+    md.append("## Azure AI Evaluation\n")
 
-    def format_agent_row(agent: Agent, agent_url: str) -> str:
-        result_url = eval_results[agent.id].ai_foundry_url
-        result_link = fmt_hyperlink("Click here", result_url) if result_url else ""
-        agent_link = fmt_hyperlink(agent.id, agent_url) if agent_url else agent.id
-        return f"| {agent.name} | " f"{agent_link} | " f"{result_link} |"
+    # Create eval link if URL available
+    eval_link = fmt_hyperlink("View evaluation", eval_url) if eval_url else None
 
-    md.append("### Agent variants\n")
-    md.append("| Agent name | Agent ID | Evaluation results |")
-    md.append("|:-----------|:---------|:-------------------|")
-    md.append(format_agent_row(agents[baseline], agent_base_url + agents[baseline].id))
+    # Show agents section - list all agents if comparisons available
+    if comparisons_by_evaluator and treatment_agent_names:
+        md.append("### Agents\n")
+        if eval_link:
+            md.append(f"{eval_link}\n")
+        md.append("| Agent ID | Role | Evaluation results |")
+        md.append("|:---------|:-----|:-------------------|")
 
-    for agent in agents.values():
-        if agent.id != baseline:
-            md.append(format_agent_row(agent, agent_base_url + agent.id))
+        # Use per-agent URLs from report_urls dictionary
+        baseline_url = report_urls.get(agent_name) if report_urls else None
+        baseline_link = (
+            fmt_hyperlink("View run results", baseline_url) if baseline_url else ""
+        )
+        md.append(f"| {agent_name} | Baseline | {baseline_link} |")
 
-    # load hardcoded evaluator score metadata
-    metadata_path = Path(__file__).parent / "evaluator-scores.yaml"
-    with open(metadata_path, encoding="utf-8") as f:
-        score_metadata = yaml.safe_load(f)
-
-    if len(eval_results) >= 2:
-        md.append("\n### Compare evaluation scores between variants\n")
-    elif len(eval_results) == 1:
-        md.append("\n### Evaluation results\n")
-
-    for section in score_metadata["sections"]:
-        section_evals = [x["class"] for x in section["evaluators"]]
-        if any(x in evaluators for x in section_evals):
-            append_eval_section(
-                eval_results, baseline, evaluators, result_view, md, section
+        for treatment_name in treatment_agent_names:
+            treatment_url = report_urls.get(treatment_name) if report_urls else None
+            treatment_link = (
+                fmt_hyperlink("View run results", treatment_url)
+                if treatment_url
+                else ""
             )
+            md.append(f"| {treatment_name} | Treatment | {treatment_link} |")
+    else:
+        md.append("### Agent\n")
+        if eval_link:
+            md.append(f"{eval_link}\n")
+        md.append("| Agent ID | Evaluation results |")
+        md.append("|:---------|:-------------------|")
+        agent_url = report_urls.get(agent_name) if report_urls else None
+        result_link = fmt_hyperlink("View run results", agent_url) if agent_url else ""
+        md.append(f"| {agent_name} | {result_link} |")
+
+    md.append("\n### Evaluation results\n")
+
+    # Add comparison link above the results table if available
+    if compare_url:
+        compare_link = fmt_hyperlink("View compare report", compare_url)
+        md.append(f"{compare_link}\n")
+
+    # Generate comparison table if comparisons are available, otherwise show CI table
+    if comparisons_by_evaluator and treatment_agent_names:
+        md_table = fmt_table_compare(
+            comparisons_by_evaluator,
+            agent_name,
+            evaluator_catalog_url or "",
+            evaluator_metadata,
+        )
+    else:
+        md_table = fmt_table_ci(
+            evaluation_scores, evaluator_catalog_url or "", evaluator_metadata
+        )
+    md.append(md_table)
+    md.append("")
 
     md.append("### References\n")
     md.append(
-        "- See [evaluator-scores.yaml](https://github.com/microsoft/ai-agent-evals/blob/main/"
-        "analysis/evaluator-scores.yaml) for the full list of evaluators supported "
-        "and the definitions of the scores"
-    )
-    md.append(
-        "- For in-depth details on evaluators, please see the "
-        "[Agent Evaluation SDK section in the Azure AI documentation]"
-        "(https://learn.microsoft.com/en-us/azure/ai-foundry/how-to/develop/agent-evaluate-sdk)"
+        "- For in-depth details on evaluators, please see "
+        "[Observability in generative AI]"
+        "(https://learn.microsoft.com/en-us/azure/ai-foundry/concepts/observability?view=foundry)"
     )
     md.append("")
 
     return "\n".join(md)
-
-
-# pylint: disable-next=too-many-arguments, too-many-positional-arguments
-def append_eval_section(eval_results, baseline, evaluators, result_view, md, section):
-    """Append a section of evaluation scores to the markdown summary."""
-    eval_scores = []
-    for evaluator in section["evaluators"]:
-        if evaluator["class"] not in evaluators:
-            continue
-        for score in evaluator["scores"]:
-            if should_include_score(score, evaluator, result_view):
-                eval_scores.append(
-                    EvaluationScore(
-                        name=score["name"],
-                        evaluator=evaluator["key"],
-                        field=score["key"],
-                        data_type=score["type"],
-                        desired_direction=score["desired_direction"],
-                    )
-                )
-
-    if len(eval_scores) > 0:
-        md_table = ""
-        if len(eval_results) >= 2:
-            md_table = fmt_table_compare(eval_scores, eval_results, baseline)
-        elif len(eval_results) == 1:
-            md_table = fmt_table_ci(eval_scores, eval_results[baseline])
-
-        md.append(f"#### {section['name']}\n")
-        md.append(md_table)
-        md.append("")

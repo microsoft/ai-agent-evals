@@ -5,7 +5,6 @@ This package provides tools and utilities for analyzing and summarizing evaluati
 results from AI agent performance tests. It includes functionality for:
 
 - Processing evaluation results with confidence intervals
-- Custom evaluators for operational metrics
 - Summarization of evaluation findings
 - Visualization and reporting capabilities
 
@@ -14,6 +13,16 @@ The module exposes key classes and functions for working with evaluation data.
 
 # ruff: noqa: F401
 # flake8: noqa: F401
-from .analysis import EvaluationResult, EvaluationResultView
-from .custom_eval import OperationalMetricsEvaluator
+from .analysis import (
+    DesiredDirection,
+    EvaluationScore,
+    EvaluationScoreCI,
+    EvaluationScoreComparison,
+    EvaluationScoreDataType,
+)
+from .processing import (
+    convert_insight_to_comparisons,
+    convert_json_to_jsonl,
+    process_evaluation_results,
+)
 from .summary import summarize

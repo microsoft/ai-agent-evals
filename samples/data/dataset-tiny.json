@@ -1,13 +1,40 @@
 {
   "name": "test-dataset-tiny",
   "evaluators": [
-    "FluencyEvaluator",
-    "ToolCallAccuracyEvaluator", 
-    "GroundednessEvaluator"
+    "builtin.text_similarity",
+    "custom_prompt_kid_friendly",
+    "custom_code_1",
+    "builtin.fluency",   
+    "builtin.groundedness",
+    "builtin.f1_score",
+    "builtin.task_adherence",
+    "builtin.violence" 
   ],
+  "openai_graders": {
+    "builtin.text_similarity": {
+      "evaluation_metric": "fuzzy_match",
+      "input": "{{sample.output_text}}",
+      "reference": "{{item.ground_truth}}"
+    }
+  },
+  "evaluator_parameters": { 
+    "custom_prompt_kid_friendly": {
+      "threshold": 4
+    },
+    "custom_code_1": {
+      "pass_threshold": 0.5
+    }
+  },
+  "data_mapping": {
+  },
   "data": [
     {
-      "query": "Tell me about Smart eyeware"
-    }
+      "query": "Tell me about Smart eyeware",
+      "ground_truth": "Smart eyeware includes devices like augmented reality glasses and smart contact lenses that offer features beyond traditional vision correction."
+    },
+    {
+      "query": "How do I rebase my branch in git?",
+      "ground_truth": "To rebase a branch in git, check out the branch you want to rebase and use 'git rebase <target-branch>' to apply your changes on top of the target branch."
+    }  
   ]
 }

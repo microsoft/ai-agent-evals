@@ -3,26 +3,25 @@
 
 """GitHub Action to evaluate Azure AI agents using the Azure AI Evaluation SDK."""
 
-import inspect
 import json
 import os
-import random
 import time
-import uuid
 from pathlib import Path
-from urllib.parse import parse_qs, urlparse
 
-import azure.ai.evaluation as evals
-import pandas as pd
-import yaml
-from azure.ai.agents.models import Agent, MessageRole, RunStatus
-from azure.ai.evaluation import AIAgentConverter, evaluate
 from azure.ai.projects import AIProjectClient
+from azure.ai.projects.models import EvaluatorMetricDirection, EvaluatorMetricType
+from azure.ai.projects.models._enums import OperationState
+from azure.ai.projects.models._models import EvaluationComparisonRequest, Insight
 from azure.identity import DefaultAzureCredential
+from openai.types.eval_create_params import DataSourceConfigCustom
 
-import analysis
-
-# NOTE: custom evaluators must be imported so evaluate() can pickle them
+from analysis import (
+    convert_insight_to_comparisons,
+    convert_json_to_jsonl,
+    process_evaluation_results,
+    summarize,
+)
+from analysis.constants import DEFAULT_EVALUATOR_METADATA
 
 current_dir = Path(__file__).parent
 env_path = current_dir / ".env"
@@ -31,417 +30,810 @@ if env_path.exists():
 
     load_dotenv(dotenv_path=env_path)
 
-USER_AGENT = "ai-agent-evals/v2-beta (+https://github.com/microsoft/ai-agent-evals)"
+
+# Configuration constants
+class EvaluationConfig:  # pylint: disable=too-few-public-methods
+    """Evaluation configuration constants."""
+
+    DEPLOYMENT_NAME_PARAM = "deployment_name"
+    POLLING_INTERVAL_SECONDS = 5
+    USER_AGENT = "ai-agent-evals/v3-beta (+https://github.com/microsoft/ai-agent-evals)"
+
+
 STEP_SUMMARY = os.getenv("GITHUB_STEP_SUMMARY") or os.getenv("ADO_STEP_SUMMARY")
 
 AZURE_AI_PROJECT_ENDPOINT = os.getenv("AZURE_AI_PROJECT_ENDPOINT")
 DEPLOYMENT_NAME = os.getenv("DEPLOYMENT_NAME")
-API_VERSION = os.getenv("API_VERSION")
 DATA_PATH = os.getenv("DATA_PATH")
 AGENT_IDS = [x.strip() for x in os.getenv("AGENT_IDS", "").split(",") if x.strip()]
 BASELINE_AGENT_ID = os.getenv("BASELINE_AGENT_ID")
-EVALUATION_RESULT_VIEW = os.getenv("EVALUATION_RESULT_VIEW")
 
 
-# pylint: disable=too-many-locals
-def simulate_question_answer(
-    ai_project: AIProjectClient, agent: Agent, input_queries: dict
-) -> dict:
-    """
-    Simulates a question-answering interaction with an agent.
-
-    This function performs the following steps:
-    1. Creates a new thread for the interaction.
-    2. Sends a user message containing the query to the agent.
-    3. Processes the run to generate the agent's response.
-    4. Handles retries with exponential backoff in case of rate limit errors.
-    5. Extracts the agent's response and relevant metrics.
-
-    Args:
-        project_client (AIProjectClient): The client used to interact with the Azure AI Project.
-        agent (Agent): The agent instance to simulate the interaction with.
-        input_queries (dict): A dictionary containing the input data for the interaction.
-                      It must include a "query" key and may include "id".
-
-    Returns:
-        dict: A dictionary containing the evaluation input using thread data with added fields:
-            - "id": The unique identifier for the input.
-            - "metrics": A dictionary of performance metrics.
-
-    Raises:
-        ValueError: If the run fails for reasons other than rate limits or if retries are exhausted.
-    """
-    agent_client = ai_project.agents
-    thread = agent_client.threads.create()
-    agent_client.messages.create(
-        thread.id, role=MessageRole.USER, content=input_queries.get("query")
-    )
-
-    # Exponential backoff retry logic
-    max_retries = 5
-    base_wait_seconds = 2
-    for attempt in range(max_retries):
-        start_time = time.time()
-        run = agent_client.runs.create_and_process(
-            thread_id=thread.id, agent_id=agent.id
-        )
-        end_time = time.time()
-
-        if run.status == RunStatus.COMPLETED:
-            break
-
-        if run.last_error.code == "rate_limit_exceeded" and attempt < max_retries - 1:
-            # Calculate wait time with exponential backoff (2^attempt * base_wait_seconds)
-            # with a small random jitter to avoid thundering herd problem
-            jitter = random.uniform(0, 0.5)
-            wait_seconds = (2**attempt) * base_wait_seconds + jitter
-            print(
-                f"Rate limit exceeded (attempt {attempt + 1}/{max_retries}). "
-                f"You may wish to increase your quota. "
-                f"Retrying in {wait_seconds: .2f} seconds..."
+def get_agents(project_client: AIProjectClient, agent_ids: list[str]) -> dict:
+    """Parse and retrieve agent objects from agent IDs."""
+    agents = {}
+    for agent_id in agent_ids:
+        agent_name_version = agent_id.split(":")
+        if len(agent_name_version) == 2:
+            agent_name = agent_name_version[0]
+            agent_version = agent_name_version[1]
+            agent = project_client.agents.get_version(
+                agent_name=agent_name, agent_version=agent_version
             )
-            time.sleep(wait_seconds)
+            agents[agent_id] = agent
         else:
-            if run.status != RunStatus.COMPLETED:
-                raise ValueError(run.last_error or "Run failed to complete")
-
-    if run.status != RunStatus.COMPLETED:
-        raise ValueError(f"Failed to complete run after {max_retries} attempts")
-
-    # Collect performance metrics
-    metrics = {
-        "server-run-duration-in-seconds": (
-            run.completed_at - run.created_at
-        ).total_seconds(),
-        "client-run-duration-in-seconds": end_time - start_time,
-        "completion-tokens": run.usage.completion_tokens,
-        "prompt-tokens": run.usage.prompt_tokens,
-    }
-
-    # Generate evaluation data from the thread
-    converter = AIAgentConverter(ai_project)
-    evaluation_data = converter.prepare_evaluation_data(thread_ids=thread.id)
-
-    output = evaluation_data[0]
-    output["id"] = input_queries.get(
-        "id", str(uuid.uuid4())
-    )  # Use provided ID or generate one
-    output["metrics"] = metrics
-
-    return output
-
-
-def create_evaluators(class_names: list[str], args_default: dict) -> dict:
-    """
-    Creates a dictionary of evaluators based on the provided class names and default arguments.
-    This function reads evaluator metadata from a YAML file, matches the provided class names
-    with the metadata, and dynamically creates instances of the corresponding evaluator classes.
-    It also appends a custom evaluator for operational metrics.
-    Args:
-        class_names (list[str]): A list of evaluator class names to be instantiated.
-        args_default (dict): A dictionary containing default arguments to be used for initializing
-            the evaluator classes.
-    Returns:
-        dict: A dictionary where the keys are evaluator keys (from the metadata) and the values
-        are instances of the corresponding evaluator classes.
-    Raises:
-        AttributeError: If the specified evaluator class is not found in the `evals` module.
-        KeyError: If a required argument for an evaluator class is missing in `args_default`.
-    """
-    path = Path(__file__).parent / "analysis" / "evaluator-scores.yaml"
-    with open(path, encoding="utf-8") as f:
-        evaluator_metadata = yaml.safe_load(f)
-
-    evaluators = {}
-    for evaluator_search in class_names:
-        evaluator_found = None
-        for section in evaluator_metadata["sections"]:
-            for evaluator in section["evaluators"]:
-                if evaluator["class"] == evaluator_search:
-                    evaluator_found = evaluator
-                    break
-
-        if not evaluator_found:
-            print(f"Unrecognized evaluator '{evaluator_search}'")
-            continue
-
-        # create evaluator instance using class from evals module
-        evaluator_class = getattr(evals, evaluator_found["class"])
-        init_signature = inspect.signature(evaluator_class.__init__)
-        args_required = {
-            k
-            for k, v in init_signature.parameters.items()
-            if (
-                v.kind is v.POSITIONAL_OR_KEYWORD
-                and k != "self"
-                and v.default is v.empty
-            )
-        }
-        args_used = {k: args_default[k] for k in args_required}
-
-        evaluators[evaluator_found["key"]] = evaluator_class(**args_used)
-
-    # append custom evaluator to propagate operational metrics to evaluation result
-    evaluators["operational_metrics"] = analysis.OperationalMetricsEvaluator()
-
-    return evaluators
-
-
-# pylint: disable=too-many-branches
-def validate_input_data(data: dict, eval_metadata: dict) -> None:
-    """
-    Validates that the input data has the required structure and fields.
-
-    Args:
-        data: The input data to validate
-
-    Raises:
-        ValueError: If the input data is missing required fields or has invalid types
-    """
-    # Validate required fields in the input data
-    required_fields = ["name", "evaluators", "data"]
-    missing_fields = [field for field in required_fields if field not in data]
-
-    if missing_fields:
-        raise ValueError(
-            f"Input data is missing required fields: {', '.join(missing_fields)}"
-        )
-
-    # Validate field types
-    if not isinstance(data["name"], str):
-        raise ValueError("Input data 'name' must be a string")
-
-    if not isinstance(data["evaluators"], list):
-        raise ValueError("Input data 'evaluators' must be a list")
-
-    if not isinstance(data["data"], list):
-        raise ValueError("Input data 'data' must be a list")
-
-    if not data["data"]:
-        raise ValueError("Input data 'data' list cannot be empty")
-
-    # Validate that each item in data has a 'query' field and check for unique IDs
-    ids = set()
-    for i, item in enumerate(data["data"]):
-        if not isinstance(item, dict):
-            raise ValueError(f"Item at index {i} in 'data' must be a dictionary")
-        if "query" not in item:
             raise ValueError(
-                f"Item at index {i} in 'data' is missing required field 'query'"
+                f"Invalid agent ID format: {agent_id}. Expected 'name:version'"
             )
-        # Check if ID is provided, and ensure it's unique
-        if "id" in item:
-            if item["id"] in ids:
-                raise ValueError(f"Duplicate ID '{item['id']}' found in 'data'")
-            ids.add(item["id"])
-
-    # Validate that all evaluator names exist in the available evaluators
-    available_evaluators = []
-    for section in eval_metadata["sections"]:
-        for evaluator in section["evaluators"]:
-            available_evaluators.append(evaluator["class"])
-
-    unknown_evaluators = [
-        e
-        for e in data["evaluators"]
-        if e not in available_evaluators and e != "OperationalMetricsEvaluator"
-    ]
-    if unknown_evaluators:
-        raise ValueError(
-            f"Unknown evaluators specified: {', '.join(unknown_evaluators)}"
-        )
+    return agents
 
 
-def get_evaluator_metadata() -> dict:
-    """
-    Get evaluator metadata from the evaluator-scores.yaml file.
-    """
-    evaluator_path = Path(__file__).parent / "analysis" / "evaluator-scores.yaml"
-    with open(evaluator_path, encoding="utf-8") as f:
-        metadata = yaml.safe_load(f)
-        return metadata
-
-
-# pylint: disable=too-many-nested-blocks
-def convert_pass_fail_to_boolean(
-    eval_result_data: dict, eval_metadata: dict
-) -> list[dict]:
-    """
-    Convert "pass" and "fail" strings in evaluation results to booleans.
-    """
-    # Create a mapping of available scores
-    available_scores = {}
-    for section in eval_metadata["sections"]:
-        for evaluator in section["evaluators"]:
-            for score in evaluator["scores"]:
-                field = f"outputs.{evaluator['key']}.{score['key']}"
-                available_scores[field] = score
-
-    # Convert "pass" and "fail" strings to booleans based on the desired direction
-    #   Pass rate: pass = True, fail = False (count # passes)
-    #   Defect rate: pass = False, fail = True (count # fails)
-    eval_rows = eval_result_data["rows"]
-    for row in eval_rows:
-        for key in row:
-            if key.startswith("outputs."):
-                matching_score = available_scores.get(key, None)
-                if matching_score:
-                    is_up_good = (
-                        matching_score.get("desired_direction").lower() == "increase"
-                    )
-                    if isinstance(row[key], str):
-                        if row[key].lower() == "pass":
-                            row[key] = is_up_good
-                        elif row[key].lower() == "fail":
-                            row[key] = not is_up_good
-    return eval_rows
-
-
-# pylint: disable=too-many-locals, too-many-arguments, too-many-positional-arguments
-def main(
-    credential,
-    endpoint: str,
-    input_data_set: dict,
-    agent_ids: list[str],
-    eval_metadata: dict,
-    baseline_agent_id: str | None = None,
-    working_dir: Path | None = None,
-    eval_result_view: analysis.EvaluationResultView = analysis.EvaluationResultView.DEFAULT,
-) -> str:
-    """
-    Main function to evaluate AI agents using simulated conversations and analysis.
+def _build_metrics_dict(definition) -> dict:
+    """Build metrics dictionary from evaluator definition.
 
     Args:
-        credential: The credential object for authentication.
-        endpoint (str): The endpoint for the AI project.
-        input_data_set (dict): The input data containing evaluation details, including
-            the dataset and evaluator configurations.
-        agent_ids (list[str]): A list of agent IDs to be evaluated.
-        baseline_agent_id (Optional[str], optional): The ID of the baseline agent for
-            comparison. Defaults to the first agent in `agent_ids` if not provided.
-        working_dir (Path, optional): The working directory for storing intermediate
-            evaluation files. Defaults to the current directory.
-        eval_result_view (analysis.EvaluationResultView, optional): The view type for
-            displaying evaluation results. Defaults to `EvaluationResultView.DEFAULT`.
+        definition: Evaluator definition object
 
     Returns:
-        str: A summary of the evaluation results, including analysis and comparison
-        of agents' performance.
-
-    Raises:
-        Exception: If any error occurs during the simulation of question-answer
-        interactions or evaluation process.
-
-    Notes:
-        - The function uses the default evaluator model configuration.
-        - Evaluation results are stored in JSON files in the specified working
-          directory.
-        - The function facilitates paired comparisons by adding unique IDs to input
-          data rows if not already present.
-        - The evaluation results are analyzed and summarized, with a baseline agent
-          used for comparison.
+        Dictionary mapping metric names to metric metadata
     """
-    working_dir = Path(".") if working_dir is None else working_dir
-    project_client = AIProjectClient(
-        credential=credential,
-        endpoint=endpoint,
-        api_version="2025-05-15-preview",
-        # Evaluations yet not supported on stable (api_version="2025-05-01")
-    )
+    metrics_dict = {}
+    if hasattr(definition, "metrics") and definition.metrics:
+        for metric_name, metric in definition.metrics.items():
+            metric_type = (
+                metric.type
+                if hasattr(metric, "type")
+                else EvaluatorMetricType.CONTINUOUS
+            )
+            metric_direction = (
+                metric.desirable_direction
+                if hasattr(metric, "desirable_direction")
+                else EvaluatorMetricDirection.INCREASE
+            )
+            metrics_dict[metric_name] = {
+                "data_type": metric_type,
+                "desired_direction": metric_direction,
+                "field": metric_name,
+            }
+    return metrics_dict
 
-    parsed_url = urlparse(endpoint)
-    model_config = {
-        "azure_deployment": DEPLOYMENT_NAME,
-        "azure_endpoint": f"{parsed_url.scheme}://{parsed_url.netloc}",
-        "api_version": API_VERSION or "",
-    }
 
-    agents = {id: project_client.agents.get_agent(id) for id in agent_ids}
-    eval_input_paths = {id: working_dir / f"eval-input_{id}.jsonl" for id in agent_ids}
-    eval_output_paths = {id: working_dir / f"eval-output_{id}.json" for id in agent_ids}
+def get_evaluator_metadata(
+    project_client: AIProjectClient, evaluator_names: list[str]
+) -> dict:
+    """Get metadata for specific evaluators.
 
-    # facilitate paired comparisons by adding GUIDs to input data
-    for row in input_data_set["data"]:
-        if "id" not in row:
-            row["id"] = str(uuid.uuid4())
+    Args:
+        project_client: AI Project client
+        evaluator_names: List of evaluator names to fetch metadata for
 
-    # simulate conversations with each agent to produce evaluation inputs
-    for agent_id, agent in agents.items():
-        eval_input_paths[agent_id].unlink(missing_ok=True)
-        for row in input_data_set["data"]:
-            try:
-                eval_input = simulate_question_answer(project_client, agent, row)
-                with eval_input_paths[agent_id].open("a", encoding="utf-8") as f:
-                    f.write(json.dumps(eval_input) + "\n")
-            # pylint: disable=broad-exception-caught
-            except Exception as e:
-                print(
-                    f"An error occurred while simulating question-answer for agent {agent_id}: {e}"
+    Returns:
+        Dictionary mapping evaluator names to metadata with data_type and desired_direction
+    """
+    evaluator_metadata: dict = {}
+
+    for evaluator_name in evaluator_names:
+        is_openai_type = False
+        is_custom_code = False
+        try:
+            evaluator = project_client.evaluators.get_version(
+                name=evaluator_name, version="latest"
+            )
+
+            # Get categories from evaluator
+            categories = getattr(evaluator, "categories", [])
+
+            # Get metrics from the evaluator definition
+            if hasattr(evaluator, "definition") and evaluator.definition:
+                definition = evaluator.definition
+                evaluator_type = getattr(definition, "type", "")
+
+                # Check if this is an OpenAI-type evaluator
+                is_openai_type = evaluator_type == "openai_graders"
+
+                # Check if custom code evaluator (type="code" without "builtin." prefix)
+                is_custom_code = (
+                    evaluator_type == "code"
+                    and not evaluator_name.startswith("builtin.")
                 )
 
-    # create evaluator instances
-    args_default = {
-        "model_config": model_config,
-        "credential": credential,
-        "azure_ai_project": endpoint,
-        "rouge_type": evals.RougeType.ROUGE_L,
+                # Extract init_parameters and metrics from definition
+                init_parameters = getattr(definition, "init_parameters", None)
+                metrics_dict = _build_metrics_dict(definition)
+
+                evaluator_metadata[evaluator_name] = {
+                    "metrics": metrics_dict,
+                    "categories": categories,
+                    "init_parameters": init_parameters,
+                    "data_schema": getattr(definition, "data_schema", {}),
+                    "version": getattr(evaluator, "version", "1"),
+                    "is_openai_type": is_openai_type,
+                    "is_custom_code": is_custom_code,
+                }
+                continue
+
+        except (  # pylint: disable=broad-exception-caught
+            KeyError,
+            AttributeError,
+            TypeError,
+            ValueError,
+            Exception,
+        ) as e:
+            # Custom evaluator or error fetching metadata - use defaults
+            print(
+                f"Could not fetch metadata for evaluator '{evaluator_name}': {e}. "
+                f"Using defaults."
+            )
+
+        # Use default metadata (for errors or missing definitions)
+        evaluator_metadata[evaluator_name] = DEFAULT_EVALUATOR_METADATA
+        evaluator_metadata[evaluator_name]["is_openai_type"] = is_openai_type
+        evaluator_metadata[evaluator_name]["is_custom_code"] = is_custom_code
+
+    print(f"Loaded metadata for {len(evaluator_metadata)} evaluators")
+    return evaluator_metadata
+
+
+def _build_openai_evaluator_criteria(
+    evaluator_display_name: str, grader_config: dict
+) -> dict:
+    """Build testing criteria for OpenAI evaluators.
+
+    Args:
+        evaluator_display_name: Display name (evaluator name without prefix)
+        grader_config: Configuration from openai_graders field containing
+                       evaluation_metric, input, reference, etc.
+
+    Returns:
+        Testing criteria dictionary for OpenAI evaluator
+    """
+    criteria = {
+        "type": evaluator_display_name,
+        "name": evaluator_display_name,
     }
-    evaluators = create_evaluators(input_data_set["evaluators"], args_default)
 
-    # evaluate locally
-    for agent_id, agent in agents.items():
-        eval_name = (
-            f"Evaluating agent '{agent.name}' upon dataset '{input_data_set['name']}'"
-        )
-        evaluate(
-            data=eval_input_paths[agent_id],
-            evaluators=evaluators,
-            evaluation_name=eval_name,
-            azure_ai_project=endpoint,
-            output_path=eval_output_paths[agent_id],
-            user_agent=USER_AGENT,
-        )
-        # display evaluation results
-        print(f"Evaluation results for agent '{agent.name}': ")
+    # Add grader-specific properties (evaluation_metric, input, reference, etc.)
+    for key, value in grader_config.items():
+        if key not in {"type", "id", "name"}:
+            criteria[key] = value
 
-    # analyze evaluation results
-    eval_results = {}
-    for agent_id, agent in agents.items():
-        with open(eval_output_paths[agent_id], encoding="utf-8") as f:
-            eval_result_data = json.load(f)
+    # Use DEPLOYMENT_NAME if model field is not provided
+    if "model" not in criteria and DEPLOYMENT_NAME:
+        criteria["model"] = DEPLOYMENT_NAME
 
-        eval_rows = convert_pass_fail_to_boolean(eval_result_data, eval_metadata)
+    return criteria
 
-        eval_results[agent_id] = analysis.EvaluationResult(
-            variant=agent.name,
-            ai_foundry_url=eval_result_data["studio_url"],
-            df_result=pd.DataFrame.from_records(eval_rows),
-        )
 
-    baseline_agent_id = baseline_agent_id or agent_ids[0]
+def _generate_data_mappings(input_data: dict | None) -> dict:
+    """Generate data mappings from input data.
 
-    if eval_results[agent_id].ai_foundry_url:
-        parsed_foundry_url = urlparse(eval_results[agent_id].ai_foundry_url)
-        query_params = parse_qs(str(parsed_foundry_url.query))
-        agent_base_url = (
-            f"https://ai.azure.com/playground/agents?wsid={query_params['wsid'][0]}"
-            + "&assistantId="
-        )
-    else:
-        agent_base_url = None
+    Args:
+        input_data: Input data dictionary containing data_mapping and data fields
 
-    return analysis.summarize(
-        eval_results,
-        agents,
-        baseline_agent_id,
-        input_data_set["evaluators"] + ["OperationalMetricsEvaluator"],
-        agent_base_url,
-        eval_result_view,
+    Returns:
+        Dictionary of data field mappings
+    """
+    user_data_mappings = input_data.get("data_mapping", None) if input_data else None
+
+    # Auto-generate data mappings from fields in data items
+    if input_data and "data" in input_data and len(input_data["data"]) > 0:
+        first_item = input_data["data"][0]
+        if user_data_mappings is None:
+            user_data_mappings = {}
+        # Add all fields from the first data item that aren't already mapped
+        for field in first_item.keys():
+            user_data_mappings[field] = f"{{{{item.{field}}}}}"
+
+    return user_data_mappings or {}
+
+
+def _get_response_field(
+    evaluator_name: str, categories: list, is_custom_code: bool = False
+) -> str:
+    """Determine the response field based on evaluator name and categories.
+
+    Args:
+        evaluator_name: Name of the evaluator
+        categories: List of evaluator categories
+        is_custom_code: Whether this is a custom code evaluator
+
+    Returns:
+        Response field template string
+    """
+    # Custom code evaluators always use item.sample.output_text because of an OpenAI limitation
+    if is_custom_code:
+        return "{{item.sample.output_text}}"
+    if evaluator_name == "builtin.groundedness" or categories == ["agents"]:
+        return "{{sample.output_items}}"
+    return "{{sample.output_text}}"
+
+
+def _build_base_data_mapping(response_field: str, user_data_mappings: dict) -> dict:
+    """Build the base data mapping for an evaluator.
+
+    Args:
+        response_field: Response field template string
+        user_data_mappings: User-provided data mappings
+
+    Returns:
+        Complete data mapping dictionary
+    """
+    evaluator_data_mapping = {
+        "response": response_field,
+        "tool_calls": "{{sample.tool_calls}}",
+        "tool_definitions": "{{sample.tool_definitions}}",
+    }
+    evaluator_data_mapping.update(user_data_mappings)
+    return evaluator_data_mapping
+
+
+def _build_azure_evaluator_criteria(
+    evaluator_name: str,
+    evaluator_display_name: str,
+    metadata: dict,
+    user_data_mappings: dict,
+    evaluator_parameters: dict | None = None,
+) -> dict:
+    """Build testing criteria for Azure AI evaluators.
+
+    Args:
+        evaluator_name: Full evaluator name (e.g., 'builtin.coherence')
+        evaluator_display_name: Display name (e.g., 'coherence')
+        metadata: Evaluator metadata including categories and schemas
+        user_data_mappings: User-provided data mappings from input data
+        evaluator_parameters: Optional evaluator-specific parameters
+
+    Returns:
+        Testing criteria dictionary for Azure AI evaluator
+    """
+    categories = metadata.get("categories", [])
+    init_params_schema = metadata.get("init_parameters", {})
+    data_schema = metadata.get("data_schema", {})
+    is_custom_code = metadata.get("is_custom_code", False)
+
+    # Determine response field and build data mapping
+    response_field = _get_response_field(evaluator_name, categories, is_custom_code)
+    evaluator_data_mapping = _build_base_data_mapping(
+        response_field, user_data_mappings
     )
 
+    # Get and validate initialization parameters
+    initialization_parameters = {}
+    if evaluator_parameters and evaluator_name in evaluator_parameters:
+        initialization_parameters = evaluator_parameters[evaluator_name].copy()
 
-if __name__ == "__main__":
-    # Check required environment variables
+    _validate_init_parameters(
+        evaluator_name, init_params_schema, initialization_parameters
+    )
+    _validate_data_schema(evaluator_name, data_schema, evaluator_data_mapping)
+
+    return {
+        "type": "azure_ai_evaluator",
+        "name": evaluator_display_name,
+        "evaluator_name": evaluator_name,
+        "initialization_parameters": initialization_parameters,
+        "data_mapping": evaluator_data_mapping,
+    }
+
+
+def _validate_init_parameters(
+    evaluator_name: str, init_params_schema: dict, initialization_parameters: dict
+) -> None:
+    """Validate that all required initialization parameters are provided.
+
+    Args:
+        evaluator_name: Name of the evaluator
+        init_params_schema: Schema defining required parameters
+        initialization_parameters: Dictionary of provided parameters
+
+    Raises:
+        ValueError: If required parameters are missing
+    """
+    if not init_params_schema or "required" not in init_params_schema:
+        return
+
+    required_params = init_params_schema["required"]
+
+    # Add deployment_name if required and not present
+    if (
+        EvaluationConfig.DEPLOYMENT_NAME_PARAM in required_params
+        and EvaluationConfig.DEPLOYMENT_NAME_PARAM not in initialization_parameters
+    ):
+        initialization_parameters[EvaluationConfig.DEPLOYMENT_NAME_PARAM] = (
+            DEPLOYMENT_NAME
+        )
+
+    # Parameters to exclude from validation (auto-populated by system)
+    excluded_params = {
+        EvaluationConfig.DEPLOYMENT_NAME_PARAM,
+        "azure_ai_project",
+    }
+
+    # Validate all other required parameters are provided
+    missing_params = [
+        param
+        for param in required_params
+        if param not in excluded_params and param not in initialization_parameters
+    ]
+
+    if missing_params:
+        raise ValueError(
+            f"Evaluator '{evaluator_name}' requires the following "
+            f"parameters that are not provided: {', '.join(missing_params)}. "
+            f"Please add them to 'evaluator_parameters' in your input JSON."
+        )
+
+
+def _validate_data_schema(
+    evaluator_name: str, data_schema: dict, evaluator_data_mapping: dict
+) -> None:
+    """Validate that data mapping satisfies the required data schema.
+
+    Args:
+        evaluator_name: Name of the evaluator
+        data_schema: Schema defining required data fields
+        evaluator_data_mapping: Dictionary of data field mappings
+
+    Raises:
+        ValueError: If required data fields are missing
+    """
+    if not data_schema:
+        return
+
+    # Check if schema has anyOf (multiple acceptable combinations)
+    if "anyOf" in data_schema:
+        any_combination_satisfied = False
+        all_missing_combinations = []
+
+        for schema_option in data_schema["anyOf"]:
+            if "required" in schema_option:
+                required_fields = schema_option["required"]
+                missing_fields = [
+                    field
+                    for field in required_fields
+                    if field not in evaluator_data_mapping
+                ]
+
+                if not missing_fields:
+                    any_combination_satisfied = True
+                    break
+                all_missing_combinations.append(missing_fields)
+
+        if not any_combination_satisfied:
+            combinations_str = " OR ".join(
+                f"[{', '.join(combo)}]" for combo in all_missing_combinations
+            )
+            raise ValueError(
+                f"Evaluator '{evaluator_name}' requires at least one of "
+                f"these field combinations: {combinations_str}. Please add "
+                f"the required fields to 'data_mapping' or ensure they exist "
+                f"in your data items."
+            )
+
+    # Check if schema has simple required list
+    elif "required" in data_schema:
+        required_data_fields = data_schema["required"]
+        missing_data_fields = [
+            field
+            for field in required_data_fields
+            if field not in evaluator_data_mapping
+        ]
+
+        if missing_data_fields:
+            raise ValueError(
+                f"Evaluator '{evaluator_name}' requires the following data "
+                f"fields that are not mapped: {', '.join(missing_data_fields)}. "
+                f"Please add them to 'data_mapping' or ensure they exist in "
+                f"your data items."
+            )
+
+
+# pylint: disable-next=too-many-locals
+def create_testing_criteria(
+    evaluators: list[str],
+    evaluator_metadata: dict,
+    input_data: dict | None = None,  # pylint: disable=redefined-outer-name
+    evaluator_parameters: dict | None = None,
+) -> tuple[list[dict], dict[str, str]]:
+    """Build testing criteria dynamically from evaluator names.
+
+    Args:
+        evaluators: List of evaluator names
+        evaluator_metadata: Dictionary with evaluator metadata including category
+        input_data: Input data dictionary containing data_mapping and data fields
+        evaluator_parameters: Optional dictionary of evaluator-specific initialization parameters
+
+    Returns:
+        Tuple of (testing_criteria list, display_name_to_evaluator_name mapping dict)
+    """
+    # Generate data mappings from input data
+    user_data_mappings = _generate_data_mappings(input_data)
+
+    # Get openai_graders definitions from input data (for custom evaluator types)
+    openai_graders = input_data.get("openai_graders", {}) if input_data else {}
+
+    testing_criteria = []
+    display_name_to_evaluator_name = {}
+    for evaluator_name in evaluators:
+        evaluator_display_name = (
+            evaluator_name.split(".")[-1] if "." in evaluator_name else evaluator_name
+        )
+
+        # Store mapping from display name to actual evaluator name
+        display_name_to_evaluator_name[evaluator_display_name] = evaluator_name
+
+        # Get metadata for this evaluator
+        metadata = evaluator_metadata.get(evaluator_name, {})
+        is_openai_type = metadata.get("is_openai_type", False)
+
+        # Check if this is an OpenAI-type evaluator or has config in openai_graders
+        if is_openai_type or evaluator_name in openai_graders:
+            # Build custom evaluator criteria with grader-specific properties
+            grader_config = openai_graders.get(evaluator_name, {})
+            if not grader_config:
+                raise ValueError(
+                    f"OpenAI-type evaluator '{evaluator_name}' requires "
+                    f"configuration in 'openai_graders' field of input data."
+                )
+            criteria = _build_openai_evaluator_criteria(
+                evaluator_display_name, grader_config
+            )
+        else:
+            # Build standard Azure AI evaluator criteria
+            criteria = _build_azure_evaluator_criteria(
+                evaluator_name,
+                evaluator_display_name,
+                metadata,
+                user_data_mappings,
+                evaluator_parameters,
+            )
+
+        testing_criteria.append(criteria)
+
+    return testing_criteria, display_name_to_evaluator_name
+
+
+def create_evaluation_runs(openai_client, eval_object, dataset, agents: dict) -> dict:
+    """Create evaluation runs for each agent."""
+    agent_eval_runs = {}
+    for agent_id, agent in agents.items():
+        data_source = {
+            "type": "azure_ai_target_completions",
+            "source": {
+                "type": "file_id",
+                "id": dataset.id,
+            },
+            "input_messages": {
+                "type": "template",
+                "template": [
+                    {"type": "message", "role": "user", "content": "{{item.query}}"}
+                ],
+            },
+            "target": {
+                "type": "azure_ai_agent",
+                "name": agent.name,
+                "version": agent.version,
+            },
+        }
+
+        agent_eval_run = openai_client.evals.runs.create(
+            eval_id=eval_object.id,
+            name=f"Agent {agent_id}",
+            data_source=data_source,  # type: ignore
+        )
+        agent_eval_runs[agent_id] = agent_eval_run
+
+    print(f"Created evaluation runs for {len(agent_eval_runs)} agent(s)")
+    return agent_eval_runs
+
+
+def wait_for_evaluation_runs(openai_client, eval_object, agent_eval_runs: dict):
+    """Wait for all evaluation runs to complete."""
+    print("Waiting for evaluation runs to complete...")
+    while True:
+        all_completed = True
+        for agent_id, eval_run in agent_eval_runs.items():
+            if eval_run.status not in ["completed", "failed"]:
+                eval_run = openai_client.evals.runs.retrieve(
+                    run_id=eval_run.id, eval_id=eval_object.id
+                )
+                agent_eval_runs[agent_id] = eval_run
+                if eval_run.status not in ["completed", "failed"]:
+                    all_completed = False
+
+        if all_completed:
+            break
+        time.sleep(EvaluationConfig.POLLING_INTERVAL_SECONDS)
+
+    print(f"All {len(agent_eval_runs)} evaluation run(s) completed")
+
+
+def print_agent_results(agent_results: dict):
+    """Print evaluation results for an agent."""
+    agent = agent_results["agent"]
+    evaluator_count = len(agent_results["evaluation_scores"])
+    print(f"Processed results for {agent.name} ({evaluator_count} evaluators)")
+
+
+# pylint: disable-next=too-many-arguments,too-many-positional-arguments
+def generate_comparison_insight(
+    project_client: AIProjectClient,
+    eval_object,
+    baseline_run_id: str,
+    treatment_run_ids: list[str],
+    baseline_agent_id: str,
+    treatment_agent_ids: list[str],
+) -> Insight | None:
+    """Generate comparison insights between baseline and treatment evaluation runs."""
+    print(
+        f"Generating comparison insight (baseline: {baseline_agent_id} "
+        f"vs {len(treatment_agent_ids)} treatment(s))..."
+    )
+
+    compare_insight = project_client.insights.generate(
+        Insight(
+            display_name="Agent Evaluation Comparison",
+            request=EvaluationComparisonRequest(
+                eval_id=eval_object.id,
+                baseline_run_id=baseline_run_id,
+                treatment_run_ids=treatment_run_ids,
+            ),
+        )
+    )
+
+    # Wait for insight generation to complete
+    while compare_insight.state not in [
+        OperationState.SUCCEEDED,
+        OperationState.FAILED,
+    ]:
+        compare_insight = project_client.insights.get(id=compare_insight.id)
+        time.sleep(EvaluationConfig.POLLING_INTERVAL_SECONDS)
+
+    if compare_insight.state == OperationState.SUCCEEDED:
+        print("Comparison insight generated successfully")
+        return compare_insight
+
+    print("Comparison insight generation failed")
+    return None
+
+
+def create_evaluation_and_dataset(
+    openai_client,
+    project_client,
+    input_data_path: Path,
+    input_data: dict,
+    evaluator_metadata: dict,
+) -> tuple:
+    """Create evaluation object and upload dataset.
+
+    Args:
+        openai_client: OpenAI client
+        project_client: AI Project client
+        input_data_path: Path to input data file
+        input_data: Input data dictionary
+        evaluator_metadata: Evaluator metadata with categories
+
+    Returns:
+        Tuple of (eval_object, dataset, display_name_to_evaluator_name)
+    """
+    data_source_config = DataSourceConfigCustom(
+        type="custom",
+        item_schema={
+            "type": "object",
+            "properties": {"query": {"type": "string"}},
+            "required": ["query"],
+        },
+        include_sample_schema=True,
+    )
+
+    # Get evaluator-specific parameters from input data if provided
+    evaluator_parameters = input_data.get("evaluator_parameters", None)
+
+    # Build testing criteria dynamically from evaluators in input data
+    testing_criteria, display_name_to_evaluator_name = create_testing_criteria(
+        input_data.get("evaluators", []),
+        evaluator_metadata,
+        input_data,
+        evaluator_parameters,
+    )
+
+    eval_object = openai_client.evals.create(
+        name="Agent Evaluation",
+        data_source_config=data_source_config,
+        testing_criteria=testing_criteria,  # type: ignore
+    )
+    print(f"Created evaluation with {len(testing_criteria)} evaluator(s)")
+
+    # Convert JSON to JSONL format
+    jsonl_path = convert_json_to_jsonl(input_data_path)
+
+    dataset = project_client.datasets.upload_file(
+        name=input_data_path.stem,
+        version=str(int(time.time())),
+        file_path=jsonl_path,
+    )
+    print(f"Uploaded dataset: {dataset.name} (version: {dataset.version})")
+
+    return eval_object, dataset, display_name_to_evaluator_name
+
+
+# pylint: disable-next=too-many-arguments,too-many-positional-arguments
+def generate_and_print_comparisons(
+    project_client,
+    eval_object,
+    agent_ids: list[str],
+    baseline_agent_id: str | None,
+    agent_eval_runs: dict,
+    evaluator_metadata: dict,
+) -> tuple[dict, Insight | None]:
+    """Generate comparison insights for multiple agents.
+
+    Returns:
+        Tuple of (comparisons_by_evaluator dict, comparison_insight Insight object or None)
+    """
+    if len(agent_ids) <= 1:
+        return {}, None
+
+    # Use baseline agent if specified, otherwise use first agent
+    baseline_id = baseline_agent_id if baseline_agent_id else agent_ids[0]
+    baseline_run_id = agent_eval_runs[baseline_id].id
+
+    # Get treatment run IDs (all agents except baseline)
+    treatment_ids = [aid for aid in agent_ids if aid != baseline_id]
+    treatment_run_ids = [agent_eval_runs[aid].id for aid in treatment_ids]
+
+    comparison_insight = generate_comparison_insight(
+        project_client,
+        eval_object,
+        baseline_run_id,
+        treatment_run_ids,
+        baseline_id,
+        treatment_ids,
+    )
+
+    if not comparison_insight:
+        return {}, None
+
+    # Convert insight to EvaluationScoreComparison objects
+    treatment_agent_ids = [aid for aid in agent_ids if aid != baseline_id]
+    comparisons_by_evaluator = convert_insight_to_comparisons(
+        comparison_insight,
+        baseline_id,
+        treatment_agent_ids,
+        evaluator_metadata,
+    )
+
+    return comparisons_by_evaluator, comparison_insight
+
+
+# pylint: disable-next=too-many-locals
+def main(
+    endpoint: str,
+    input_data_path: Path,
+    input_data: dict,
+    agent_ids: list[str],
+    baseline_agent_id: str | None = None,
+) -> str:
+    """Main evaluation workflow.
+
+    Orchestrates the complete evaluation process:
+    1. Setup: Get agents and evaluator metadata
+    2. Create evaluation and upload dataset
+    3. Execute evaluation runs for all agents
+    4. Process and analyze results
+    5. Generate comparison insights (if multiple agents)
+    6. Create summary markdown report
+    """
+    with (
+        DefaultAzureCredential() as credential,
+        AIProjectClient(endpoint=endpoint, credential=credential) as project_client,
+        project_client.get_openai_client() as openai_client,
+    ):
+        # Setup: Parse agents and get evaluator metadata
+        agents = get_agents(project_client, agent_ids)
+        evaluator_names = input_data.get("evaluators", [])
+        evaluator_metadata = get_evaluator_metadata(project_client, evaluator_names)
+
+        # Create evaluation and prepare dataset
+        eval_object, dataset, display_name_to_evaluator_name = (
+            create_evaluation_and_dataset(
+                openai_client,
+                project_client,
+                input_data_path,
+                input_data,
+                evaluator_metadata,
+            )
+        )
+
+        # Execute evaluation runs for all agents
+        agent_eval_runs = create_evaluation_runs(
+            openai_client, eval_object, dataset, agents
+        )
+        wait_for_evaluation_runs(openai_client, eval_object, agent_eval_runs)
+
+        # Extract report URLs from all completed eval runs
+        report_urls = {}
+        eval_base_url = None
+        for agent_id, eval_run in agent_eval_runs.items():
+            report_url = getattr(eval_run, "report_url", None)
+            if report_url:
+                report_urls[agent_id] = report_url
+                # Extract evaluation base URL (remove last 2 path segments)
+                if not eval_base_url:
+                    parts = report_url.rsplit("/", 2)
+                    eval_base_url = parts[0] if len(parts) > 2 else report_url
+        print(f"Collected {len(report_urls)} evaluation report URL(s)")
+
+        # Determine baseline agent
+        baseline_id = baseline_agent_id if baseline_agent_id else agent_ids[0]
+        baseline_agent = agents[baseline_id]
+        baseline_eval_run = agent_eval_runs[baseline_id]
+
+        # Process baseline agent results (needed for summary in all cases)
+        baseline_results = process_evaluation_results(
+            openai_client,
+            eval_object,
+            baseline_eval_run,
+            baseline_agent,
+            evaluator_metadata,
+            display_name_to_evaluator_name,
+        )
+        print_agent_results(baseline_results)
+
+        # Generate comparison insights if multiple agents
+        # (uses API, doesn't need individual processing)
+        comparisons_by_evaluator: dict[str, list] = {}
+        compare_url = None
+        if len(agent_ids) > 1:
+            comparisons_by_evaluator, comparison_insight = (
+                generate_and_print_comparisons(
+                    project_client,
+                    eval_object,
+                    agent_ids,
+                    baseline_agent_id,
+                    agent_eval_runs,
+                    evaluator_metadata,
+                )
+            )
+            # Build compare URL if insight available
+            if comparison_insight and eval_base_url:
+                insight_id = comparison_insight.id
+                compare_url = f"{eval_base_url}/compare/{insight_id}"
+
+        # Build evaluator catalog base URL (remove eval ID if present)
+        evaluator_catalog_url = ""
+        if eval_base_url:
+            # eval_base_url is like: .../build/evaluations/eval_xxx
+            # We want: .../build/evaluations
+            if "/build/evaluations/" in eval_base_url:
+                evaluator_catalog_url = eval_base_url.rsplit("/", 1)[0]
+            else:
+                # Already at the right level
+                evaluator_catalog_url = eval_base_url
+
+        # Generate and return summary markdown
+        return summarize(
+            baseline_results=baseline_results,
+            comparisons_by_evaluator=(
+                comparisons_by_evaluator if len(agent_ids) > 1 else None
+            ),
+            report_urls=report_urls,
+            eval_url=eval_base_url,
+            compare_url=compare_url,
+            evaluator_metadata=evaluator_metadata,
+            evaluator_catalog_url=evaluator_catalog_url,
+        )
+
+
+def _validate_environment_variables() -> dict:
+    """Validate and return required environment variables.
+
+    Returns:
+        Dictionary with validated environment variables
+
+    Raises:
+        ValueError: If any required environment variable is missing or invalid
+    """
     if not AZURE_AI_PROJECT_ENDPOINT:
         raise ValueError("AZURE_AI_PROJECT_ENDPOINT environment variable is not set")
     if not DEPLOYMENT_NAME:
@@ -457,36 +849,35 @@ if __name__ == "__main__":
             f"BASELINE_AGENT_ID '{BASELINE_AGENT_ID}' is not in AGENT_IDS '{AGENT_IDS}'"
         )
 
-    result_view = analysis.EvaluationResultView.DEFAULT
-    if EVALUATION_RESULT_VIEW:
-        try:
-            result_view = analysis.EvaluationResultView(EVALUATION_RESULT_VIEW)
-        except ValueError as exc:
-            valid_options = [e.value for e in analysis.EvaluationResultView]
-            raise ValueError(
-                f"EVALUATION_RESULT_VIEW must be one of {valid_options}"
-            ) from exc
+    return {
+        "endpoint": AZURE_AI_PROJECT_ENDPOINT,
+        "deployment_name": DEPLOYMENT_NAME,
+        "data_path": DATA_PATH,
+        "agent_ids": AGENT_IDS,
+        "baseline_agent_id": BASELINE_AGENT_ID,
+    }
 
-    evaluator_score_metadata = get_evaluator_metadata()
 
-    # Load and validate input data
+if __name__ == "__main__":
+    # Validate environment variables
+    env_config = _validate_environment_variables()
+
+    # Load input data
     try:
-        input_data_path = Path(DATA_PATH)
-        input_data = json.loads(input_data_path.read_text(encoding="utf-8"))
-        validate_input_data(input_data, evaluator_score_metadata)
+        data_path = Path(env_config["data_path"])
+        data = json.loads(data_path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
-        raise ValueError(f"Input data at {DATA_PATH} is not valid JSON") from exc
+        raise ValueError(
+            f"Input data at {env_config['data_path']} is not valid JSON"
+        ) from exc
 
     # Run evaluation and output summary
     SUMMARY_MD = main(
-        credential=DefaultAzureCredential(),
-        endpoint=AZURE_AI_PROJECT_ENDPOINT,
-        input_data_set=input_data,
-        agent_ids=AGENT_IDS,
-        eval_metadata=evaluator_score_metadata,
-        baseline_agent_id=BASELINE_AGENT_ID,
-        working_dir=input_data_path.parent,
-        eval_result_view=result_view,
+        endpoint=env_config["endpoint"],
+        input_data_path=data_path,
+        input_data=data,
+        agent_ids=env_config["agent_ids"],
+        baseline_agent_id=env_config["baseline_agent_id"],
     )
 
     if STEP_SUMMARY:

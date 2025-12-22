@@ -10,18 +10,9 @@ on:
         type: choice
         options:
           - "dataset-tiny.json"
-          - "dataset-small.json"
           - "dataset.json"
-      evaluation_result_view:
-        description: "Result view"
-        required: false
-        type: choice
-        options:
-          - "default"
-          - "all-scores"
-          - "raw-scores-only"
       compare_view:
-        description: "Compare 2 AI Agents?"
+        description: "Compare AI Agents?"
         required: false
         default: "true"
         type: boolean
@@ -52,5 +43,4 @@ jobs:
           azure-ai-project-endpoint: "https://aoai-qyrftgva6obps.services.ai.azure.com/api/projects/proj-qyrftgva6obps"
           deployment-name: "gpt-4o-mini"
           data-path: ${{ github.workspace }}/samples/data/${{ github.event.inputs.data_file || 'dataset-tiny.json' }}
-          agent-ids: ${{ github.event.inputs.compare_view == 'true' && 'asst_7ZijCsebAPQ7ggOkqJE1uH4G,asst_q1l6UXTwGOa9smSOjRGROCEg' || 'asst_7ZijCsebAPQ7ggOkqJE1uH4G' }}
-          evaluation-result-view: ${{ github.event.inputs.evaluation_result_view || 'default' }}
+          agent-ids: ${{ github.event.inputs.compare_view == 'true' && 'agentv2test:12,agentv2test:13,agentv2test:14' || 'agentv2test:14' }}

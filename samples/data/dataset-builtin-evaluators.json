@@ -1,0 +1,54 @@
+{
+  "name": "builtin-evaluators-sample",
+  "evaluators": [
+    "builtin.coherence",   
+    "builtin.fluency",   
+    "builtin.groundedness",
+ 
+    "builtin.intent_resolution",
+    "builtin.relevance",
+    "builtin.response_completeness",
+
+    "builtin.bleu_score",
+    "builtin.f1_score",
+    "builtin.gleu_score",
+    "builtin.meteor_score",
+    "builtin.rouge_score",
+    
+    "builtin.task_adherence",
+    "builtin.task_completion",
+    "builtin.tool_call_accuracy",
+    "builtin.tool_call_success",
+    "builtin.tool_input_accuracy",
+    "builtin.tool_output_utilization",
+    "builtin.tool_selection",
+
+    "builtin.code_vulnerability",
+    "builtin.hate_unfairness",
+    "builtin.indirect_attack",
+    "builtin.protected_material",
+    "builtin.self_harm",
+    "builtin.sexual",
+    "builtin.violence" 
+  ],
+  "evaluator_parameters": {
+    "builtin.rouge_score": {
+      "rouge_type": "rouge1",
+      "f1_score_threshold": 0.5,
+      "precision_threshold": 0.5,
+      "recall_threshold": 0.5
+    }
+  },
+  "data_mapping": {
+  },
+  "data": [
+    {
+      "query": "What is machine learning?",
+      "ground_truth": "Machine learning is a subset of artificial intelligence that allows systems to learn from data."
+    },
+    {
+      "query": "Explain neural networks",
+      "ground_truth": "Neural networks are computing systems inspired by biological neurons that process information."
+    }
+  ]
+}

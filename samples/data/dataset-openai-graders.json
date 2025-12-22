@@ -1,0 +1,71 @@
+{
+  "name": "openai-graders-sample",
+  "evaluators": [
+    "builtin.label_model",
+    "builtin.score_model",
+    "builtin.string_check",
+    "builtin.text_similarity"
+  ],
+  "openai_graders": {
+    "builtin.label_model": {
+      "input": [
+          {
+              "role": "user",
+              "content": "{{item.query}}\n\nResponse: {{sample.output_text}}",
+              "type": "message"
+          },
+          {
+              "role": "system",
+              "content": "Evaluate if the response is a pass or fail.",
+              "type": "message"
+          }
+      ],
+      "labels": [
+          "Pass",
+          "Fail"
+      ],
+      "passing_labels": [
+          "Pass"
+      ]
+    },
+    "builtin.score_model": {
+      "input": [
+        {
+            "role": "user",
+            "content": "**Conversation**\n\n{{item.query}}\n\n**Final Response**\n\n{{sample.output_text}}\n\n**Criteria**\n\n// Describe how you'd like the model to respond",
+            "type": "message"
+        },
+        {
+            "role": "system",
+            "content": "Assign a quality score between 1.0 (poor) and 7.0 (excellent) based on how well the response addresses user needs.",
+            "type": "message"
+        }
+      ],
+      "pass_threshold": 4,
+      "range": [
+          1,
+          7
+      ]
+    },
+    "builtin.string_check": {
+      "input": "{{sample.output_text}}",
+      "operation": "like",
+      "reference": "{{item.ground_truth}}"
+    },
+    "builtin.text_similarity": {
+      "evaluation_metric": "fuzzy_match",
+      "input": "{{sample.output_text}}",
+      "reference": "{{item.ground_truth}}"
+    }
+  }, 
+  "data": [
+    {
+      "query": "What is Python?",
+      "ground_truth": "Python is a high-level, interpreted programming language known for simplicity and readability."
+    },
+    {
+      "query": "How do I install Python?",
+      "ground_truth": "Download Python from python.org and run the installer for your operating system."
+    }
+  ]
+}
