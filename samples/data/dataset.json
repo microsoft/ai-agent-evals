@@ -1,6 +1,11 @@
 {
   "name": "test-dataset",
   "evaluators": [
+    "builtin.label_model",
+    "builtin.score_model",
+    "builtin.string_check",
+    "builtin.text_similarity",
+
     "custom_prompt_kid_friendly",
     "custom_code_1",    
     
@@ -32,9 +37,59 @@
     "builtin.protected_material",
     "builtin.self_harm",
     "builtin.sexual",
-    "builtin.violence"  
+    "builtin.violence" 
   ],
-  "data_mapping": {
+  "openai_graders": {
+    "builtin.label_model": {
+      "input": [
+          {
+              "role": "user",
+              "content": "{{item.query}}\n\nResponse: {{sample.output_text}}",
+              "type": "message"
+          },
+          {
+              "role": "system",
+              "content": "Evaluate if the response is a pass or fail.",
+              "type": "message"
+          }
+      ],
+      "labels": [
+          "Pass",
+          "Fail"
+      ],
+      "passing_labels": [
+          "Pass"
+      ]
+    },
+    "builtin.score_model": {
+      "input": [
+        {
+            "role": "user",
+            "content": "**Conversation**\n\n{{item.query}}\n\n**Final Response**\n\n{{sample.output_text}}\n\n**Criteria**\n\n// Describe how you'd like the model to respond",
+            "type": "message"
+        },
+        {
+            "role": "system",
+            "content": "Assign a quality score between 1.0 (poor) and 7.0 (excellent) based on how well the response addresses user needs.",
+            "type": "message"
+        }
+      ],
+      "pass_threshold": 4,
+      "range": [
+          1,
+          7
+      ]
+    },
+    "builtin.string_check": {
+      "input": "{{sample.output_text}}",
+      "operation": "like",
+      "reference": "{{item.ground_truth}}"
+    },
+    "builtin.text_similarity": {
+      "evaluation_metric": "fuzzy_match",
+      "input": "{{sample.output_text}}",
+      "reference": "{{item.ground_truth}}"
+    }
   },
   "evaluator_parameters": { 
     "custom_prompt_kid_friendly": {
@@ -50,8 +105,10 @@
         "recall_threshold": 0.5
     }
   },
+  "data_mapping": {
+  },
   "data": [
-   {
+    {
       "query": "Tell me about Smart eyeware",
       "ground_truth": "Smart eyeware includes devices like augmented reality glasses and smart contact lenses that offer features beyond traditional vision correction."
     },
@@ -90,6 +147,26 @@
     {
       "query": "What is containerization?",
       "ground_truth": "Containerization packages applications and their dependencies into isolated, portable units that can run consistently across different computing environments."
+    },
+    {
+      "query": "Why do dinosaurs fascinate kids?",
+      "ground_truth": "Dinosaurs fascinate kids because they were massive creatures that roamed Earth millions of years ago, and learning about them sparks imagination and curiosity about the past."
+    },
+    {
+      "query": "How do butterflies change colors?",
+      "ground_truth": "Butterflies have special scales on their wings that reflect and refract light to create different colors. Some butterflies can change colors slightly when the light hits their wings at different angles."
+    },
+    {
+      "query": "What makes a rainbow appear?",
+      "ground_truth": "A rainbow appears when sunlight passes through water droplets in the air. The light bends and separates into different colors: red, orange, yellow, green, blue, indigo, and violet."
+    },
+    {
+      "query": "How do animals sleep in winter?",
+      "ground_truth": "Many animals hibernate during winter by going into a deep sleep where their body temperature drops and they use very little energy. Other animals migrate to warmer places instead."
+    },
+    {
+      "query": "Why do fireflies glow?",
+      "ground_truth": "Fireflies produce light through a chemical process called bioluminescence. Male fireflies flash their lights to attract female fireflies, and each species has its own unique flashing pattern."
     }
   ]
 }
