@@ -1,36 +1,25 @@
-# Azure AI Evaluation GitHub Action
+# Microsot Foundry Evaluation GitHub Action
 
-This GitHub Action enables offline evaluation of [Azure AI Agents](https://learn.microsoft.com/en-us/azure/ai-services/agents/) within your CI/CD pipelines. It is designed to streamline the offline evaluation process, allowing you to identify potential issues and make improvements before releasing an update to production.
+This GitHub Action enables offline evaluation of [Microsoft Foundry Agents](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/overview?view=foundry) within your CI/CD pipelines. It is designed to streamline the offline evaluation process, allowing you to identify potential issues and make improvements before releasing an update to production.
 
 To use this action, all you need to provide is a data set with test queries and a list of evaluators. This action will invoke your agent(s) with the queries, collect the performance data including latency and token counts, run the evaluations, and generate a summary report.
 
 ## Features
 
-- **Agent Evaluation:** Automate pre-production assessment of Azure AI agents in your CI/CD workflow.
-- **Built-in Evaluators:** Leverage existing evaluators provided by the [Azure AI Evaluation SDK](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/develop/evaluate-sdk).
+- **Agent Evaluation:** Automate pre-production assessment of Microsoft Foundry agents in your CI/CD workflow.
+- **Evaluators:** Leverage any evaluators from the Foundry evaluator catalog.
 - **Statistical Analysis:** Evaluation results include confidence intervals and test for statistical significance to determine if changes are meaningful and not due to random variation.
 
-## Supported AI Evaluators
+### Evaluator Categories
 
-| Type                     | Evaluator                  |
-| ------------------------ | -------------------------- |
-| AI Quality (AI assisted) | IntentResolutionEvaluator  |
-|                          | TaskAdherenceEvaluator     |
-|                          | RelevanceEvaluator         |
-|                          | CoherenceEvaluator         |
-|                          | FluencyEvaluator           |
-|                          | GroundednessEvaluator      |
-|                          | ToolCallAccuracyEvaluator  |
-| Risk and safety          | ViolenceEvaluator          |
-|                          | SexualEvaluator            |
-|                          | SelfHarmEvaluator          |
-|                          | HateUnfairnessEvaluator    |
-|                          | IndirectAttackEvaluator    |
-|                          | ProtectedMaterialEvaluator |
-|                          | CodeVulnerabilityEvaluator |
-| Composite                | ContentSafetyEvaluator     |
+- **Agent evaluators**: Process and system-level evaluators for agent workflows
+- **RAG evaluators**: Evaluate end-to-end and retrieval processes in RAG systems
+- **Risk and safety evaluators**: Assess risks and safety concerns in responses
+- **General purpose evaluators**: Quality evaluation such as coherence and fluency
+- **OpenAI-based graders**: [Leverage OpenAI graders](https://learn.microsoft.com/en-us/azure/ai-foundry/concepts/evaluation-evaluators/azure-openai-graders?view=foundry) including string check, text simularity, score/label model
+- **Custom evaluators**: [Define your own custom evaluators](https://learn.microsoft.com/en-us/azure/ai-foundry/concepts/evaluation-evaluators/custom-evaluators?view=foundry) using Python code or LLM-as-a-judge patterns
 
-For the full list of evaluator scores and their types, see [analysis/evaluator-scores.yaml](analysis/evaluator-scores.yaml).
+
 
 ## Inputs
 
@@ -38,38 +27,41 @@ For the full list of evaluator scores and their types, see [analysis/evaluator-s
 
 | Name                      | Required? | Description                                                                                                                                                                                                                                           |
 | :------------------------ | :-------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| azure-ai-project-endpoint |    Yes    | Endpoint of your Azure AI Project                                                                                                                                                                                                                     |
+| azure-ai-project-endpoint |    Yes    | Endpoint of your Microsoft Foundry Project                                                                                                                                                                                                                     |
 | deployment-name           |    Yes    | The name of the Azure AI model deployment to use for evaluation                                                                                                                                                                                       |
-| data-path                 |    Yes    | Path to the data file that contains the evaluators and input queries for evaluations                                                                                                                                                                  |
-| agent-ids                 |    Yes    | ID of the agent(s) to evaluate. If multiple are provided, all agents should be comma-separated and will be evaluated and compared against the baseline with statistical test results                                                                  |
-| baseline-agent-id         |    No     | ID of the baseline agent to compare against when evaluating multiple agents. If not provided, the first agent is used                                                                                                                                 |
-| evaluation-result-view    |    No     | Specifies the format of evaluation results. Defaults to "default" (boolean scores such as passing and defect rates) if omitted. Options are "default", "all-scores" (includes all evaluation scores), and "raw-scores-only" (non-boolean scores only) |
-| api-version               |    No     | The API version to use when connecting to model deployment                                                                                                                                                                                            |
+| data-path                 |    Yes    | Path to the data file that contains the evaluators and input queries for evaluations                                                                                                          |
+| agent-ids                 |    Yes    | ID of the agent(s) to evaluate in the format `agent-name:version` (e.g., `my-agent:1` or `my-agent:1,my-agent:2`). If multiple are provided, all agents should be comma-separated and will be evaluated and compared against the baseline with statistical test results                                                                  |
+| baseline-agent-id         |    No     | ID of the baseline agent to compare against when evaluating multiple agents. If not provided, the first agent is used                                                                                                                                 |                                                                                                                                                                                           |
 
 ### Data File
 
 The input data file should be a JSON file with the following structure:
 
-| Field        | Type     | Required? | Description                    |
-| :----------- | :------- | :-------: | :----------------------------- |
-| name         | string   |    Yes    | Name of the test dataset       |
-| evaluators   | string[] |    Yes    | List of evaluator names to use |
-| data         | object[] |    Yes    | Array of input objects         |
-| data[].query | string   |    Yes    | The query text to evaluate     |
-| data[].id    | string   |    No     | Optional ID for the query      |
+| Field                        | Type     | Required? | Description                                                                              |
+| :--------------------------- | :------- | :-------: | :--------------------------------------------------------------------------------------- |
+| name                         | string   |    Yes    | Name of the evaluation dataset                                                                 |
+| evaluators                   | string[] |    Yes    | List of evaluator names to use. Check out the list of available evaluators in your project's evaluator catalog in Foundry portal: **Build > Evaluations > Evaluator catalog**                                                          |
+| data                         | object[] |    Yes    | Array of input objects. Data items can include additional columns beyond `query`, such as `ground_truth`, `context`, or any other fields needed by evaluators. These fields are automatically mapped to evaluators with matching names. Use the `data_mapping` field to override automatic mappings if needed.                                                                  |                                                               |
+| openai_graders               | object   |    No     | Configuration for OpenAI-based evaluators (label_model, score_model, string_check, etc) |
+| evaluator_parameters         | object   |    No     | Evaluator-specific initialization parameters (e.g., thresholds, custom settings)         |
+| data_mapping                 | object   |    No     | Custom data field mappings (auto-generated from data if not provided)                   |
 
-Below is a sample data file.
+#### Basic Sample Data File
 
 ```JSON
 {
   "name": "test-data",
-  "evaluators": ["IntentResolutionEvaluator", "FluencyEvaluator"],
+  "evaluators": [
+    "builtin.fluency",
+    "builtin.task_adherence",
+    "builtin.violence",
+  ],
   "data": [
     {
-      "query": "Tell me about Smart eyeware"
+      "query": "Tell me about Tokyo disneyland"
     },
     {
-      "query": "How do I rebase my branch in git?"
+      "query": "How do I install Python?"
     }
   ]
 }
@@ -79,9 +71,15 @@ Below is a sample data file.
 
 | Filename                                                           | Description                                                                                                        |
 | :----------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------- |
-| [samples/data/dataset-tiny.json](samples/data/dataset-tiny.json)   | Small dataset with minimal test queries and evaluators                                                             |
-| [samples/data/dataset-small.json](samples/data/dataset-small.json) | Small dataset with a small number of test queries and all supported evaluators                                     |
-| [samples/data/dataset.json](samples/data/dataset.json)             | Dataset with all supported evaluators and enough queries for confidence interval calcualtion and statistical test. |
+| [samples/data/dataset-tiny.json](samples/data/dataset-tiny.json)   | Small dataset with small number of test queries and evaluators                                                             |
+| [samples/data/dataset.json](samples/data/dataset.json)             | Dataset with all supported evaluator types and enough queries for confidence interval calculation and statistical test. |
+| [samples/data/dataset-builtin-evaluators.json](samples/data/dataset-builtin-evaluators.json) | Built-in Foundry evaluators example (e.g., coherence, fluency, relevance, groundedness, metrics) |
+| [samples/data/dataset-openai-graders.json](samples/data/dataset-openai-graders.json) | OpenAI-based graders example (label models, score models, text similarity, string checks) |
+| [samples/data/dataset-custom-evaluators.json](samples/data/dataset-custom-evaluators.json) | Custom evaluators example with evaluator parameters |
+| [samples/data/dataset-data-mapping.json](samples/data/dataset-data-mapping.json) | Data mapping example showing how to override automatic field mappings with custom data column names |
+
+
+
 
 ## Sample workflow
 
@@ -117,15 +115,12 @@ jobs:
       - name: Run Evaluation
         uses: microsoft/ai-agent-evals@v2-beta
         with:
-          # Replace placeholders with values for your Azure AI Project
+          # Replace placeholders with values for your Foundry Project
           azure-ai-project-endpoint: "<your-ai-project-endpoint>"
           deployment-name: "<your-deployment-name>"
           agent-ids: "<your-ai-agent-ids>"
           data-path: ${{ github.workspace }}/path/to/your/data-file
 ```
-
-> [!NOTE]
-> If you have a hub-based Azure AI Project, use the `v1-beta` version with `azure-aiproject-connection-string` parameter.
 
 ## Evaluation Outputs
 
@@ -133,7 +128,13 @@ Evaluation results will be output to the summary section for each AI Evaluation 
 
 Below is a sample report for comparing two agents.
 
-![Sample output to compare multiple agent evaluations](sample-output.png)
+![Sample output to compare multiple agent evaluations](sample-output.jpeg)
+
+## Learn More
+
+For more information about Foundry agent service and observability, see:
+- [Foundry Observability Concepts](https://learn.microsoft.com/en-us/azure/ai-foundry/concepts/observability?view=foundry)
+- [Foundry Agent Service Documentation](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/overview?view=foundry)
 
 ## Contributing
 

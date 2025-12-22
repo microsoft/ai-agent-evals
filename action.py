@@ -37,7 +37,7 @@ class EvaluationConfig:  # pylint: disable=too-few-public-methods
 
     DEPLOYMENT_NAME_PARAM = "deployment_name"
     POLLING_INTERVAL_SECONDS = 5
-    USER_AGENT = "ai-agent-evals/v2-beta (+https://github.com/microsoft/ai-agent-evals)"
+    USER_AGENT = "ai-agent-evals/v3-beta (+https://github.com/microsoft/ai-agent-evals)"
 
 
 STEP_SUMMARY = os.getenv("GITHUB_STEP_SUMMARY") or os.getenv("ADO_STEP_SUMMARY")

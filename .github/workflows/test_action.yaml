@@ -10,7 +10,6 @@ on:
         type: choice
         options:
           - "dataset-tiny.json"
-          - "dataset-small.json"
           - "dataset.json"
       compare_view:
         description: "Compare AI Agents?"

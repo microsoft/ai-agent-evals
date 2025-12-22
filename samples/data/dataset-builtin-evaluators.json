@@ -1,9 +1,6 @@
 {
-  "name": "test-dataset-small",
+  "name": "builtin-evaluators-sample",
   "evaluators": [
-    "custom_prompt_kid_friendly",
-    "custom_code_1",    
-    
     "builtin.coherence",   
     "builtin.fluency",   
     "builtin.groundedness",
@@ -32,30 +29,26 @@
     "builtin.protected_material",
     "builtin.self_harm",
     "builtin.sexual",
-    "builtin.violence"  
+    "builtin.violence" 
   ],
-  "data_mapping": {
-  },
-  "evaluator_parameters": { 
-    "custom_prompt_kid_friendly": {
-      "threshold": 4
-    },
-    "custom_code_1": {
-      "pass_threshold": 0.5
-    },
+  "evaluator_parameters": {
     "builtin.rouge_score": {
-        "rouge_type": "rouge1",
-        "f1_score_threshold": 0.5,
-        "precision_threshold": 0.5,
-        "recall_threshold": 0.5
+      "rouge_type": "rouge1",
+      "f1_score_threshold": 0.5,
+      "precision_threshold": 0.5,
+      "recall_threshold": 0.5
     }
+  },
+  "data_mapping": {
   },
   "data": [
     {
-      "query": "Tell me about Smart eyeware"
+      "query": "What is machine learning?",
+      "ground_truth": "Machine learning is a subset of artificial intelligence that allows systems to learn from data."
     },
     {
-      "query": "How do I rebase my branch in git?"
+      "query": "Explain neural networks",
+      "ground_truth": "Neural networks are computing systems inspired by biological neurons that process information."
     }
   ]
 }
