@@ -57,10 +57,14 @@ def get_agents(project_client: AIProjectClient, agent_ids: list[str]) -> dict:
         if len(agent_name_version) == 2:
             agent_name = agent_name_version[0]
             agent_version = agent_name_version[1]
-            agent = project_client.agents.get_version(agent_name=agent_name, agent_version=agent_version)
+            agent = project_client.agents.get_version(
+                agent_name=agent_name, agent_version=agent_version
+            )
             agents[agent_id] = agent
         else:
-            raise ValueError(f"Invalid agent ID format: {agent_id}. Expected 'name:version'")
+            raise ValueError(
+                f"Invalid agent ID format: {agent_id}. Expected 'name:version'"
+            )
     return agents
 
 
@@ -76,7 +80,11 @@ def _build_metrics_dict(definition) -> dict:
     metrics_dict = {}
     if hasattr(definition, "metrics") and definition.metrics:
         for metric_name, metric in definition.metrics.items():
-            metric_type = metric.type if hasattr(metric, "type") else EvaluatorMetricType.CONTINUOUS
+            metric_type = (
+                metric.type
+                if hasattr(metric, "type")
+                else EvaluatorMetricType.CONTINUOUS
+            )
             metric_direction = (
                 metric.desirable_direction
                 if hasattr(metric, "desirable_direction")
@@ -90,7 +98,9 @@ def _build_metrics_dict(definition) -> dict:
     return metrics_dict
 
 
-def get_evaluator_metadata(project_client: AIProjectClient, evaluator_names: list[str]) -> dict:
+def get_evaluator_metadata(
+    project_client: AIProjectClient, evaluator_names: list[str]
+) -> dict:
     """Get metadata for specific evaluators.
 
     Args:
@@ -100,13 +110,15 @@ def get_evaluator_metadata(project_client: AIProjectClient, evaluator_names: lis
     Returns:
         Dictionary mapping evaluator names to metadata with data_type and desired_direction
     """
-    evaluator_metadata = {}
+    evaluator_metadata: dict = {}
 
     for evaluator_name in evaluator_names:
         is_openai_type = False
         is_custom_code = False
         try:
-            evaluator = project_client.evaluators.get_version(name=evaluator_name, version="latest")
+            evaluator = project_client.evaluators.get_version(
+                name=evaluator_name, version="latest"
+            )
 
             # Get categories from evaluator
             categories = getattr(evaluator, "categories", [])
@@ -120,7 +132,10 @@ def get_evaluator_metadata(project_client: AIProjectClient, evaluator_names: lis
                 is_openai_type = evaluator_type == "openai_graders"
 
                 # Check if custom code evaluator (type="code" without "builtin." prefix)
-                is_custom_code = evaluator_type == "code" and not evaluator_name.startswith("builtin.")
+                is_custom_code = (
+                    evaluator_type == "code"
+                    and not evaluator_name.startswith("builtin.")
+                )
 
                 # Extract init_parameters and metrics from definition
                 init_parameters = getattr(definition, "init_parameters", None)
@@ -145,7 +160,10 @@ def get_evaluator_metadata(project_client: AIProjectClient, evaluator_names: lis
             Exception,
         ) as e:
             # Custom evaluator or error fetching metadata - use defaults
-            print(f"Could not fetch metadata for evaluator '{evaluator_name}': {e}. Using defaults.")
+            print(
+                f"Could not fetch metadata for evaluator '{evaluator_name}': {e}. "
+                f"Using defaults."
+            )
 
         # Use default metadata (for errors or missing definitions)
         evaluator_metadata[evaluator_name] = DEFAULT_EVALUATOR_METADATA
@@ -156,7 +174,9 @@ def get_evaluator_metadata(project_client: AIProjectClient, evaluator_names: lis
     return evaluator_metadata
 
 
-def _build_openai_evaluator_criteria(evaluator_display_name: str, grader_config: dict) -> dict:
+def _build_openai_evaluator_criteria(
+    evaluator_display_name: str, grader_config: dict
+) -> dict:
     """Build testing criteria for OpenAI evaluators.
 
     Args:
@@ -167,7 +187,7 @@ def _build_openai_evaluator_criteria(evaluator_display_name: str, grader_config:
     Returns:
         Testing criteria dictionary for OpenAI evaluator
     """
-    criteria: dict = {
+    criteria = {
         "type": evaluator_display_name,
         "name": evaluator_display_name,
     }
@@ -273,14 +293,18 @@ def _build_azure_evaluator_criteria(
 
     # Determine response field and build data mapping
     response_field = _get_response_field(evaluator_name, categories, is_custom_code)
-    evaluator_data_mapping = _build_base_data_mapping(response_field, user_data_mappings)
+    evaluator_data_mapping = _build_base_data_mapping(
+        response_field, user_data_mappings
+    )
 
     # Get and validate initialization parameters
     initialization_parameters = {}
     if evaluator_parameters and evaluator_name in evaluator_parameters:
         initialization_parameters = evaluator_parameters[evaluator_name].copy()
 
-    _validate_init_parameters(evaluator_name, init_params_schema, initialization_parameters)
+    _validate_init_parameters(
+        evaluator_name, init_params_schema, initialization_parameters
+    )
     _validate_data_schema(evaluator_name, data_schema, evaluator_data_mapping)
 
     return {
@@ -292,7 +316,9 @@ def _build_azure_evaluator_criteria(
     }
 
 
-def _validate_init_parameters(evaluator_name: str, init_params_schema: dict, initialization_parameters: dict) -> None:
+def _validate_init_parameters(
+    evaluator_name: str, init_params_schema: dict, initialization_parameters: dict
+) -> None:
     """Validate that all required initialization parameters are provided.
 
     Args:
@@ -318,11 +344,16 @@ def _validate_init_parameters(evaluator_name: str, init_params_schema: dict, ini
         )
 
     # Parameters to exclude from validation (auto-populated by system)
-    excluded_params = {EvaluationConfig.DEPLOYMENT_NAME_PARAM, "azure_ai_project"}
+    excluded_params = {
+        EvaluationConfig.DEPLOYMENT_NAME_PARAM,
+        "azure_ai_project",
+    }
 
     # Validate all other required parameters are provided
     missing_params = [
-        param for param in required_params if param not in excluded_params and param not in initialization_parameters
+        param
+        for param in required_params
+        if param not in excluded_params and param not in initialization_parameters
     ]
 
     if missing_params:
@@ -333,7 +364,9 @@ def _validate_init_parameters(evaluator_name: str, init_params_schema: dict, ini
         )
 
 
-def _validate_data_schema(evaluator_name: str, data_schema: dict, evaluator_data_mapping: dict) -> None:
+def _validate_data_schema(
+    evaluator_name: str, data_schema: dict, evaluator_data_mapping: dict
+) -> None:
     """Validate that data mapping satisfies the required data schema.
 
     Args:
@@ -355,7 +388,11 @@ def _validate_data_schema(evaluator_name: str, data_schema: dict, evaluator_data
         for schema_option in data_schema["anyOf"]:
             if "required" in schema_option:
                 required_fields = schema_option["required"]
-                missing_fields = [field for field in required_fields if field not in evaluator_data_mapping]
+                missing_fields = [
+                    field
+                    for field in required_fields
+                    if field not in evaluator_data_mapping
+                ]
 
                 if not missing_fields:
                     any_combination_satisfied = True
@@ -363,7 +400,9 @@ def _validate_data_schema(evaluator_name: str, data_schema: dict, evaluator_data
                 all_missing_combinations.append(missing_fields)
 
         if not any_combination_satisfied:
-            combinations_str = " OR ".join(f"[{', '.join(combo)}]" for combo in all_missing_combinations)
+            combinations_str = " OR ".join(
+                f"[{', '.join(combo)}]" for combo in all_missing_combinations
+            )
             raise ValueError(
                 f"Evaluator '{evaluator_name}' requires at least one of "
                 f"these field combinations: {combinations_str}. Please add "
@@ -374,7 +413,11 @@ def _validate_data_schema(evaluator_name: str, data_schema: dict, evaluator_data
     # Check if schema has simple required list
     elif "required" in data_schema:
         required_data_fields = data_schema["required"]
-        missing_data_fields = [field for field in required_data_fields if field not in evaluator_data_mapping]
+        missing_data_fields = [
+            field
+            for field in required_data_fields
+            if field not in evaluator_data_mapping
+        ]
 
         if missing_data_fields:
             raise ValueError(
@@ -412,7 +455,9 @@ def create_testing_criteria(
     testing_criteria = []
     display_name_to_evaluator_name = {}
     for evaluator_name in evaluators:
-        evaluator_display_name = evaluator_name.split(".")[-1] if "." in evaluator_name else evaluator_name
+        evaluator_display_name = (
+            evaluator_name.split(".")[-1] if "." in evaluator_name else evaluator_name
+        )
 
         # Store mapping from display name to actual evaluator name
         display_name_to_evaluator_name[evaluator_display_name] = evaluator_name
@@ -430,7 +475,9 @@ def create_testing_criteria(
                     f"OpenAI-type evaluator '{evaluator_name}' requires "
                     f"configuration in 'openai_graders' field of input data."
                 )
-            criteria = _build_openai_evaluator_criteria(evaluator_display_name, grader_config)
+            criteria = _build_openai_evaluator_criteria(
+                evaluator_display_name, grader_config
+            )
         else:
             # Build standard Azure AI evaluator criteria
             criteria = _build_azure_evaluator_criteria(
@@ -458,7 +505,9 @@ def create_evaluation_runs(openai_client, eval_object, dataset, agents: dict) ->
             },
             "input_messages": {
                 "type": "template",
-                "template": [{"type": "message", "role": "user", "content": "{{item.query}}"}],
+                "template": [
+                    {"type": "message", "role": "user", "content": "{{item.query}}"}
+                ],
             },
             "target": {
                 "type": "azure_ai_agent",
@@ -485,7 +534,9 @@ def wait_for_evaluation_runs(openai_client, eval_object, agent_eval_runs: dict):
         all_completed = True
         for agent_id, eval_run in agent_eval_runs.items():
             if eval_run.status not in ["completed", "failed"]:
-                eval_run = openai_client.evals.runs.retrieve(run_id=eval_run.id, eval_id=eval_object.id)
+                eval_run = openai_client.evals.runs.retrieve(
+                    run_id=eval_run.id, eval_id=eval_object.id
+                )
                 agent_eval_runs[agent_id] = eval_run
                 if eval_run.status not in ["completed", "failed"]:
                     all_completed = False
@@ -684,16 +735,20 @@ def main(
         evaluator_metadata = get_evaluator_metadata(project_client, evaluator_names)
 
         # Create evaluation and prepare dataset
-        eval_object, dataset, display_name_to_evaluator_name = create_evaluation_and_dataset(
-            openai_client,
-            project_client,
-            input_data_path,
-            input_data,
-            evaluator_metadata,
+        eval_object, dataset, display_name_to_evaluator_name = (
+            create_evaluation_and_dataset(
+                openai_client,
+                project_client,
+                input_data_path,
+                input_data,
+                evaluator_metadata,
+            )
         )
 
         # Execute evaluation runs for all agents
-        agent_eval_runs = create_evaluation_runs(openai_client, eval_object, dataset, agents)
+        agent_eval_runs = create_evaluation_runs(
+            openai_client, eval_object, dataset, agents
+        )
         wait_for_evaluation_runs(openai_client, eval_object, agent_eval_runs)
 
         # Extract report URLs from all completed eval runs
@@ -730,13 +785,15 @@ def main(
         comparisons_by_evaluator: dict[str, list] = {}
         compare_url = None
         if len(agent_ids) > 1:
-            comparisons_by_evaluator, comparison_insight = generate_and_print_comparisons(
-                project_client,
-                eval_object,
-                agent_ids,
-                baseline_agent_id,
-                agent_eval_runs,
-                evaluator_metadata,
+            comparisons_by_evaluator, comparison_insight = (
+                generate_and_print_comparisons(
+                    project_client,
+                    eval_object,
+                    agent_ids,
+                    baseline_agent_id,
+                    agent_eval_runs,
+                    evaluator_metadata,
+                )
             )
             # Build compare URL if insight available
             if comparison_insight and eval_base_url:
@@ -757,7 +814,9 @@ def main(
         # Generate and return summary markdown
         return summarize(
             baseline_results=baseline_results,
-            comparisons_by_evaluator=(comparisons_by_evaluator if len(agent_ids) > 1 else None),
+            comparisons_by_evaluator=(
+                comparisons_by_evaluator if len(agent_ids) > 1 else None
+            ),
             report_urls=report_urls,
             eval_url=eval_base_url,
             compare_url=compare_url,
@@ -786,7 +845,9 @@ def _validate_environment_variables() -> dict:
 
     # Check optional environment variables
     if BASELINE_AGENT_ID and BASELINE_AGENT_ID not in AGENT_IDS:
-        raise ValueError(f"BASELINE_AGENT_ID '{BASELINE_AGENT_ID}' is not in AGENT_IDS '{AGENT_IDS}'")
+        raise ValueError(
+            f"BASELINE_AGENT_ID '{BASELINE_AGENT_ID}' is not in AGENT_IDS '{AGENT_IDS}'"
+        )
 
     return {
         "endpoint": AZURE_AI_PROJECT_ENDPOINT,

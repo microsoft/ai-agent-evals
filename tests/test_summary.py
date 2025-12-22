@@ -26,7 +26,9 @@ def test_summarize_single_variant():
 
     result_items = [{"score": 0.8}, {"score": 0.9}, {"score": 0.85}]
 
-    score_ci = EvaluationScoreCI(variant="agent1:v1", score=score, result_items=result_items)
+    score_ci = EvaluationScoreCI(
+        variant="agent1:v1", score=score, result_items=result_items
+    )
 
     baseline_results = {
         "evaluation_scores": {"fluency": score_ci},
@@ -50,7 +52,9 @@ def test_summarize_with_comparisons():
 
     control_items = [{"score": 0.7}, {"score": 0.75}, {"score": 0.72}]
 
-    score_ci = EvaluationScoreCI(variant="control:v1", score=score, result_items=control_items)
+    score_ci = EvaluationScoreCI(
+        variant="control:v1", score=score, result_items=control_items
+    )
 
     comparison = EvaluationScoreComparison(
         score=score,
@@ -92,7 +96,9 @@ def test_summarize_with_report_urls():
 
     result_items = [{"score": 0.9}]
 
-    score_ci = EvaluationScoreCI(variant="agent1:v1", score=score, result_items=result_items)
+    score_ci = EvaluationScoreCI(
+        variant="agent1:v1", score=score, result_items=result_items
+    )
 
     baseline_results = {
         "evaluation_scores": {"relevance": score_ci},
@@ -127,9 +133,13 @@ def test_summarize_multiple_evaluators():
         desired_direction=DesiredDirection.INCREASE,
     )
 
-    fluency_ci = EvaluationScoreCI(variant="agent:v1", score=fluency_score, result_items=[{"score": 0.8}])
+    fluency_ci = EvaluationScoreCI(
+        variant="agent:v1", score=fluency_score, result_items=[{"score": 0.8}]
+    )
 
-    relevance_ci = EvaluationScoreCI(variant="agent:v1", score=relevance_score, result_items=[{"score": 0.9}])
+    relevance_ci = EvaluationScoreCI(
+        variant="agent:v1", score=relevance_score, result_items=[{"score": 0.9}]
+    )
 
     baseline_results = {
         "evaluation_scores": {"fluency": fluency_ci, "relevance": relevance_ci},

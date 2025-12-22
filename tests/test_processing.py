@@ -13,7 +13,9 @@ from analysis.processing import _convert_sdk_enums_to_analysis, convert_json_to_
 def test_convert_json_to_jsonl():
     """Test converting JSON to JSONL format."""
     # Create temporary input file
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False, encoding="utf-8") as f:
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".json", delete=False, encoding="utf-8"
+    ) as f:
         json_data = {
             "data": [
                 {"query": "test1", "context": "context1"},

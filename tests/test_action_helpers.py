@@ -34,7 +34,9 @@ def test_generate_data_mappings_with_user_mappings():
 
 def test_generate_data_mappings_auto_generates():
     """Test auto-generation of data mappings from data fields."""
-    input_data = {"data": [{"query": "test", "context": "test context", "ground_truth": "answer"}]}
+    input_data = {
+        "data": [{"query": "test", "context": "test context", "ground_truth": "answer"}]
+    }
     result = _generate_data_mappings(input_data)
 
     assert result == {
@@ -259,7 +261,9 @@ def test_create_testing_criteria_basic():
     evaluators = ["builtin.coherence"]
     evaluator_metadata = {
         "builtin.coherence": {
-            "metrics": {"score": {"data_type": "continuous", "desired_direction": "increase"}},
+            "metrics": {
+                "score": {"data_type": "continuous", "desired_direction": "increase"}
+            },
             "categories": ["quality"],
             "init_parameters": {},
             "data_schema": {},
@@ -268,7 +272,9 @@ def test_create_testing_criteria_basic():
     }
     input_data = {"data": [{"query": "test"}]}
 
-    result, mapping = create_testing_criteria(evaluators, evaluator_metadata, input_data)
+    result, mapping = create_testing_criteria(
+        evaluators, evaluator_metadata, input_data
+    )
 
     assert len(result) == 1
     assert result[0]["name"] == "coherence"
@@ -293,7 +299,9 @@ def test_create_testing_criteria_with_parameters():
     input_data = {"data": [{"query": "test"}]}
     evaluator_parameters = {"custom.evaluator": {"threshold": 0.8}}
 
-    result, mapping = create_testing_criteria(evaluators, evaluator_metadata, input_data, evaluator_parameters)
+    result, mapping = create_testing_criteria(
+        evaluators, evaluator_metadata, input_data, evaluator_parameters
+    )
 
     assert len(result) == 1
     assert result[0]["initialization_parameters"]["threshold"] == 0.8
@@ -315,7 +323,9 @@ def test_create_testing_criteria_agents_category():
     }
     input_data = {"data": [{"query": "test"}]}
 
-    result, mapping = create_testing_criteria(evaluators, evaluator_metadata, input_data)
+    result, mapping = create_testing_criteria(
+        evaluators, evaluator_metadata, input_data
+    )
 
     assert result[0]["data_mapping"]["response"] == "{{sample.output_items}}"
     assert mapping["task_adherence"] == "builtin.task_adherence"
@@ -357,7 +367,9 @@ def test_create_testing_criteria_custom_evaluator():
         },
     }
 
-    result, mapping = create_testing_criteria(evaluators, evaluator_metadata, input_data)
+    result, mapping = create_testing_criteria(
+        evaluators, evaluator_metadata, input_data
+    )
 
     assert len(result) == 1
     assert result[0]["type"] == "text_similarity"
@@ -398,7 +410,9 @@ def test_create_testing_criteria_mixed_evaluators():
         },
     }
 
-    result, mapping = create_testing_criteria(evaluators, evaluator_metadata, input_data)
+    result, mapping = create_testing_criteria(
+        evaluators, evaluator_metadata, input_data
+    )
 
     assert len(result) == 2
 
@@ -440,7 +454,9 @@ def test_create_testing_criteria_openai_type_from_metadata():
         },
     }
 
-    result, mapping = create_testing_criteria(evaluators, evaluator_metadata, input_data)
+    result, mapping = create_testing_criteria(
+        evaluators, evaluator_metadata, input_data
+    )
 
     assert len(result) == 1
     assert result[0]["type"] == "text_similarity"

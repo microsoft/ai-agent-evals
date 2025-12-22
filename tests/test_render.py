@@ -51,7 +51,9 @@ def test_fmt_pvalue():
 
 def test_fmt_image():
     """Test formatting of image markdown."""
-    assert fmt_image("https://example.com/image.png", "Alt text") == '![Alt text](https://example.com/image.png "")'
+    assert fmt_image("https://example.com/image.png", "Alt text") == (
+        '![Alt text](https://example.com/image.png "")'
+    )
 
 
 @pytest.mark.parametrize(
@@ -172,7 +174,9 @@ def test_fmt_ci():
         {"score": 0.83},
     ]
 
-    score_ci = EvaluationScoreCI(variant="agent1", score=score, result_items=result_items)
+    score_ci = EvaluationScoreCI(
+        variant="agent1", score=score, result_items=result_items
+    )
 
     ci_output = fmt_ci(score_ci)
 
