@@ -116,8 +116,10 @@ def test_summarize_with_report_urls():
         compare_url="https://example.com/compare",
     )
 
-    # Verify summary contains URLs
-    assert "https://example.com" in summary or "example.com" in summary
+    # Verify summary contains the expected URLs
+    assert report_urls["agent1_v1"] in summary
+    assert "https://example.com/eval" in summary
+    assert "https://example.com/compare" in summary
 
 
 def test_summarize_multiple_evaluators():
