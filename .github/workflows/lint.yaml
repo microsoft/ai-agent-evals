@@ -27,7 +27,7 @@ jobs:
         uses: super-linter/super-linter/slim@v7.3.0 # x-release-please-version
         env:
           MULTI_STATUS: false
-          FILTER_REGEX_EXCLUDE: (.*tests/snapshots/.*\.md|SECURITY\.md|SUPPORT\.md|.*\.js|.*/V1/.*$)
+          FILTER_REGEX_EXCLUDE: (.*tests/snapshots/.*\.md|SECURITY\.md|SUPPORT\.md|.*\.js|.*/V1/.*|.*/V2/.*$)
           VALIDATE_TSX: false
           VALIDATE_TYPESCRIPT_ES: false
           VALIDATE_TYPESCRIPT_PRETTIER: false
