@@ -108,7 +108,7 @@ jobs:
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
       - name: Run Evaluation
-        uses: microsoft/ai-agent-evals@v2-beta
+        uses: microsoft/ai-agent-evals@v3-beta
         with:
           # Replace placeholders with values for your Foundry Project
           azure-ai-project-endpoint: "<your-ai-project-endpoint>"
