@@ -304,6 +304,7 @@ def _validate_data_schema(
             )
 
 
+# pylint: disable-next=too-many-locals
 def create_testing_criteria(
     evaluators: list[str],
     evaluator_metadata: dict,

@@ -82,6 +82,7 @@ def convert_json_to_jsonl(
 
 
 # pylint: disable-next=too-many-locals
+# pylint: disable-next=too-many-arguments,too-many-positional-arguments,too-many-branches,too-many-locals
 def process_evaluation_results(
     openai_client,
     eval_object,
@@ -97,13 +98,16 @@ def process_evaluation_results(
         eval_object: Evaluation object
         eval_run: Evaluation run object
         agent: Agent object
-        evaluator_metadata: Dictionary with evaluator metadata (data_type, desired_direction, field)
-        display_name_to_evaluator_name: Optional mapping from display names to actual evaluator names
+        evaluator_metadata: Dictionary with evaluator metadata (data_type,
+            desired_direction, field)
+        display_name_to_evaluator_name: Optional mapping from display names
+            to actual evaluator names
 
     Returns:
         Dictionary containing:
             - agent: Agent object
-            - evaluation_scores: Dict mapping evaluator names to EvaluationScoreCI objects
+            - evaluation_scores: Dict mapping evaluator names to
+              EvaluationScoreCI objects
             - evaluator_names: List of evaluator names
     """
     if display_name_to_evaluator_name is None:

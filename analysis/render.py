@@ -175,6 +175,7 @@ def fmt_ci(x: EvaluationScoreCI) -> str:
     return md_ci
 
 
+# pylint: disable-next=too-many-locals
 def fmt_table_compare(
     comparisons_by_evaluator: dict[str, list[EvaluationScoreComparison]],
     baseline_name: str,
@@ -252,6 +253,7 @@ def fmt_table_compare(
     return df_summary.to_markdown(index=False)
 
 
+# pylint: disable-next=too-many-locals
 def fmt_table_ci(
     evaluation_scores: dict[str, EvaluationScoreCI],
     base_url: str = "",
@@ -307,7 +309,7 @@ def fmt_table_ci(
                     "Evaluation metric": eval_score_label,
                     "Pass Rate": pass_rate_text,
                     "Passed/Total": pass_count_text,
-                    "Score": (
+                    "Avg Score": (
                         fmt_metric_value(score_ci.mean, score_ci.score.data_type)
                         if score_ci.mean is not None
                         else "N/A"
