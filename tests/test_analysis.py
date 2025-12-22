@@ -68,6 +68,33 @@ def test_evaluation_score_ci():
     assert ci.mean == pytest.approx(0.85, rel=1e-2)
 
 
+def test_evaluation_score_ci_boolean():
+    """Test creating a confidence interval with boolean data type."""
+    # Test with passed/failed boolean results
+    result_items = [
+        {"passed": True, "score": 1},
+        {"passed": False, "score": 0},
+        {"passed": True, "score": 1},
+    ]
+    score = EvaluationScore(
+        name="pass_fail",
+        evaluator="pass_fail",
+        field="passed",
+        data_type=EvaluationScoreDataType.BOOLEAN,
+        desired_direction=DesiredDirection.INCREASE,
+    )
+
+    ci = EvaluationScoreCI(
+        variant="test_variant", score=score, result_items=result_items
+    )
+
+    assert ci.variant == "test_variant"
+    assert ci.count == 3
+    assert ci.mean == pytest.approx(2 / 3, rel=1e-2)  # 2 out of 3 passed
+    assert ci.ci_lower is not None
+    assert ci.ci_upper is not None
+
+
 def test_evaluation_score_comparison_continuous():
     """Test comparing two variants with continuous scores."""
     control_values = [0.8, 0.9, 0.85]

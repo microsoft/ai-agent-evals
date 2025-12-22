@@ -131,7 +131,7 @@ class EvaluationScoreCI:
             if not self._validate_numeric_data(data):
                 return
 
-            result = binomtest(data.sum(), data.count())
+            result = binomtest(int(data.sum()), int(data.count()))
             mean = result.proportion_estimate
             ci = result.proportion_ci(
                 confidence_level=confidence_level, method="wilsoncc"

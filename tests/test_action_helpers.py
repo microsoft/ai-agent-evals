@@ -193,13 +193,16 @@ def test_create_testing_criteria_basic():
     }
     input_data = {"data": [{"query": "test"}]}
 
-    result = create_testing_criteria(evaluators, evaluator_metadata, input_data)
+    result, mapping = create_testing_criteria(
+        evaluators, evaluator_metadata, input_data
+    )
 
     assert len(result) == 1
     assert result[0]["name"] == "coherence"
     assert result[0]["evaluator_name"] == "builtin.coherence"
     assert result[0]["type"] == "azure_ai_evaluator"
     assert "query" in result[0]["data_mapping"]
+    assert mapping["coherence"] == "builtin.coherence"
 
 
 def test_create_testing_criteria_with_parameters():
@@ -216,12 +219,14 @@ def test_create_testing_criteria_with_parameters():
     input_data = {"data": [{"query": "test"}]}
     evaluator_parameters = {"custom.evaluator": {"threshold": 0.8}}
 
-    result = create_testing_criteria(
+    result, mapping = create_testing_criteria(
         evaluators, evaluator_metadata, input_data, evaluator_parameters
     )
 
     assert len(result) == 1
     assert result[0]["initialization_parameters"]["threshold"] == 0.8
+    assert mapping["evaluator"] == "custom.evaluator"
+    assert mapping["evaluator"] == "custom.evaluator"
 
 
 def test_create_testing_criteria_agents_category():
@@ -237,9 +242,12 @@ def test_create_testing_criteria_agents_category():
     }
     input_data = {"data": [{"query": "test"}]}
 
-    result = create_testing_criteria(evaluators, evaluator_metadata, input_data)
+    result, mapping = create_testing_criteria(
+        evaluators, evaluator_metadata, input_data
+    )
 
     assert result[0]["data_mapping"]["response"] == "{{sample.output_items}}"
+    assert mapping["task_adherence"] == "builtin.task_adherence"
 
 
 def test_create_testing_criteria_validation_error():

@@ -18,6 +18,8 @@ def summarize(
     report_urls: dict[str, str] | None = None,
     eval_url: str | None = None,
     compare_url: str | None = None,
+    evaluator_metadata: dict | None = None,
+    evaluator_catalog_url: str | None = None,
 ) -> str:
     """Generate a markdown summary of evaluation results.
 
@@ -31,6 +33,8 @@ def summarize(
         report_urls: Optional dictionary mapping agent IDs to their report URLs
         eval_url: Optional evaluation base URL
         compare_url: Optional comparison report URL
+        evaluator_metadata: Optional dictionary with evaluator metadata including versions
+        evaluator_catalog_url: Optional evaluator catalog base URL for linking
 
     Returns:
         Formatted markdown string with evaluation summary
@@ -67,14 +71,16 @@ def summarize(
         # Use per-agent URLs from report_urls dictionary
         baseline_url = report_urls.get(agent_name) if report_urls else None
         baseline_link = (
-            fmt_hyperlink("View results", baseline_url) if baseline_url else ""
+            fmt_hyperlink("View run results", baseline_url) if baseline_url else ""
         )
         md.append(f"| {agent_name} | Baseline | {baseline_link} |")
 
         for treatment_name in treatment_agent_names:
             treatment_url = report_urls.get(treatment_name) if report_urls else None
             treatment_link = (
-                fmt_hyperlink("View results", treatment_url) if treatment_url else ""
+                fmt_hyperlink("View run results", treatment_url)
+                if treatment_url
+                else ""
             )
             md.append(f"| {treatment_name} | Treatment | {treatment_link} |")
     else:
@@ -84,21 +90,28 @@ def summarize(
         md.append("| Agent ID | Evaluation results |")
         md.append("|:---------|:-------------------|")
         agent_url = report_urls.get(agent_name) if report_urls else None
-        result_link = fmt_hyperlink("View results", agent_url) if agent_url else ""
+        result_link = fmt_hyperlink("View run results", agent_url) if agent_url else ""
         md.append(f"| {agent_name} | {result_link} |")
 
     md.append("\n### Evaluation results\n")
 
     # Add comparison link above the results table if available
     if compare_url:
-        compare_link = fmt_hyperlink("View comparison", compare_url)
+        compare_link = fmt_hyperlink("View compare report", compare_url)
         md.append(f"{compare_link}\n")
 
     # Generate comparison table if comparisons are available, otherwise show CI table
     if comparisons_by_evaluator and treatment_agent_names:
-        md_table = fmt_table_compare(comparisons_by_evaluator, agent_name)
+        md_table = fmt_table_compare(
+            comparisons_by_evaluator,
+            agent_name,
+            evaluator_catalog_url or "",
+            evaluator_metadata,
+        )
     else:
-        md_table = fmt_table_ci(evaluation_scores)
+        md_table = fmt_table_ci(
+            evaluation_scores, evaluator_catalog_url or "", evaluator_metadata
+        )
     md.append(md_table)
     md.append("")
 

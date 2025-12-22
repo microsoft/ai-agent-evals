@@ -83,7 +83,12 @@ def convert_json_to_jsonl(
 
 # pylint: disable-next=too-many-locals
 def process_evaluation_results(
-    openai_client, eval_object, eval_run, agent, evaluator_metadata: dict
+    openai_client,
+    eval_object,
+    eval_run,
+    agent,
+    evaluator_metadata: dict,
+    display_name_to_evaluator_name: dict | None = None,
 ) -> dict:
     """Process evaluation results for a single agent.
 
@@ -93,6 +98,7 @@ def process_evaluation_results(
         eval_run: Evaluation run object
         agent: Agent object
         evaluator_metadata: Dictionary with evaluator metadata (data_type, desired_direction, field)
+        display_name_to_evaluator_name: Optional mapping from display names to actual evaluator names
 
     Returns:
         Dictionary containing:
@@ -100,6 +106,8 @@ def process_evaluation_results(
             - evaluation_scores: Dict mapping evaluator names to EvaluationScoreCI objects
             - evaluator_names: List of evaluator names
     """
+    if display_name_to_evaluator_name is None:
+        display_name_to_evaluator_name = {}
     # Retrieve all output items with pagination
     all_output_items = []
     after = None
@@ -121,7 +129,11 @@ def process_evaluation_results(
     for output_item in all_output_items:
         for result in output_item.results:
             total_results += 1
-            evaluator_name = result.name
+            # result.name is the display name, map it back to the actual evaluator name
+            display_name = result.name
+            evaluator_name = display_name_to_evaluator_name.get(
+                display_name, display_name
+            )
             metric_name = result.metric if result.metric else "score"
 
             # Convert result to dict format

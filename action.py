@@ -117,6 +117,7 @@ def get_evaluator_metadata(
                         "categories": categories,
                         "init_parameters": init_parameters,
                         "data_schema": data_schema,
+                        "version": getattr(evaluator, "version", "1"),
                     }
                     continue
 
@@ -308,7 +309,7 @@ def create_testing_criteria(
     evaluator_metadata: dict,
     input_data: dict | None = None,  # pylint: disable=redefined-outer-name
     evaluator_parameters: dict | None = None,
-) -> list[dict]:
+) -> tuple[list[dict], dict[str, str]]:
     """Build testing criteria dynamically from evaluator names.
 
     Args:
@@ -318,16 +319,20 @@ def create_testing_criteria(
         evaluator_parameters: Optional dictionary of evaluator-specific initialization parameters
 
     Returns:
-        List of testing criteria dictionaries
+        Tuple of (testing_criteria list, display_name_to_evaluator_name mapping dict)
     """
     # Generate data mappings from input data
     user_data_mappings = _generate_data_mappings(input_data)
 
     testing_criteria = []
+    display_name_to_evaluator_name = {}
     for evaluator_name in evaluators:
         evaluator_display_name = (
             evaluator_name.split(".")[-1] if "." in evaluator_name else evaluator_name
         )
+
+        # Store mapping from display name to actual evaluator name
+        display_name_to_evaluator_name[evaluator_display_name] = evaluator_name
 
         # Get metadata for this evaluator
         metadata = evaluator_metadata.get(evaluator_name, {})
@@ -361,7 +366,7 @@ def create_testing_criteria(
             }
         )
 
-    return testing_criteria
+    return testing_criteria, display_name_to_evaluator_name
 
 
 def create_evaluation_runs(openai_client, eval_object, dataset, agents: dict) -> dict:
@@ -485,7 +490,7 @@ def create_evaluation_and_dataset(
         evaluator_metadata: Evaluator metadata with categories
 
     Returns:
-        Tuple of (eval_object, dataset)
+        Tuple of (eval_object, dataset, display_name_to_evaluator_name)
     """
     data_source_config = DataSourceConfigCustom(
         type="custom",
@@ -501,7 +506,7 @@ def create_evaluation_and_dataset(
     evaluator_parameters = input_data.get("evaluator_parameters", None)
 
     # Build testing criteria dynamically from evaluators in input data
-    testing_criteria = create_testing_criteria(
+    testing_criteria, display_name_to_evaluator_name = create_testing_criteria(
         input_data.get("evaluators", []),
         evaluator_metadata,
         input_data,
@@ -525,7 +530,7 @@ def create_evaluation_and_dataset(
     )
     print(f"Uploaded dataset: {dataset.name} (version: {dataset.version})")
 
-    return eval_object, dataset
+    return eval_object, dataset, display_name_to_evaluator_name
 
 
 # pylint: disable-next=too-many-arguments,too-many-positional-arguments
@@ -606,12 +611,14 @@ def main(
         evaluator_metadata = get_evaluator_metadata(project_client, evaluator_names)
 
         # Create evaluation and prepare dataset
-        eval_object, dataset = create_evaluation_and_dataset(
-            openai_client,
-            project_client,
-            input_data_path,
-            input_data,
-            evaluator_metadata,
+        eval_object, dataset, display_name_to_evaluator_name = (
+            create_evaluation_and_dataset(
+                openai_client,
+                project_client,
+                input_data_path,
+                input_data,
+                evaluator_metadata,
+            )
         )
 
         # Execute evaluation runs for all agents
@@ -645,6 +652,7 @@ def main(
             baseline_eval_run,
             baseline_agent,
             evaluator_metadata,
+            display_name_to_evaluator_name,
         )
         print_agent_results(baseline_results)
 
@@ -668,6 +676,17 @@ def main(
                 insight_id = comparison_insight.id
                 compare_url = f"{eval_base_url}/compare/{insight_id}"
 
+        # Build evaluator catalog base URL (remove eval ID if present)
+        evaluator_catalog_url = ""
+        if eval_base_url:
+            # eval_base_url is like: .../build/evaluations/eval_xxx
+            # We want: .../build/evaluations
+            if "/build/evaluations/" in eval_base_url:
+                evaluator_catalog_url = eval_base_url.rsplit("/", 1)[0]
+            else:
+                # Already at the right level
+                evaluator_catalog_url = eval_base_url
+
         # Generate and return summary markdown
         return summarize(
             baseline_results=baseline_results,
@@ -677,6 +696,8 @@ def main(
             report_urls=report_urls,
             eval_url=eval_base_url,
             compare_url=compare_url,
+            evaluator_metadata=evaluator_metadata,
+            evaluator_catalog_url=evaluator_catalog_url,
         )
 
 

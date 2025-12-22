@@ -178,6 +178,8 @@ def fmt_ci(x: EvaluationScoreCI) -> str:
 def fmt_table_compare(
     comparisons_by_evaluator: dict[str, list[EvaluationScoreComparison]],
     baseline_name: str,
+    base_url: str = "",
+    evaluator_metadata: dict | None = None,
 ) -> str:
     """Render a table comparing evaluation results from multiple agent variants.
 
@@ -185,12 +187,18 @@ def fmt_table_compare(
         comparisons_by_evaluator: Dictionary mapping evaluator names to lists of
             EvaluationScoreComparison objects (one per treatment agent)
         baseline_name: Name of the baseline agent
+        base_url: Optional base URL for evaluator links
+            (e.g., https://ai.azure.com/nextgen/r/PROJECT_ID/build/evaluations)
+        evaluator_metadata: Optional dictionary with evaluator metadata including versions
 
     Returns:
         Markdown formatted comparison table
     """
     if not comparisons_by_evaluator:
         raise ValueError("No comparison results provided")
+
+    if evaluator_metadata is None:
+        evaluator_metadata = {}
 
     records = []
     for score_key, comparisons in comparisons_by_evaluator.items():
@@ -199,7 +207,21 @@ def fmt_table_compare(
             # It's either "evaluator" or "evaluator:metric" for multiple metrics
             first_comp = comparisons[0] if comparisons else None
 
-            row = {"Evaluation metric": score_key}
+            eval_score_label = score_key
+
+            # Create hyperlink if base_url is provided
+            if base_url and first_comp:
+                # Extract evaluator name from first_comp.score.evaluator
+                # This should match the keys in evaluator_metadata dictionary
+                evaluator_str = first_comp.score.evaluator
+                # Get version from evaluator metadata, default to "1"
+                evaluator_entry = evaluator_metadata.get(evaluator_str, {})
+                version = evaluator_entry.get("version", "1")
+                # Build evaluator URL: {base_url}/catalog/{evaluator_name}/{version}
+                evaluator_url = f"{base_url}/catalog/{evaluator_str}/{version}"
+                eval_score_label = fmt_hyperlink(score_key, evaluator_url)
+
+            row = {"Evaluation metric": eval_score_label}
 
             # Create a control badge using first comparison (same baseline for all)
             if first_comp:
@@ -230,18 +252,27 @@ def fmt_table_compare(
     return df_summary.to_markdown(index=False)
 
 
-def fmt_table_ci(evaluation_scores: dict[str, EvaluationScoreCI]) -> str:
+def fmt_table_ci(
+    evaluation_scores: dict[str, EvaluationScoreCI],
+    base_url: str = "",
+    evaluator_metadata: dict | None = None,
+) -> str:
     """Render a table of confidence intervals for the evaluation scores
 
     Args:
         evaluation_scores: Dictionary mapping evaluator names to EvaluationScoreCI objects
-        agent_name: Name of the agent being evaluated
+        base_url: Optional base URL for evaluator links
+            (e.g., https://ai.azure.com/nextgen/r/PROJECT_ID/build/evaluations)
+        evaluator_metadata: Optional dictionary with evaluator metadata including versions
 
     Returns:
         Markdown formatted table string
     """
     if not evaluation_scores:
         raise ValueError("No evaluation scores provided")
+
+    if evaluator_metadata is None:
+        evaluator_metadata = {}
 
     records = []
     for score_key, score_ci in evaluation_scores.items():
@@ -250,20 +281,32 @@ def fmt_table_ci(evaluation_scores: dict[str, EvaluationScoreCI]) -> str:
             # It's either "evaluator" or "evaluator:metric" for multiple metrics
             eval_score_label = score_key
 
+            # Create hyperlink if base_url is provided
+            if base_url:
+                # Extract evaluator name from score_ci.score.evaluator
+                # This should match the keys in evaluator_metadata dictionary
+                evaluator_str = score_ci.score.evaluator
+                # Get version from evaluator metadata, default to "1"
+                evaluator_entry = evaluator_metadata.get(evaluator_str, {})
+                version = evaluator_entry.get("version", "1")
+                # Build evaluator URL: {base_url}/catalog/{evaluator_name}/{version}
+                evaluator_url = f"{base_url}/catalog/{evaluator_str}/{version}"
+                eval_score_label = fmt_hyperlink(score_key, evaluator_url)
+
             pass_rate_text = "N/A"
+            pass_count_text = "N/A"
             if score_ci.item_summary:
                 summary = score_ci.item_summary
-                pass_rate_text = f"{summary['pass_rate']:.1%}"
                 passed = summary.get("passed_count", 0)
-                failed = summary.get("failed_count", 0)
                 total = summary.get("total_items", 0)
-                tooltip = f"Passed: {passed}\nFailed: {failed}\nTotal: {total}"
-                pass_rate_text = fmt_hyperlink(pass_rate_text, "", tooltip)
+                pass_rate_text = f"{summary['pass_rate']:.1%}"
+                pass_count_text = f"{passed}/{total}"
 
             records.append(
                 {
                     "Evaluation metric": eval_score_label,
                     "Pass Rate": pass_rate_text,
+                    "Passed/Total": pass_count_text,
                     "Score": (
                         fmt_metric_value(score_ci.mean, score_ci.score.data_type)
                         if score_ci.mean is not None
