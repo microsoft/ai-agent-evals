@@ -35,4 +35,3 @@ steps:
       deployment-name: $(DEPLOYMENT_NAME)
       data-path: $(Build.SourcesDirectory)\samples\data\dataset.json
       agent-ids: $(AGENT_IDS)
-      evaluation-result-view: "all-scores"
