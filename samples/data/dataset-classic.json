@@ -1,0 +1,28 @@
+{
+  "name": "test-dataset-foundry-classic-v1-beta-or-v2-beta",
+  "evaluators": [
+    "IntentResolutionEvaluator",
+    "TaskAdherenceEvaluator",
+    "CoherenceEvaluator",
+    "RelevanceEvaluator",
+    "FluencyEvaluator",
+    "ViolenceEvaluator",
+    "SexualEvaluator",
+    "SelfHarmEvaluator",
+    "HateUnfairnessEvaluator",
+    "IndirectAttackEvaluator",
+    "ProtectedMaterialEvaluator",
+    "CodeVulnerabilityEvaluator",
+    "ContentSafetyEvaluator",
+    "ToolCallAccuracyEvaluator", 
+    "GroundednessEvaluator"
+  ],
+  "data": [
+    {
+      "query": "Tell me about Smart eyewear"
+    },
+    {
+      "query": "How do I rebase my branch in git?"
+    }
+  ]
+}
