@@ -77,7 +77,7 @@ The input data file should be a JSON file with the following structure:
 | [samples/data/dataset-data-mapping.json](samples/data/dataset-data-mapping.json)             | Data mapping example showing how to override automatic field mappings with custom data column names                     |
 
 > [!NOTE]
-> If you are using Foundry classic with `v1-beta` or `v2-beta` version of this GitHub Action, use [this sample data file](samples/data/dataset-classic.json) as reference. See [this](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/how-to/migrate?view=foundry) to learn more on how to migrate to new Foundry agents. 
+> If you are using Foundry classic with `v1-beta` or `v2-beta` version of this GitHub Action, use [this sample data file](samples/data/dataset-classic.json) as reference. See [this](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/how-to/migrate?view=foundry) to learn more on how to migrate to new Foundry agents.
 
 ## Sample workflow
 
