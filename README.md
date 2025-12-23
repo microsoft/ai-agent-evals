@@ -76,6 +76,9 @@ The input data file should be a JSON file with the following structure:
 | [samples/data/dataset-custom-evaluators.json](samples/data/dataset-custom-evaluators.json)   | Custom evaluators example with evaluator parameters                                                                     |
 | [samples/data/dataset-data-mapping.json](samples/data/dataset-data-mapping.json)             | Data mapping example showing how to override automatic field mappings with custom data column names                     |
 
+> [!NOTE]
+> If you are using Foundry classic with `v1-beta` or `v2-beta` version of this GitHub Action, please use [this sample data file](samples/data/dataset-classic.json) as reference. See [this](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/how-to/migrate?view=foundry) to learn more on how to migrate to new Foundry agents. 
+
 ## Sample workflow
 
 To use this GitHub Action, add this GitHub Action to your CI/CD workflows and specify the trigger criteria (e.g., on commit).
@@ -116,6 +119,12 @@ jobs:
           agent-ids: "<your-ai-agent-ids>"
           data-path: ${{ github.workspace }}/path/to/your/data-file
 ```
+
+> [!NOTE]
+> If you have using Foundry classic agents, use the `v2-beta` version. See v2 workflow sample [here](samples/workflows/single-agent-v2.yml)
+
+> [!NOTE]
+> If you have a hub-based Azure AI Project, use the `v1-beta` version with `azure-aiproject-connection-string` parameter. See v1 workflow sample [here](samples/workflows/single-agent-v1.yml)
 
 ## Evaluation Outputs
 
