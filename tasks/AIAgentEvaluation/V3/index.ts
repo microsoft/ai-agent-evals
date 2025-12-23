@@ -112,7 +112,7 @@ async function installPythonDependencies(
 
 async function run() {
   try {
-    console.log("Starting AIAgentEvaluation v1 task");
+    console.log("Starting AIAgentEvaluation v3 task");
     const scriptDir = __dirname;
 
     // Find Python executable
@@ -135,13 +135,12 @@ async function run() {
     console.log("Reading task inputs...");
 
     const inputs = [
-      { name: "azure-aiproject-connection-string", required: true },
+      { name: "azure-ai-project-endpoint", required: true },
       { name: "deployment-name", required: true },
       { name: "api-version", required: false },
       { name: "data-path", required: true },
       { name: "agent-ids", required: true },
       { name: "baseline-agent-id", required: false },
-      { name: "evaluation-result-view", required: false },
     ];
     inputs.forEach((input) => {
       const value = tl.getInput(input.name, input.required);

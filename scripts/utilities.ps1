@@ -107,7 +107,7 @@ function Check-CriticalFiles {
         [Parameter(Mandatory = $true)]
         [bool]$IsDevExtension
     )
-    $versions = @("V1", "V2")
+    $versions = @("V1", "V2", "V3")
 
     # Common files that should exist regardless of version
     $commonFiles = @(

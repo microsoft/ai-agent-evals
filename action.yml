@@ -27,12 +27,6 @@ inputs:
       Agent ID of the baseline agent to compare against when evaluating multiple agents. If not provided, the first
       agent is used.
     required: false
-  evaluation-result-view:
-    description: >
-      The evaluation result view. Options are "default" (boolean scores only such as passing and defect rates),
-      "all-scores" (all scores), "raw-scores-only" (all non-boolean scores).
-    required: false
-    default: "default"
   api-version:
     description: The API version to use when connecting to model deployment.
     required: false

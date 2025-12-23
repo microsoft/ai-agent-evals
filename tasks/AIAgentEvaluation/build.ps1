@@ -4,8 +4,8 @@
 $projectRoot = Split-Path -Parent $MyInvocation.MyCommand.Definition
 Set-Location $projectRoot
 
-$versions = @("V1", "V2");
-$latestVersion = "V2"
+$versions = @("V1", "V2", "V3");
+$latestVersion = "V3"
 
 Copy-Item -Path "$projectRoot\..\..\pyproject.toml" -Destination "$projectRoot\$latestVersion" -Force
 Copy-Item -Path "$projectRoot\..\..\action.py" -Destination "$projectRoot\$latestVersion" -Force

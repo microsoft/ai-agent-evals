@@ -1,0 +1,26 @@
+{
+  "name": "aiagentevaluation",
+  "version": "3.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "clean": "tsc --build --clean",
+    "watch": "tsc --watch",
+    "all": "npm run clean && npm run build"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "azure-pipelines-task-lib": "^4.4.0"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.1",
+    "@types/node": "^20.2.5",
+    "@types/q": "^1.5.5",
+    "mocha": "^10.2.0",
+    "sync-request": "^6.1.0",
+    "typescript": "^5.1.3"
+  }
+}
