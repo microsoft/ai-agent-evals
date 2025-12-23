@@ -1,4 +1,4 @@
-# Microsot Foundry Evaluation GitHub Action
+# Microsoft Foundry Evaluation GitHub Action
 
 This GitHub Action enables offline evaluation of [Microsoft Foundry Agents](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/overview?view=foundry) within your CI/CD pipelines. It is designed to streamline the offline evaluation process, allowing you to identify potential issues and make improvements before releasing an update to production.
 
@@ -121,9 +121,13 @@ jobs:
 ```
 
 > [!NOTE]
-> If you have using Foundry classic agents, use the `v2-beta` version. See v2 workflow sample [here](samples/workflows/single-agent-v2.yml)
-> [!NOTE]
-> If you have a hub-based Azure AI Project, use the `v1-beta` version with `azure-aiproject-connection-string` parameter. See v1 workflow sample [here](samples/workflows/single-agent-v1.yml)
+> If you are using previous versions of this GitHub Action:
+>
+> - **Foundry classic agents**: Use `v2-beta` version. See
+>   [v2 workflow sample](samples/workflows/single-agent-v2.yml)
+> - **Hub-based Azure AI Project**: Use `v1-beta` version with
+>   `azure-aiproject-connection-string` parameter. See
+>   [v1 workflow sample](samples/workflows/single-agent-v1.yml)
 
 ## Evaluation Outputs
 
