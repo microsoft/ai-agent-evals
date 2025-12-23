@@ -122,7 +122,6 @@ jobs:
 
 > [!NOTE]
 > If you have using Foundry classic agents, use the `v2-beta` version. See v2 workflow sample [here](samples/workflows/single-agent-v2.yml)
-
 > [!NOTE]
 > If you have a hub-based Azure AI Project, use the `v1-beta` version with `azure-aiproject-connection-string` parameter. See v1 workflow sample [here](samples/workflows/single-agent-v1.yml)
 
