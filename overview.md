@@ -67,8 +67,8 @@ The input data file should be a JSON file with the following structure:
 
 #### Additional sample data files
 
-| Filename                                                                                     | Description                                                                                                             |
-| :------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------- |
+| Filename                                                                                                                                           | Description                                                                                                             |
+| :------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------- |
 | [samples/data/dataset-tiny.json](https://github.com/microsoft/ai-agent-evals/tree/main/samples/data/dataset-tiny.json)                             | Dataset with small number of test queries and evaluators                                                                |
 | [samples/data/dataset.json](https://github.com/microsoft/ai-agent-evals/tree/main/samples/data/dataset.json)                                       | Dataset with all supported evaluator types and enough queries for confidence interval calculation and statistical test. |
 | [samples/data/dataset-builtin-evaluators.json](https://github.com/microsoft/ai-agent-evals/tree/main/samples/data/dataset-builtin-evaluators.json) | Built-in Foundry evaluators example (e.g., coherence, fluency, relevance, groundedness, metrics)                        |
