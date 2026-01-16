@@ -96,15 +96,9 @@ steps:
 Evaluation results will appear in the Azure DevOps pipeline summary with detailed metrics
 and comparisons between agents when multiple are evaluated.
 
-![Sample evaluation results showing agent comparisons](sample-output.jpeg)
-
-## Evaluation Outputs
-
-Evaluation results will be output to the summary section for each AI Evaluation task run in your Azure DevOps pipeline.
-
 Below is a sample report for comparing two agents.
 
-![Sample output to compare multiple agent evaluations](sample-output.jpeg)
+![Sample evaluation results showing agent comparisons](sample-output.jpeg)
 
 ## Learn More
 
