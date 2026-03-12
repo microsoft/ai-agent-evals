@@ -11,7 +11,7 @@ from pathlib import Path
 from azure.ai.projects import AIProjectClient
 from azure.ai.projects.models import EvaluatorMetricDirection, EvaluatorMetricType
 from azure.ai.projects.models._enums import OperationState
-from azure.ai.projects.models._models import EvaluationComparisonRequest, Insight
+from azure.ai.projects.models._models import EvaluationComparisonInsightRequest, Insight
 from azure.identity import DefaultAzureCredential
 from openai.types.eval_create_params import DataSourceConfigCustom
 
@@ -116,7 +116,7 @@ def get_evaluator_metadata(
         is_openai_type = False
         is_custom_code = False
         try:
-            evaluator = project_client.evaluators.get_version(
+            evaluator = project_client.beta.evaluators.get_version(
                 name=evaluator_name, version="latest"
             )
 
@@ -570,10 +570,10 @@ def generate_comparison_insight(
         f"vs {len(treatment_agent_ids)} treatment(s))..."
     )
 
-    compare_insight = project_client.insights.generate(
+    compare_insight = project_client.beta.insights.generate(
         Insight(
             display_name="Agent Evaluation Comparison",
-            request=EvaluationComparisonRequest(
+            request=EvaluationComparisonInsightRequest(
                 eval_id=eval_object.id,
                 baseline_run_id=baseline_run_id,
                 treatment_run_ids=treatment_run_ids,
@@ -586,7 +586,7 @@ def generate_comparison_insight(
         OperationState.SUCCEEDED,
         OperationState.FAILED,
     ]:
-        compare_insight = project_client.insights.get(id=compare_insight.id)
+        compare_insight = project_client.beta.insights.get(insight_id=compare_insight.insight_id)
         time.sleep(EvaluationConfig.POLLING_INTERVAL_SECONDS)
 
     if compare_insight.state == OperationState.SUCCEEDED:
@@ -797,7 +797,7 @@ def main(
             )
             # Build compare URL if insight available
             if comparison_insight and eval_base_url:
-                insight_id = comparison_insight.id
+                insight_id = comparison_insight.insight_id
                 compare_url = f"{eval_base_url}/compare/{insight_id}"
 
         # Build evaluator catalog base URL (remove eval ID if present)
