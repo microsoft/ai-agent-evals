@@ -586,7 +586,9 @@ def generate_comparison_insight(
         OperationState.SUCCEEDED,
         OperationState.FAILED,
     ]:
-        compare_insight = project_client.beta.insights.get(insight_id=compare_insight.insight_id)
+        compare_insight = project_client.beta.insights.get(
+            insight_id=compare_insight.insight_id
+        )
         time.sleep(EvaluationConfig.POLLING_INTERVAL_SECONDS)
 
     if compare_insight.state == OperationState.SUCCEEDED:
