@@ -16,7 +16,7 @@ dependencies = [
     "pyyaml",
     "scipy",
     "tabulate",
-    "azure-ai-projects>=2.0.0b4",
+    "azure-ai-projects>=2.0.0",
     "azure-identity",
     "aiohttp>=3.8.5",
     "packaging>=25.0"
