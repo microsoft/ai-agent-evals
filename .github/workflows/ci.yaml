@@ -16,7 +16,6 @@ on:
 permissions:
   id-token: write
   contents: read
-  issues: write
 
 jobs:
   run-tests:
@@ -67,6 +66,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [run-tests, run-action]
     if: failure() && github.event_name == 'schedule'
+    permissions:
+      issues: write
     steps:
       - name: Create Issue on Failure
         uses: actions/github-script@v7
