@@ -65,7 +65,7 @@ jobs:
     name: Notify on Failure
     runs-on: ubuntu-latest
     needs: [run-tests, run-action]
-    if: failure() && github.event_name == 'schedule'
+    if: always() && github.event_name == 'schedule' && (needs.run-tests.result == 'failure' || needs.run-action.result == 'failure')
     permissions:
       issues: write
     steps:
@@ -84,9 +84,12 @@ jobs:
               state: 'open'
             });
             
-            if (existingIssues.data.length > 0) {
+            // Filter out pull requests (listForRepo returns both issues and PRs)
+            const actualIssues = existingIssues.data.filter(item => !item.pull_request);
+            
+            if (actualIssues.length > 0) {
               // Add a comment to the existing issue instead of creating a new one
-              const existingIssue = existingIssues.data[0];
+              const existingIssue = actualIssues[0];
               const commentBody = [
                 `## CI Check Failed Again on ${date}`,
                 '',
