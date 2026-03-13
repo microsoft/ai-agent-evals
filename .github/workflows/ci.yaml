@@ -65,7 +65,7 @@ jobs:
     name: Notify on Failure
     runs-on: ubuntu-latest
     needs: [run-tests, run-action]
-    if: always() && github.event_name == 'schedule' && (needs.run-tests.result == 'failure' || needs.run-action.result == 'failure')
+    if: always() && github.event_name == 'schedule' && (needs['run-tests'].result == 'failure' || needs['run-action'].result == 'failure')
     permissions:
       issues: write
     steps:
