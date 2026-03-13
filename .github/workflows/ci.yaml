@@ -87,33 +87,41 @@ jobs:
             if (existingIssues.data.length > 0) {
               // Add a comment to the existing issue instead of creating a new one
               const existingIssue = existingIssues.data[0];
+              const commentBody = [
+                `## CI Check Failed Again on ${date}`,
+                '',
+                `**Workflow Run:** ${workflowUrl}`,
+                '',
+                'The scheduled CI check is still failing. Please investigate.'
+              ].join('\n');
+              
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: existingIssue.number,
-                body: `## CI Check Failed Again on ${date}
-
-            **Workflow Run:** ${workflowUrl}
-
-            The scheduled CI check is still failing. Please investigate.`
+                body: commentBody
               });
               console.log(`Added comment to existing issue #${existingIssue.number}`);
             } else {
               // Create a new issue if none exists
+              const issueBody = [
+                '## Daily CI Check Failed',
+                '',
+                `The scheduled CI workflow failed on ${date}.`,
+                '',
+                `**Workflow Run:** ${workflowUrl}`,
+                '',
+                'Please investigate the failure and take appropriate action.',
+                '',
+                '---',
+                '_This issue was automatically created by the scheduled CI workflow._'
+              ].join('\n');
+              
               const issue = await github.rest.issues.create({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 title: '🚨 Scheduled CI Check Failed',
-                body: `## Daily CI Check Failed
-
-            The scheduled CI workflow failed on ${date}.
-
-            **Workflow Run:** ${workflowUrl}
-
-            Please investigate the failure and take appropriate action.
-
-            ---
-            _This issue was automatically created by the scheduled CI workflow._`,
+                body: issueBody,
                 labels: ['ci-failure', 'automated']
               });
               console.log('Created issue:', issue.data.html_url);
