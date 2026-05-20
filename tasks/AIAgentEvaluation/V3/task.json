@@ -9,7 +9,7 @@
   "version": {
     "Major": 3,
     "Minor": 0,
-    "Patch": 88
+    "Patch": 89
   },
   "instanceNameFormat": "AI Agent Evaluation",
   "inputs": [
