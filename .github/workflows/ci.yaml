@@ -9,6 +9,9 @@ on:
   push:
     branches:
       - main
+  schedule:
+    # Run daily at 9:00 AM UTC
+    - cron: '0 9 * * *'
 
 permissions:
   id-token: write
@@ -57,3 +60,72 @@ jobs:
           deployment-name: "gpt-4o-mini"
           data-path: ${{ github.workspace }}/samples/data/dataset-tiny.json
           agent-ids: "agentv2test:12,agentv2test:13"
+
+  notify-on-failure:
+    name: Notify on Failure
+    runs-on: ubuntu-latest
+    needs: [run-tests, run-action]
+    if: always() && github.event_name == 'schedule' && (needs['run-tests'].result == 'failure' || needs['run-action'].result == 'failure')
+    permissions:
+      issues: write
+    steps:
+      - name: Create Issue on Failure
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const date = new Date().toISOString().split('T')[0];
+            const workflowUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            
+            // Check if there's already an open issue with ci-failure label
+            const existingIssues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'ci-failure',
+              state: 'open'
+            });
+            
+            // Filter out pull requests (listForRepo returns both issues and PRs)
+            const actualIssues = existingIssues.data.filter(item => !item.pull_request);
+            
+            if (actualIssues.length > 0) {
+              // Add a comment to the existing issue instead of creating a new one
+              const existingIssue = actualIssues[0];
+              const commentBody = [
+                `## CI Check Failed Again on ${date}`,
+                '',
+                `**Workflow Run:** ${workflowUrl}`,
+                '',
+                'The scheduled CI check is still failing. Please investigate.'
+              ].join('\n');
+              
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: commentBody
+              });
+              console.log(`Added comment to existing issue #${existingIssue.number}`);
+            } else {
+              // Create a new issue if none exists
+              const issueBody = [
+                '## Daily CI Check Failed',
+                '',
+                `The scheduled CI workflow failed on ${date}.`,
+                '',
+                `**Workflow Run:** ${workflowUrl}`,
+                '',
+                'Please investigate the failure and take appropriate action.',
+                '',
+                '---',
+                '_This issue was automatically created by the scheduled CI workflow._'
+              ].join('\n');
+              
+              const issue = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: '🚨 Scheduled CI Check Failed',
+                body: issueBody,
+                labels: ['ci-failure', 'automated']
+              });
+              console.log('Created issue:', issue.data.html_url);
+            }
