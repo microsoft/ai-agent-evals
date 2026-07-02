@@ -30,6 +30,7 @@ To use this action, all you need to provide is a data set with test queries and 
 | data-path                 |    Yes    | Path to the data file that contains the evaluators and input queries for evaluations                                                                                                          |
 | agent-ids                 |    Yes    | ID of the agent(s) to evaluate in format `agent-name:version` (e.g., `my-agent:1` or `my-agent:1,my-agent:2`). Multiple agents are comma-separated and compared with statistical test results |
 | baseline-agent-id         |    No     | ID of the baseline agent to compare against when evaluating multiple agents. If not provided, the first agent is used                                                                         |
+| eval-name                 |    No     | Name to assign to the eval object created in Foundry. Useful for distinguishing evals from multiple pipelines, repos, or environments. Defaults to `"Agent Evaluation"`                      |
 
 ### Data file
 

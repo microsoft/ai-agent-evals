@@ -27,6 +27,10 @@ inputs:
       Agent ID of the baseline agent to compare against when evaluating multiple agents. If not provided, the first
       agent is used.
     required: false
+  eval-name:
+    description: Name to assign to the eval object created in Foundry. Useful for distinguishing evals from multiple pipelines, repos, or environments.
+    required: false
+    default: "Agent Evaluation"
   api-version:
     description: The API version to use when connecting to model deployment.
     required: false
@@ -56,3 +60,4 @@ runs:
         DATA_PATH: ${{ inputs.data-path }}
         AGENT_IDS: ${{ inputs.agent-ids }}
         BASELINE_AGENT_ID: ${{ inputs.baseline-agent-id }}
+        EVAL_NAME: ${{ inputs.eval-name }}

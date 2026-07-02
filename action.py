@@ -47,6 +47,7 @@ DEPLOYMENT_NAME = os.getenv("DEPLOYMENT_NAME")
 DATA_PATH = os.getenv("DATA_PATH")
 AGENT_IDS = [x.strip() for x in os.getenv("AGENT_IDS", "").split(",") if x.strip()]
 BASELINE_AGENT_ID = os.getenv("BASELINE_AGENT_ID")
+EVAL_NAME = os.getenv("EVAL_NAME") or "Agent Evaluation"
 
 
 def get_agents(project_client: AIProjectClient, agent_ids: list[str]) -> dict:
@@ -605,6 +606,7 @@ def create_evaluation_and_dataset(
     input_data_path: Path,
     input_data: dict,
     evaluator_metadata: dict,
+    eval_name: str = "Agent Evaluation",
 ) -> tuple:
     """Create evaluation object and upload dataset.
 
@@ -614,6 +616,7 @@ def create_evaluation_and_dataset(
         input_data_path: Path to input data file
         input_data: Input data dictionary
         evaluator_metadata: Evaluator metadata with categories
+        eval_name: Name to assign to the evaluation object in Foundry
 
     Returns:
         Tuple of (eval_object, dataset, display_name_to_evaluator_name)
@@ -640,7 +643,7 @@ def create_evaluation_and_dataset(
     )
 
     eval_object = openai_client.evals.create(
-        name="Agent Evaluation",
+        name=eval_name,
         data_source_config=data_source_config,
         testing_criteria=testing_criteria,  # type: ignore
     )
@@ -715,6 +718,7 @@ def main(
     input_data: dict,
     agent_ids: list[str],
     baseline_agent_id: str | None = None,
+    eval_name: str = "Agent Evaluation",
 ) -> str:
     """Main evaluation workflow.
 
@@ -744,6 +748,7 @@ def main(
                 input_data_path,
                 input_data,
                 evaluator_metadata,
+                eval_name,
             )
         )
 
@@ -857,6 +862,7 @@ def _validate_environment_variables() -> dict:
         "data_path": DATA_PATH,
         "agent_ids": AGENT_IDS,
         "baseline_agent_id": BASELINE_AGENT_ID,
+        "eval_name": EVAL_NAME,
     }
 
 
@@ -880,6 +886,7 @@ if __name__ == "__main__":
         input_data=data,
         agent_ids=env_config["agent_ids"],
         baseline_agent_id=env_config["baseline_agent_id"],
+        eval_name=env_config["eval_name"],
     )
 
     if STEP_SUMMARY:

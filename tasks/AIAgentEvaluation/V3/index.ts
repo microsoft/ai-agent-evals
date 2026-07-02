@@ -141,6 +141,7 @@ async function run() {
       { name: "data-path", required: true },
       { name: "agent-ids", required: true },
       { name: "baseline-agent-id", required: false },
+      { name: "eval-name", required: false },
     ];
     inputs.forEach((input) => {
       const value = tl.getInput(input.name, input.required);
