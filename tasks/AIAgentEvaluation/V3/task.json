@@ -54,6 +54,14 @@
       "helpMarkDown": "Agent ID of the baseline agent to compare against. By default, the first agent is used."
     },
     {
+      "name": "eval-name",
+      "type": "string",
+      "label": "Eval Name",
+      "defaultValue": "Agent Evaluation",
+      "required": false,
+      "helpMarkDown": "Name to assign to the eval object created in Foundry. Useful for distinguishing evals from multiple pipelines, repos, or environments."
+    },
+    {
       "name": "api-version",
       "type": "string",
       "label": "API Version",
