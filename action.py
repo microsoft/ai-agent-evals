@@ -213,18 +213,18 @@ def _generate_data_mappings(input_data: dict | None) -> dict:
     Returns:
         Dictionary of data field mappings
     """
-    user_data_mappings = input_data.get("data_mapping", None) if input_data else None
+    raw_mappings = input_data.get("data_mapping", None) if input_data else None
+    user_data_mappings = dict(raw_mappings) if raw_mappings is not None else {}
 
     # Auto-generate data mappings from fields in data items
     if input_data and "data" in input_data and len(input_data["data"]) > 0:
         first_item = input_data["data"][0]
-        if user_data_mappings is None:
-            user_data_mappings = {}
         # Add all fields from the first data item that aren't already mapped
-        for field in first_item.keys():
-            user_data_mappings[field] = f"{{{{item.{field}}}}}"
+        for field in first_item:
+            if field not in user_data_mappings:
+                user_data_mappings[field] = f"{{{{item.{field}}}}}"
 
-    return user_data_mappings or {}
+    return user_data_mappings
 
 
 def _get_response_field(

@@ -32,6 +32,24 @@ def test_generate_data_mappings_with_user_mappings():
     assert result["query"] == "{{item.query}}"
 
 
+def test_generate_data_mappings_user_mapping_precedence():
+    """Test user mappings take precedence over auto-generated mappings for matching field names."""
+    input_data = {
+        "data_mapping": {
+            "query": "{{item.user_question}}",
+            "custom_field": "{{item.custom}}",
+        },
+        "data": [{"query": "test", "context": "test context"}],
+    }
+    result = _generate_data_mappings(input_data)
+
+    assert result["query"] == "{{item.user_question}}"
+    assert result["custom_field"] == "{{item.custom}}"
+    assert result["context"] == "{{item.context}}"
+    # Ensure original input_data dictionary was not mutated
+    assert input_data["data_mapping"]["query"] == "{{item.user_question}}"
+
+
 def test_generate_data_mappings_auto_generates():
     """Test auto-generation of data mappings from data fields."""
     input_data = {
