@@ -116,7 +116,7 @@ def get_evaluator_metadata(
         is_openai_type = False
         is_custom_code = False
         try:
-            evaluator = project_client.beta.evaluators.get_version(
+            evaluator = project_client.evaluators.get_version(
                 name=evaluator_name, version="latest"
             )
 
