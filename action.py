@@ -3,6 +3,7 @@
 
 """GitHub Action to evaluate Azure AI agents using the Azure AI Evaluation SDK."""
 
+import copy
 import json
 import os
 import time
@@ -165,8 +166,11 @@ def get_evaluator_metadata(
                 f"Using defaults."
             )
 
-        # Use default metadata (for errors or missing definitions)
-        evaluator_metadata[evaluator_name] = DEFAULT_EVALUATOR_METADATA
+        # Use default metadata (for errors or missing definitions). Deep-copy so
+        # the per-evaluator mutations below don't alias and permanently pollute
+        # the shared module-level DEFAULT_EVALUATOR_METADATA constant (which is
+        # also used as a fallback elsewhere, e.g. analysis/processing.py).
+        evaluator_metadata[evaluator_name] = copy.deepcopy(DEFAULT_EVALUATOR_METADATA)
         evaluator_metadata[evaluator_name]["is_openai_type"] = is_openai_type
         evaluator_metadata[evaluator_name]["is_custom_code"] = is_custom_code
 
