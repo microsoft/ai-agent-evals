@@ -1,4 +1,5 @@
 """Tests for action.py helper functions."""
+import copy
 
 import pytest
 from action import (
@@ -483,3 +484,30 @@ def test_create_testing_criteria_openai_type_no_config():
 
     with pytest.raises(ValueError, match="requires configuration in 'openai_graders'"):
         create_testing_criteria(evaluators, evaluator_metadata, input_data)
+
+
+def test_get_evaluator_metadata_fallback_does_not_pollute_shared_default():
+    """Fallback metadata must be a per-evaluator copy, not the shared constant.
+
+    When metadata lookup fails, get_evaluator_metadata used to assign the
+    module-level DEFAULT_EVALUATOR_METADATA by reference and then mutate it, so
+    every fallback evaluator aliased the same dict and the constant itself got
+    permanently polluted (leaking into analysis/processing.py's fallback).
+    """
+    from unittest import mock  # pylint: disable=import-outside-toplevel
+
+    import action
+    from analysis.constants import DEFAULT_EVALUATOR_METADATA
+
+    before = copy.deepcopy(DEFAULT_EVALUATOR_METADATA)
+
+    client = mock.MagicMock()
+    client.beta.evaluators.get_version.side_effect = RuntimeError("boom")
+
+    result = action.get_evaluator_metadata(client, ["eval_a", "eval_b"])
+
+    # Distinct evaluators must not alias the same metadata object.
+    assert result["eval_a"] is not result["eval_b"]
+    # The shared module-level constant must be untouched.
+    assert DEFAULT_EVALUATOR_METADATA == before
+    assert "is_openai_type" not in DEFAULT_EVALUATOR_METADATA
