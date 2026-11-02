@@ -1,5 +1,8 @@
 """Tests for action.py helper functions."""
 
+from types import SimpleNamespace
+from unittest.mock import Mock
+
 import pytest
 from action import (
     _build_base_data_mapping,
@@ -9,7 +12,33 @@ from action import (
     _validate_data_schema,
     _validate_init_parameters,
     create_testing_criteria,
+    get_evaluator_metadata,
 )
+
+
+def test_get_evaluator_metadata_uses_ga_evaluators_client():
+    """Test evaluator metadata is retrieved through the GA project client."""
+    project_client = Mock()
+    project_client.evaluators.get_version.return_value = SimpleNamespace(
+        categories=["agents"],
+        definition=SimpleNamespace(
+            type="azure_ai_evaluator",
+            init_parameters={"required": ["deployment_name"]},
+            metrics={},
+            data_schema={},
+        ),
+        version="1",
+    )
+
+    metadata = get_evaluator_metadata(project_client, ["builtin.task_adherence"])
+
+    project_client.evaluators.get_version.assert_called_once_with(
+        name="builtin.task_adherence", version="latest"
+    )
+    assert metadata["builtin.task_adherence"]["categories"] == ["agents"]
+    assert metadata["builtin.task_adherence"]["init_parameters"] == {
+        "required": ["deployment_name"]
+    }
 
 
 def test_generate_data_mappings_empty():
